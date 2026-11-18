@@ -147,7 +147,7 @@ hlBlockExpect($deleteResult->isSuccess(), 'delete() должен возвращ�
 $invalidIdFailed = false;
 try {
     $manager->getById(0);
-} catch (RuntimeException) {
+} catch (InvalidArgumentException) {
     $invalidIdFailed = true;
 }
 hlBlockExpect($invalidIdFailed, 'Нулевой ID highload-блока должен отклоняться.');

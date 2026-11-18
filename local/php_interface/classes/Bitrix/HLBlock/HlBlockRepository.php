@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Project\Bitrix\HLBlock;
 
 use Closure;
+use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
 
@@ -65,7 +66,7 @@ class HlBlockRepository
     public function getById(int $id): HlBlockEntity
     {
         if ($id <= 0) {
-            throw new RuntimeException('Идентификатор highload-блока должен быть положительным числом.');
+            throw new InvalidArgumentException('Идентификатор highload-блока должен быть положительным числом.');
         }
 
         $this->ensureModuleLoaded();
