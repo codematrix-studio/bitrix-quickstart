@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Project\\Bitrix\\Sale;
+namespace Project\Bitrix\Sale;
 
 use RuntimeException;
 
