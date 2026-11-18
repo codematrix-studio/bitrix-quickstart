@@ -19,7 +19,9 @@
         "test:forms": "php ../tests/lema_forms_smoke.php",
         "test": [
             "@test:compatibility",
-            "@test:forms"
-        ]
+            "@test:forms",
+            "@test:iblock"
+        ],
+        "test:iblock": "php ../tests/lema_iblock_smoke.php"
     }
 }
