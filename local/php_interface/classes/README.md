@@ -202,3 +202,7 @@ $pageItems = $paginator->getElements();
 ## Highload-блоки
 
 Для работы с Highload-блоками используйте `Project\Bitrix\HLBlock\HlBlockManager` и `HlBlockEntity`. Менеджер подключает модуль `highloadblock` непосредственно перед обращением к API, получает ORM-сущность по ID блока и кеширует её в пределах своего экземпляра. Операции чтения и записи выполняются через D7 ORM. Подробности и примеры приведены в [Bitrix/HLBlock/README.md](Bitrix/HLBlock/README.md).
+
+## Bitrix: корзина D7 Sale
+
+Для работы с корзиной текущего покупателя используйте `Project\Bitrix\Sale\BasketManager`. Класс загружает корзину по FUSER и текущему сайту, проверяет результаты операций и не хранит состояние в статическом singleton. Он отвечает только за корзину; оформление заказа, доставку и оплату следует реализовывать отдельно. Подробности приведены в [Bitrix/Sale/README.md](Bitrix/Sale/README.md).
