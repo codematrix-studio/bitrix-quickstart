@@ -45,6 +45,10 @@ class BasketManager
         $this->assertPositiveId($productId, 'ID товара');
         $this->assertPositiveQuantity($quantity);
 
+        if ($this->basketLoader === null) {
+            $this->includeModule('catalog');
+        }
+
         $basket = $this->basket();
         $item = $basket->getExistsItem('catalog', $productId);
 
