@@ -30,7 +30,8 @@
             "@test:page",
             "@test:asset",
             "@test:file-icons",
-            "@test:hlblock"
+            "@test:hlblock",
+            "@test:d7-order"
         ],
         "test:iblock": [
             "php ../tests/lema_iblock_smoke.php",
@@ -45,6 +46,7 @@
         "test:page": "php ../tests/page_path_matcher_smoke.php",
         "test:asset": "php ../tests/asset_manager_smoke.php",
         "test:file-icons": "php ../tests/file_type_icon_resolver_smoke.php",
-        "test:hlblock": "php ../tests/hlblock_smoke.php"
+        "test:hlblock": "php ../tests/hlblock_smoke.php",
+        "test:d7-order": "php ../tests/d7_order_manager_smoke.php"
     }
 }
