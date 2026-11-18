@@ -61,7 +61,7 @@ $metadataFallback = new FileIconResolver(
 );
 fileIconExpect($metadataFallback->iconClassForId(7) === 'ico_jpg', 'При недоступности определения по содержимому используется MIME из метаданных Bitrix.');
 
-$missingFile = new FileIconResolver(static fn (int $id): false => false);
+$missingFile = new FileIconResolver(static fn (int $id) => false);
 fileIconExpect($missingFile->iconClassForId(999) === 'ico_cd', 'Для отсутствующего файла должен возвращаться резервный класс.');
 
 $invalidIdFailed = false;
