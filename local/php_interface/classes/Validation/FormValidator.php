@@ -233,7 +233,8 @@ class FormValidator
         $valid = false;
         switch ($type) {
             case 'required':
-                $valid = !($value === null || $value === '' || (is_array($value) && $value === []));
+                $requiredValue = is_string($value) ? trim($value) : $value;
+                $valid = !($requiredValue === null || $requiredValue === '' || (is_array($requiredValue) && $requiredValue === []));
                 break;
 
             case 'boolean':
@@ -253,7 +254,8 @@ class FormValidator
                 break;
 
             case 'length':
-                $length = self::unicodeLength(is_scalar($value) ? (string) $value : '');
+                $lengthValue = is_string($value) ? trim($value) : (is_scalar($value) ? (string) $value : '');
+                $length = self::unicodeLength($lengthValue);
                 $min = isset($params['min']) ? max(0, (int) $params['min']) : null;
                 $max = isset($params['max']) ? max(0, (int) $params['max']) : null;
                 $valid = ($min === null || $length >= $min) && ($max === null || $length <= $max);
