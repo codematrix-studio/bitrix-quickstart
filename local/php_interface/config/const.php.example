@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * Пример конфигурации проекта.
+ *
+ * Скопируйте файл в const.php и укажите значения конкретного сайта.
+ * Файл const.php исключён из Git и не должен содержать данные доступа,
+ * пароли или токены в репозитории.
+ */
+
+defined('PROJECT_NAME') || define('PROJECT_NAME', 'MyProject');
+defined('PROJECT_ENV') || define('PROJECT_ENV', 'production');
+
+// Пример:
+// defined('PROJECT_IBLOCK_CATALOG') || define('PROJECT_IBLOCK_CATALOG', 0);
