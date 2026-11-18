@@ -5,14 +5,14 @@
 - `HlBlockManager` — подключает модуль `highloadblock`, получает метаданные блока, компилирует ORM-сущность и кеширует её в пределах экземпляра менеджера;
 - `HlBlockEntity` — предоставляет операции чтения и изменения записей конкретного блока.
 
-Классы находятся в namespace `Project\\Bitrix\\HLBlock` и не подключают модуль Битрикс при загрузке PHP-файлов.
+Классы находятся в namespace `Project\Bitrix\HLBlock` и не подключают модуль Битрикс при загрузке PHP-файлов.
 
 ## Получение сущности
 
 Для работы используется числовой ID HL-блока. Поле `NAME` не применяется в качестве технического идентификатора: это название, которое не гарантирует уникальность.
 
 ```php
-use Project\\Bitrix\\HLBlock\\HlBlockManager;
+use Project\Bitrix\HLBlock\\HlBlockManager;
 
 $manager = new HlBlockManager();
 $records = $manager->getById(7);
