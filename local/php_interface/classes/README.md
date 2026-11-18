@@ -184,3 +184,10 @@ $pageItems = $paginator->getElements();
 В `Project\\Support` добавлены универсальные классы из старой `Lema\\Common\\Helper`: `RussianPluralizer`, `JsonEncoder`, `CharsetConverter` и `UrlGenerator`. Также расширен `HtmlEscaper`, чтобы можно было передавать флаги и кодировку.
 
 Описание и примеры: [Support/README.md](Support/README.md). Старое имя `Lema\\Common\\Helper` сохранено в необязательном адаптере `legacy/Lema/Common/Helper.php`.
+
+
+## SEO и OpenGraph
+
+Добавлен `Project\\Seo\\MetaMarkup` — генератор meta-тегов с экранированием HTML-атрибутов при выводе. Старые `Lema\\Base\\Markup` и `Lema\\Seo\\OpenGraph` доступны через адаптеры.
+
+Документация и примеры: [Seo/README.md](../Seo/README.md).
