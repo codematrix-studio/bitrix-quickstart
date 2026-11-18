@@ -2,12 +2,12 @@
 
 ## AssetManager
 
-Project\\Bitrix\\Asset\\AssetManager — небольшой фасад над штатным объектом Bitrix\\Main\\Page\\Asset. Он не хранит собственный реестр ресурсов и не заменяет механизм Bitrix: все файлы передаются непосредственно в addJs() и addCss().
+Project\Bitrix\Asset\AssetManager — небольшой фасад над штатным объектом Bitrix\Main\Page\Asset. Он не хранит собственный реестр ресурсов и не заменяет механизм Bitrix: все файлы передаются непосредственно в addJs() и addCss().
 
 Пример:
 
-    use Project\\Bitrix\\Asset\\AssetManager;
-    use Bitrix\\Main\\Page\\Asset;
+    use Project\Bitrix\Asset\AssetManager;
+    use Bitrix\Main\Page\Asset;
 
     $assets = new AssetManager(Asset::getInstance());
 
@@ -36,7 +36,7 @@ Project\\Bitrix\\Asset\\AssetManager — небольшой фасад над ш
 
 Старый API:
 
-    $assets = new \\Lema\\Common\\AssetManager();
+    $assets = new \Lema\Common\AssetManager();
     $assets
         ->addCssArray(['/css/site.css'])
         ->init(['fx', 'jquery2'])
@@ -49,7 +49,7 @@ Project\\Bitrix\\Asset\\AssetManager — небольшой фасад над ш
     require_once __DIR__ . '/legacy/Lema/Common/Asset.php';
     require_once __DIR__ . '/legacy/Lema/Common/AssetManager.php';
 
-Старый Lema\\Common\\Asset::get() возвращает штатный объект Bitrix\\Main\\Page\\Asset. Новая реализация не наследует старые базовые singleton-классы и не создаёт дополнительное хранилище экземпляра.
+Старый Lema\Common\Asset::get() возвращает штатный объект Bitrix\Main\Page\Asset. Новая реализация не наследует старые базовые singleton-классы и не создаёт дополнительное хранилище экземпляра.
 
 ## Границы проверки
 

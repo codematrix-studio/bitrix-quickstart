@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lema\\Common;
+namespace Lema\Common;
 
-use Project\\Bitrix\\Asset\\AssetManager as BitrixAssetManager;
+use Project\Bitrix\Asset\AssetManager as BitrixAssetManager;
 
-/** Переходный адаптер старого Lema\\Common\\AssetManager. */
+/** Переходный адаптер старого Lema\Common\AssetManager. */
 class AssetManager
 {
     private BitrixAssetManager $manager;

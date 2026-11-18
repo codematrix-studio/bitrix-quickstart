@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Project\\Bitrix\\Asset;
+namespace Project\Bitrix\Asset;
 
 use Closure;
 use InvalidArgumentException;
@@ -14,7 +14,7 @@ final class AssetManager
     private ?Closure $extensionInitializer;
 
     /**
-     * @param object $asset Объект Bitrix\\Main\\Page\\Asset или совместимый объект.
+     * @param object $asset Объект Bitrix\Main\Page\Asset или совместимый объект.
      */
     public function __construct(
         private object $asset,
@@ -60,7 +60,7 @@ final class AssetManager
             throw new LogicException('Для инициализации расширений требуется доступный CJSCore::init().');
         }
 
-        \\CJSCore::init($extensions);
+        \CJSCore::init($extensions);
 
         return $this;
     }

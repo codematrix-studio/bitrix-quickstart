@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Asset/AssetManager.php';
 
-use Project\\Bitrix\\Asset\\AssetManager;
+use Project\Bitrix\Asset\AssetManager;
 
 function assetExpect(bool $condition, string $message): void
 {
@@ -68,4 +68,4 @@ try {
 }
 assetExpect($failed, 'Отсутствующий метод Bitrix Asset должен давать понятную ошибку.');
 
-echo "Проверки AssetManager пройдены.\\n";
+echo "Проверки AssetManager пройдены.\n";
