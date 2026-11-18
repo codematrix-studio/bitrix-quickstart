@@ -270,6 +270,25 @@ foreach (glob($exportDirectory . '/.*') ?: [] as $file) {
 }
 rmdir($exportDirectory);
 
+$legacyStorageRoot = $documentRoot . '/bitrix/catalog_export';
+foreach (glob($legacyStorageRoot . '/*') ?: [] as $directory) {
+    if (is_dir($directory)) {
+        foreach (glob($directory . '/*') ?: [] as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+        rmdir($directory);
+    }
+}
+if (is_dir($legacyStorageRoot)) {
+    rmdir($legacyStorageRoot);
+}
+if (is_dir($documentRoot . '/bitrix')) {
+    rmdir($documentRoot . '/bitrix');
+}
+rmdir($documentRoot);
+
 foreach (glob($tempDirectory . '/*') ?: [] as $file) {
     if (is_file($file)) {
         unlink($file);
