@@ -413,3 +413,43 @@ $name = $validator->xss($name);
 
 Автономный тест: `tests/iblock_validator_compatibility_smoke.php`; команда запуска из каталога `local`: `composer test:iblock-validator`. Тест не требует ядра Битрикс.
 
+
+
+
+## Page — проверка текущего раздела сайта
+
+Старый класс `Lema\\Common\\Page` перенесён в два слоя:
+
+- `Project\\Support\\PagePathMatcher` — независимая от Bitrix логика сопоставления путей;
+- `Project\\Bitrix\\Context\\Page` — получение текущего каталога через HTTP-запрос Bitrix;
+- `legacy/Lema/Common/Page.php` — необязательный адаптер старых статических методов.
+
+Старый код:
+
+```php
+if (\\Lema\\Common\\Page::inDir(['/catalog/', '/news/'])) {
+    // ...
+}
+
+if (\\Lema\\Common\\Page::inRootDir('catalog')) {
+    // ...
+}
+```
+
+Новый API:
+
+```php
+use Project\\Bitrix\\Context\\Page;
+
+if (Page::inDirectory(['/catalog/', '/news/'])) {
+    // ...
+}
+
+if (Page::inRootDirectory('catalog')) {
+    // ...
+}
+```
+
+Исправлено важное поведение старой реализации: проверка границы сегмента. Путь `/catalog-old/` больше не считается частью `/catalog/`. Метод `inRootDir()` проверяет только первый сегмент URL и не совпадает с одноимённым вложенным каталогом.
+
+Автономный тест: `tests/page_path_matcher_smoke.php`; команда запуска из каталога `local`: `composer test:page`. Тест не требует ядра Битрикс. Фасад текущего URL требует HTTP-контекста Bitrix и проверяется интеграционно.
