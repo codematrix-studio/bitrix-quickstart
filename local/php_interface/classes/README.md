@@ -44,7 +44,19 @@ $escaper = new \Project\Support\HtmlEscaper();
 echo $escaper->escape($name);
 ```
 
-Оба класса не зависят от API Битрикс и не требуют сторонних Composer-пакетов.
+### `Project\Support\TextPreview`
+
+Преобразует HTML или обычный текст в компактный текстовый анонс. По умолчанию ограничивает результат 300 символами, старается не обрезать последнее слово и добавляет многоточие только при фактическом сокращении.
+
+Длина считается в Unicode-графемах, поэтому кириллица и составные символы не разрезаются посреди байтов или символа.
+
+```php
+$preview = new \Project\Support\TextPreview();
+
+echo $preview->create($element['PREVIEW_TEXT'], 200);
+```
+
+Класс не зависит от API Битрикс и не требует расширения mbstring.
 
 ## Замена старого `Ns\Bitrix\Helper\IBlock\Validator`
 
@@ -55,25 +67,10 @@ echo $escaper->escape($name);
 
 Эти задачи разделены между `EmailValidator` и `HtmlEscaper`. Интерфейс намеренно не копируется один в один: валидатор возвращает `bool`, а HTML-кодирование выполняется в месте вывода, с учётом контекста. Не следует сохранять HTML-сущности в базе вместо исходного текста только ради защиты от XSS.
 
-Пример обработки данных:
+## Bitrix: работа с элементами инфоблока
 
-```php
-$email = trim($email);
-$emailValidator = new \Project\Support\EmailValidator();
+Для проверки элементов используйте `Project\Bitrix\IBlock\ElementChecker` (D7 ORM) или `Project\Bitrix\IBlock\LegacyElementChecker` (старый API).
 
-if (!$emailValidator->isValid($email)) {
-    // Обработать некорректный адрес.
-}
+Для генерации символьного кода используйте `Project\Bitrix\IBlock\ElementCodeGenerator`. Для сокращения текста подходит независимый от Битрикс `Project\Support\TextPreview`.
 
-$name = trim($name);
-// Сохранять исходный текст, а HTML-кодировать при выводе:
-echo (new \Project\Support\HtmlEscaper())->escape($name);
-```
-
-## Bitrix: проверка элементов инфоблока
-
-Для проектов на D7 ORM используйте `Project\Bitrix\IBlock\ElementChecker`.
-
-Для проектов на старом API используйте `Project\Bitrix\IBlock\LegacyElementChecker`.
-
-Оба класса имеют методы `exists()` и `findId()`, но принимают фильтры в формате своего API. Подробные примеры и различия описаны в [Bitrix/IBlock/README.md](Bitrix/IBlock/README.md).
+Подробности и примеры приведены в [Bitrix/IBlock/README.md](Bitrix/IBlock/README.md).
