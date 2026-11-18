@@ -4,7 +4,7 @@
 
 Быстрый заказ — отдельный сценарий оформления покупки одного выбранного товара без предварительного помещения товара в постоянную корзину покупателя. Он не заменяет обычное оформление заказа и не должен менять содержимое уже существующей корзины.
 
-Старый `Helper\\BuyOneClickHandler` подтверждает именно товарный сценарий: его метод `CreateOrder($productId, $userId)` создаёт новую временную корзину и добавляет в неё одну позицию. Однако старый обработчик сломан на уровне передачи аргументов: `Execute()` вызывает `Buy($this->email, $this->phone)`, хотя `Buy()` ожидает ID товара и купон.
+Старый `Helper\BuyOneClickHandler` подтверждает именно товарный сценарий: его метод `CreateOrder($productId, $userId)` создаёт новую временную корзину и добавляет в неё одну позицию. Однако старый обработчик сломан на уровне передачи аргументов: `Execute()` вызывает `Buy($this->email, $this->phone)`, хотя `Buy()` ожидает ID товара и купон.
 
 ## Найденные дефекты старой реализации
 
@@ -76,13 +76,13 @@
 
 ## Реализация
 
-Добавлен сервис `Project\\Bitrix\\Sale\\QuickOrder`. Он создаёт отдельную корзину D7, добавляет в неё одну позицию через `catalog` и `CCatalogProductProvider`, а затем вызывает `OrderManager::createFromBasket()`.
+Добавлен сервис `Project\Bitrix\Sale\QuickOrder`. Он создаёт отдельную корзину D7, добавляет в неё одну позицию через `catalog` и `CCatalogProductProvider`, а затем вызывает `OrderManager::createFromBasket()`.
 
 Пример:
 
 ```php
-use Project\\Bitrix\\Sale\\OrderManager;
-use Project\\Bitrix\\Sale\\QuickOrder;
+use Project\Bitrix\Sale\OrderManager;
+use Project\Bitrix\Sale\QuickOrder;
 
 $quickOrder = new QuickOrder(new OrderManager());
 
