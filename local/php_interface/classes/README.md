@@ -133,3 +133,28 @@ $password = \Project\Support\PasswordGenerator::generate(8);
 Новый `Project\Support\PagePagination` не является drop-in заменой старого класса. Старый API использовал цепочку `perPage()`, `itemsQuantity()`, `withCurrentPage()` и `render()`, а также формировал URL и HTML конкретного сайта.
 
 В старом репозитории найдено только подключение класса через `IBlock::useVariant('pagination')`; фактических вызовов этого варианта в доступном коде не обнаружено. Поэтому старый интерфейс не эмулируется автоматически. При миграции внешнего кода нужно отдельно реализовать адаптер, который сохранит старые методы и URL-контракт. Расчёты страниц можно делегировать `PagePagination`, а HTML и URL формировать в адаптере.
+### `Project\Support\ArrayPaginator`
+
+Переработка `Lema\Base\Paginator` из `lema.lib`. Сохраняет основные публичные методы старого класса: `get()`, `setElements()`, `setPerPage()`, `setPagerName()`, `getPageNumber()`, `start()`, `getElements()`, `incCss()` и `getLinks()`.
+
+Исправлены ошибки старой реализации: выбранная страница теперь применяется к `getElements()` после `start()`; размер страницы не может быть нулевым или отрицательным; номер страницы ограничивается доступным диапазоном; заголовок и URL экранируются при генерации HTML. `renderLinks()` возвращает HTML строкой, а старый `getLinks()` по-прежнему выводит его.
+
+Для постепенной миграции есть необязательный адаптер `local/php_interface/legacy/Lema/Base/Paginator.php`. Подключать его нужно после Composer autoload. Он предоставляет старое имя `Lema\Base\Paginator`, не регистрируя namespace глобально. Это позволяет не конфликтовать с установленным `lema.lib` до момента его отключения.
+
+Пример нового API:
+
+```php
+$paginator = new \\Project\\Support\\ArrayPaginator($items, 20);
+$paginator->start(count($items));
+$pageItems = $paginator->getElements();
+```
+
+Совместимый вызов после подключения адаптера:
+
+```php
+$paginator = \\Lema\\Base\\Paginator::get();
+$paginator->setElements($items)->setPerPage(20)->start(count($items));
+$pageItems = $paginator->getElements();
+```
+
+Вызов `getLinks()` по-прежнему требует контекст Bitrix с глобальным `$APPLICATION`. Самостоятельный расчёт и выбор элементов от Bitrix не зависят.
