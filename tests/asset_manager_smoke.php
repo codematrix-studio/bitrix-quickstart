@@ -33,7 +33,7 @@ $asset = new class {
 };
 
 $initialized = [];
-$manager = new \\Project\\Bitrix\\Asset\\AssetManager($asset, static function (array $extensions) use (&$initialized): void {
+$manager = new \Project\Bitrix\Asset\AssetManager($asset, static function (array $extensions) use (&$initialized): void {
     $initialized = $extensions;
 });
 
