@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/OrderManager.php';
+require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/OrderSaveWarningsException.php';
 
 use Project\Bitrix\Sale\OrderManager;
 
@@ -17,7 +18,8 @@ class FakeOrderResult
 {
     public function __construct(
         private bool $success = true,
-        private array $errors = []
+        private array $errors = [],
+        private array $warnings = []
     ) {}
 
     public function isSuccess(): bool
@@ -28,6 +30,11 @@ class FakeOrderResult
     public function getErrorMessages(): array
     {
         return $this->errors;
+    }
+
+    public function getWarningMessages(): array
+    {
+        return $this->warnings;
     }
 }
 
@@ -76,6 +83,27 @@ class FakeOrderOrderableBasket
 class FakeOrderProperty
 {
     public array $values = [];
+    public bool $required = false;
+
+    public function isRequired(): bool
+    {
+        return $this->required;
+    }
+
+    public function getPropertyId(): int
+    {
+        return 10;
+    }
+
+    public function getValue(): mixed
+    {
+        return $this->values === [] ? '' : end($this->values);
+    }
+
+    public function checkRequiredValue(int $propertyId, mixed $value): FakeOrderResult
+    {
+        return new FakeOrderResult($propertyId === 10 && $value !== '', ['Обязательное свойство EMAIL не заполнено']);
+    }
 
     public function setValue(mixed $value): FakeOrderResult
     {
@@ -85,13 +113,18 @@ class FakeOrderProperty
     }
 }
 
-class FakeOrderPropertyCollection
+class FakeOrderPropertyCollection implements IteratorAggregate
 {
     public FakeOrderProperty $email;
 
     public function __construct()
     {
         $this->email = new FakeOrderProperty();
+    }
+
+    public function getIterator(): Traversable
+    {
+        return new ArrayIterator([$this->email]);
     }
 
     public function getItemByOrderPropertyCode(string $code): ?FakeOrderProperty
@@ -202,6 +235,8 @@ class FakeOrder
     public array $fields = [];
     public bool $saveSuccess = true;
     public int $finalActions = 0;
+    public int $saveCalls = 0;
+    public array $saveWarnings = [];
 
     public function __construct()
     {
@@ -270,7 +305,9 @@ class FakeOrder
 
     public function save(): FakeOrderResult
     {
-        return new FakeOrderResult($this->saveSuccess, ['Ошибка сохранения заказа']);
+        $this->saveCalls++;
+
+        return new FakeOrderResult($this->saveSuccess, ['Ошибка сохранения заказа'], $this->saveWarnings);
     }
 
     public function getId(): int
@@ -328,6 +365,24 @@ orderManagerExpect($order->finalActions === 1, 'Финальный расчёт 
 orderManagerExpect($deliveryChecks === 2, 'Ограничения доставки должны проверяться до и после финального расчёта.');
 orderManagerExpect($paySystemChecks === 2, 'Ограничения оплаты должны проверяться до и после финального расчёта.');
 
+$requiredOrder = new FakeOrder();
+$requiredOrder->properties->email->required = true;
+$requiredPropertyManager = new OrderManager(
+    static fn (): FakeOrderBasket => $basket,
+    static fn (): FakeOrder => $requiredOrder,
+    null,
+    null,
+    static fn (): string => 's1'
+);
+$requiredPropertyFailed = false;
+try {
+    $requiredPropertyManager->create(101, 2);
+} catch (InvalidArgumentException $exception) {
+    $requiredPropertyFailed = str_contains($exception->getMessage(), 'EMAIL не заполнено');
+}
+orderManagerExpect($requiredPropertyFailed, 'Незаполненное обязательное свойство должно отклоняться до сохранения.');
+orderManagerExpect($requiredOrder->saveCalls === 0, 'Заказ с незаполненным обязательным свойством не должен сохраняться.');
+
 $invalidUserFailed = false;
 try {
     $manager->create(0, 2);
@@ -360,6 +415,25 @@ try {
 }
 orderManagerExpect($deniedDeliveryFailed, 'Служба доставки, не прошедшая ограничения, должна быть отклонена.');
 
+$warningOrder = new FakeOrder();
+$warningOrder->saveWarnings = ['Предупреждение проверки заказа'];
+$warningManager = new OrderManager(
+    static fn (): FakeOrderBasket => $basket,
+    static fn (): FakeOrder => $warningOrder,
+    null,
+    null,
+    static fn (): string => 's1'
+);
+$saveWarningsRaised = false;
+try {
+    $warningManager->create(101, 2);
+} catch (\Project\Bitrix\Sale\OrderSaveWarningsException $exception) {
+    $saveWarningsRaised = $exception->getOrderId() === 777
+        && $exception->getWarnings() === ['Предупреждение проверки заказа'];
+}
+orderManagerExpect($saveWarningsRaised, 'Предупреждения после сохранения должны возвращать специальное исключение с ID уже созданного заказа.');
+orderManagerExpect($warningOrder->saveCalls === 1, 'Заказ с предупреждениями должен быть сохранён ровно один раз.');
+
 $failedOrder = new FakeOrder();
 $failedOrder->saveSuccess = false;
 $failedSaveManager = new OrderManager(
@@ -377,5 +451,37 @@ try {
     $failedSave = str_contains($exception->getMessage(), 'Ошибка сохранения заказа');
 }
 orderManagerExpect($failedSave, 'Ошибка сохранения заказа должна быть передана вызывающему коду.');
+
+$temporaryBasket = new FakeOrderBasket();
+$temporaryOrder = new FakeOrder();
+$permanentBasketLoads = 0;
+$temporaryManager = new OrderManager(
+    static function () use (&$permanentBasketLoads): FakeOrderBasket {
+        $permanentBasketLoads++;
+
+        throw new RuntimeException('Постоянная корзина не должна загружаться для быстрого заказа.');
+    },
+    static fn (): FakeOrder => $temporaryOrder,
+    null,
+    null,
+    static fn (): string => 's1'
+);
+$temporaryOrderId = $temporaryManager->createFromBasket(
+    $temporaryBasket,
+    202,
+    4,
+    ['EMAIL' => 'quick@example.test']
+);
+orderManagerExpect($temporaryOrderId === 777, 'Быстрый заказ должен вернуть ID сохранённого заказа.');
+orderManagerExpect($temporaryOrder->basket !== null, 'Временная корзина должна быть передана в заказ.');
+orderManagerExpect($permanentBasketLoads === 0, 'Создание заказа из временной корзины не должно загружать постоянную корзину пользователя.');
+
+$invalidTemporaryBasketFailed = false;
+try {
+    $temporaryManager->createFromBasket(new stdClass(), 202, 4);
+} catch (RuntimeException) {
+    $invalidTemporaryBasketFailed = true;
+}
+orderManagerExpect($invalidTemporaryBasketFailed, 'Некорректная временная корзина должна отклоняться.');
 
 echo "Проверки OrderManager пройдены.\n";

@@ -33,6 +33,8 @@
             "@test:hlblock",
             "@test:d7-basket",
             "@test:d7-order",
+            "@test:d7-quick-order",
+            "@test:d7-quick-order-input",
             "@test:product-list"
         ],
         "test:iblock": [
@@ -51,6 +53,8 @@
         "test:hlblock": "php ../tests/hlblock_smoke.php",
         "test:d7-basket": "php ../tests/d7_basket_manager_smoke.php",
         "test:d7-order": "php ../tests/d7_order_manager_smoke.php",
+        "test:d7-quick-order": "php ../tests/d7_quick_order_smoke.php",
+        "test:d7-quick-order-input": "php ../tests/d7_quick_order_input_smoke.php",
         "test:product-list": "php ../tests/product_id_list_smoke.php"
     }
 }

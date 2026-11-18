@@ -52,19 +52,68 @@ class OrderManager
         ?int $paySystemId = null,
         ?string $comments = null
     ): int {
-        $this->assertPositiveId($userId, 'ID пользователя');
-        $this->assertPositiveId($personTypeId, 'ID типа плательщика');
-
-        if ($deliveryId !== null) {
-            $this->assertPositiveId($deliveryId, 'ID службы доставки');
-        }
-
-        if ($paySystemId !== null) {
-            $this->assertPositiveId($paySystemId, 'ID платёжной системы');
-        }
+        $this->assertOrderParameters($userId, $personTypeId, $deliveryId, $paySystemId);
 
         $siteId = $this->getSiteId();
         $basket = $this->loadOrderableBasket($userId, $siteId);
+
+        return $this->createFromPreparedBasket(
+            $basket,
+            $siteId,
+            $userId,
+            $personTypeId,
+            $propertyValues,
+            $deliveryId,
+            $paySystemId,
+            $comments
+        );
+    }
+
+    /**
+     * Создаёт заказ из явно переданной временной корзины.
+     *
+     * В отличие от create(), этот метод не загружает и не изменяет постоянную
+     * корзину FUSER. Подготовка временной корзины остаётся ответственностью
+     * вызывающего сценария.
+     *
+     * @param array<string, mixed> $propertyValues Значения свойств по символьному коду
+     */
+    public function createFromBasket(
+        object $basket,
+        int $userId,
+        int $personTypeId,
+        array $propertyValues = [],
+        ?int $deliveryId = null,
+        ?int $paySystemId = null,
+        ?string $comments = null
+    ): int {
+        $this->assertOrderParameters($userId, $personTypeId, $deliveryId, $paySystemId);
+
+        $siteId = $this->getSiteId();
+        $orderableBasket = $this->prepareOrderableBasket($basket);
+
+        return $this->createFromPreparedBasket(
+            $orderableBasket,
+            $siteId,
+            $userId,
+            $personTypeId,
+            $propertyValues,
+            $deliveryId,
+            $paySystemId,
+            $comments
+        );
+    }
+
+    private function createFromPreparedBasket(
+        object $basket,
+        string $siteId,
+        int $userId,
+        int $personTypeId,
+        array $propertyValues,
+        ?int $deliveryId,
+        ?int $paySystemId,
+        ?string $comments
+    ): int {
         $order = $this->createOrder($siteId, $userId);
 
         $this->assertResult(
@@ -77,6 +126,7 @@ class OrderManager
         );
 
         $this->setPropertyValues($order, $propertyValues);
+        $this->validateRequiredProperties($order);
 
         if ($comments !== null) {
             $this->assertResult(
@@ -113,7 +163,8 @@ class OrderManager
             }
         }
 
-        $this->assertResult($order->save(), 'сохранить заказ');
+        $saveResult = $order->save();
+        $this->assertResult($saveResult, 'сохранить заказ');
 
         if (!is_callable([$order, 'getId'])) {
             throw new RuntimeException('После сохранения заказа невозможно получить его ID.');
@@ -124,7 +175,36 @@ class OrderManager
             throw new RuntimeException('Битрикс не вернул корректный ID сохранённого заказа.');
         }
 
+        $warnings = is_callable([$saveResult, 'getWarningMessages'])
+            ? $saveResult->getWarningMessages()
+            : [];
+
+        if (is_array($warnings) && $warnings !== []) {
+            throw new OrderSaveWarningsException(
+                $orderId,
+                array_map('strval', $warnings)
+            );
+        }
+
         return $orderId;
+    }
+
+    private function assertOrderParameters(
+        int $userId,
+        int $personTypeId,
+        ?int $deliveryId,
+        ?int $paySystemId
+    ): void {
+        $this->assertPositiveId($userId, 'ID пользователя');
+        $this->assertPositiveId($personTypeId, 'ID типа плательщика');
+
+        if ($deliveryId !== null) {
+            $this->assertPositiveId($deliveryId, 'ID службы доставки');
+        }
+
+        if ($paySystemId !== null) {
+            $this->assertPositiveId($paySystemId, 'ID платёжной системы');
+        }
     }
 
     private function loadOrderableBasket(int $userId, string $siteId): object
@@ -142,8 +222,13 @@ class OrderManager
             $basket = \Bitrix\Sale\Basket::loadItemsForFUser($fuserId, $siteId);
         }
 
-        if (!is_object($basket) || !is_callable([$basket, 'refresh']) || !is_callable([$basket, 'getOrderableItems'])) {
-            throw new RuntimeException('Не удалось загрузить корзину пользователя.');
+        return $this->prepareOrderableBasket($basket);
+    }
+
+    private function prepareOrderableBasket(object $basket): object
+    {
+        if (!is_callable([$basket, 'refresh']) || !is_callable([$basket, 'getOrderableItems'])) {
+            throw new RuntimeException('Корзина не поддерживает пересчёт и получение доступных для заказа позиций.');
         }
 
         $this->assertResult($basket->refresh(), 'пересчитать корзину');
@@ -222,6 +307,57 @@ class OrderManager
             $this->assertResult(
                 $property->setValue($value),
                 sprintf('установить значение свойства заказа %s', $code)
+            );
+        }
+    }
+
+    private function validateRequiredProperties(object $order): void
+    {
+        $collection = $order->getPropertyCollection();
+        if (!is_iterable($collection)) {
+            throw new RuntimeException('Коллекция свойств заказа не поддерживает перебор.');
+        }
+
+        $errors = [];
+
+        foreach ($collection as $property) {
+            if (!is_object($property)
+                || !is_callable([$property, 'isRequired'])
+                || !is_callable([$property, 'getPropertyId'])
+                || !is_callable([$property, 'getValue'])
+                || !is_callable([$property, 'checkRequiredValue'])
+            ) {
+                throw new RuntimeException('Элемент коллекции свойств заказа не поддерживает проверку обязательности.');
+            }
+
+            if (!$property->isRequired()) {
+                continue;
+            }
+
+            $result = $property->checkRequiredValue(
+                $property->getPropertyId(),
+                $property->getValue()
+            );
+
+            if (!is_object($result) || !is_callable([$result, 'isSuccess'])) {
+                throw new RuntimeException('Не удалось проверить обязательное свойство заказа.');
+            }
+
+            if ($result->isSuccess()) {
+                continue;
+            }
+
+            $messages = is_callable([$result, 'getErrorMessages']) ? $result->getErrorMessages() : [];
+            if (is_array($messages) && $messages !== []) {
+                $errors = array_merge($errors, $messages);
+            } else {
+                $errors[] = 'Не заполнено обязательное свойство заказа.';
+            }
+        }
+
+        if ($errors !== []) {
+            throw new InvalidArgumentException(
+                'Не заполнены обязательные свойства заказа: ' . implode('; ', $errors)
             );
         }
     }
