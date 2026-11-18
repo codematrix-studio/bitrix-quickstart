@@ -2,7 +2,7 @@
 
 Размещайте здесь собственные PHP-классы проекта.
 
-Composer PSR-4 в `local/composer.json` связывает namespace `Project\\` с этим каталогом.
+Composer PSR-4 в `local/composer.json` связывает namespace `Project\` с этим каталогом.
 
 Например:
 
@@ -168,7 +168,7 @@ $pageItems = $paginator->getElements();
 
 ## Проверка форм и полей
 
-Добавлен раздел `Project\\Validation`:
+Добавлен раздел `Project\Validation`:
 
 - `FormValidator` — проверка массива полей по набору правил;
 - `LegacyFieldValidator` — совместимый интерфейс старых валидаторов;
@@ -176,19 +176,19 @@ $pageItems = $paginator->getElements();
 
 Подробное описание правил, параметров, сообщений об ошибках, CAPTCHA и миграции: [Validation/README.md](Validation/README.md).
 
-Для старого API подготовлены адаптеры `Lema\\Forms\\Form`, `Lema\\Forms\\AjaxForm` и все использовавшиеся валидаторы. Они находятся в `local/php_interface/legacy/Lema/Forms/` и подключаются явно. Список изменений и исправленных дефектов приведён в `local/php_interface/legacy/README.md`.
+Для старого API подготовлены адаптеры `Lema\Forms\Form`, `Lema\Forms\AjaxForm` и все использовавшиеся валидаторы. Они находятся в `local/php_interface/legacy/Lema/Forms/` и подключаются явно. Список изменений и исправленных дефектов приведён в `local/php_interface/legacy/README.md`.
 
 
 ## Утилиты Support
 
-В `Project\\Support` добавлены универсальные классы из старой `Lema\\Common\\Helper`: `RussianPluralizer`, `JsonEncoder`, `CharsetConverter` и `UrlGenerator`. Также расширен `HtmlEscaper`, чтобы можно было передавать флаги и кодировку.
+В `Project\Support` добавлены универсальные классы из старой `Lema\Common\Helper`: `RussianPluralizer`, `JsonEncoder`, `CharsetConverter` и `UrlGenerator`. Также расширен `HtmlEscaper`, чтобы можно было передавать флаги и кодировку.
 
-Описание и примеры: [Support/README.md](Support/README.md). Старое имя `Lema\\Common\\Helper` сохранено в необязательном адаптере `legacy/Lema/Common/Helper.php`.
+Описание и примеры: [Support/README.md](Support/README.md). Старое имя `Lema\Common\Helper` сохранено в необязательном адаптере `legacy/Lema/Common/Helper.php`.
 
 
 ## SEO и OpenGraph
 
-Добавлен `Project\\Seo\\MetaMarkup` — генератор meta-тегов с экранированием HTML-атрибутов при выводе. Старые `Lema\\Base\\Markup` и `Lema\\Seo\\OpenGraph` доступны через адаптеры.
+Добавлен `Project\Seo\MetaMarkup` — генератор meta-тегов с экранированием HTML-атрибутов при выводе. Старые `Lema\Base\Markup` и `Lema\Seo\OpenGraph` доступны через адаптеры.
 
 Документация и примеры: [Seo/README.md](../Seo/README.md).
 
@@ -205,4 +205,4 @@ $pageItems = $paginator->getElements();
 
 ## Bitrix: создание заказа D7 Sale
 
-Для создания нового заказа зарегистрированного пользователя используйте `Project\Bitrix\Sale\OrderManager`. Менеджер пересчитывает корзину, назначает тип плательщика, заполняет настроенные свойства и при необходимости добавляет проверенные отгрузку и оплату. Гостевой сценарий и запуск платёжного обработчика не входят в первую версию. Подробности: [Bitrix/Sale/OrderManager.md](Bitrix/Sale/OrderManager.md). Для создания заказа из временной корзины без изменения постоянной корзины используйте метод `createFromBasket()`. Для покупки одной выбранной позиции без изменения корзины пользователя используйте `Project\\Bitrix\\Sale\\QuickOrder`; описание: [Bitrix/Sale/QuickOrder.md](Bitrix/Sale/QuickOrder.md).
+Для создания нового заказа зарегистрированного пользователя используйте `Project\Bitrix\Sale\OrderManager`. Менеджер пересчитывает корзину, назначает тип плательщика, заполняет настроенные свойства и при необходимости добавляет проверенные отгрузку и оплату. Гостевой сценарий и запуск платёжного обработчика не входят в первую версию. Подробности: [Bitrix/Sale/OrderManager.md](Bitrix/Sale/OrderManager.md). Для создания заказа из временной корзины без изменения постоянной корзины используйте метод `createFromBasket()`. Для покупки одной выбранной позиции без изменения корзины пользователя используйте `Project\Bitrix\Sale\QuickOrder`; описание: [Bitrix/Sale/QuickOrder.md](Bitrix/Sale/QuickOrder.md).
