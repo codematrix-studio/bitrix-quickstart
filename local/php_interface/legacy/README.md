@@ -25,6 +25,7 @@
 | `Lema\\Base\\Paginator` | `Project\\Support\\ArrayPaginator` | Есть необязательный адаптер `legacy/Lema/Base/Paginator.php` |
 | `Lema\\Template\\Item` | `Project\\Bitrix\\IBlock\\ElementView` | Есть необязательный адаптер `legacy/Lema/Template/Item.php` |
 | `Lema\\Template\\Section` | `Project\\Bitrix\\IBlock\\SectionView` | Есть необязательный адаптер `legacy/Lema/Template/Section.php` |
+| `Lema\\Template\\TemplateHelper` | `Project\\Bitrix\\IBlock\\TemplateHelper` | Есть необязательный адаптер `legacy/Lema/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
 | `Lema\\Base\\Component` | `Project\\Bitrix\\Component\\ComponentInvoker` | Есть необязательный адаптер `legacy/Lema/Base/Component.php` |
 
 Адаптеры не подключаются автоматически. Их следует подключать после Composer autoload и только при миграции, когда старый модуль `lema.lib` уже отключён. Это предотвращает конфликт классов с исходным модулем.
@@ -43,7 +44,7 @@
 
 - `lib/Common/AssetManager.php`, `App.php`, `Request.php`, `Context.php`, `Server.php`, `User.php`: обёртки над Bitrix API, после проверки контракта и версий ядра.
 - `lib/Base/XmlExport.php` и `lib/Seo/YmlExport.php`: переписать кеш и XML-генерацию целиком, сохранив публичные методы и формат результата.
-- `lib/Template/TemplateHelper.php`: сохранить методы работы с результатом компонента и edit/delete actions.
+- `lib/Template/TemplateHelper.php`: **переработан** в `Project\\Bitrix\\IBlock\\TemplateHelper`; методы работы со списками и edit/delete actions сохранены, добавлен необязательный адаптер старого API.
 - `lib/Basket/BasketHandler.php`: отдельно оценить как обёртку над штатной Sale Basket; это перспективнее старой HL-корзины.
 
 ### Не переносить без существенной переработки

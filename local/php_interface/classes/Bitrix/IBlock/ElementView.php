@@ -25,6 +25,12 @@ class ElementView
         return $this->arItem[$name] ?? null;
     }
 
+    /** Возвращает исходный массив записи для совместимых адаптеров. */
+    public function toArray(): array
+    {
+        return $this->arItem;
+    }
+
     public function propEmpty($key): bool
     {
         return empty($this->arItem['PROPERTIES'][$key]['VALUE']);

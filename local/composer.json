@@ -25,7 +25,8 @@
             "@test:helper",
             "@test:base",
             "@test:markup",
-            "@test:export"
+            "@test:export",
+            "@test:template"
         ],
         "test:iblock": [
             "php ../tests/lema_iblock_smoke.php",
@@ -35,6 +36,7 @@
         "test:base": "php ../tests/lema_base_instances_smoke.php",
         "test:markup": "php ../tests/lema_markup_smoke.php",
         "test:export": "php ../tests/lema_export_smoke.php",
-        "test:iblock-validator": "php ../tests/iblock_validator_compatibility_smoke.php"
+        "test:iblock-validator": "php ../tests/iblock_validator_compatibility_smoke.php",
+        "test:template": "php ../tests/template_helper_smoke.php"
     }
 }
