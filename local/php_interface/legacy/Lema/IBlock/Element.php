@@ -12,9 +12,9 @@ class Element
     const CLASS_NAME = '\\Bitrix\\Iblock\\ElementTable';
     const OLD_CLASS_NAME = '\\CIBlockElement';
 
-    private static function repository(): \Project\Bitrix\IBlock\\ElementRepository
+    private static function repository(): \Project\Bitrix\IBlock\ElementRepository
     {
-        return new \Project\Bitrix\IBlock\\ElementRepository();
+        return new \Project\Bitrix\IBlock\ElementRepository();
     }
 
     public static function __callStatic($name, $arguments)
