@@ -113,6 +113,105 @@ try {
 }
 exportExpect($invalidTagRejected, 'YML renderer must reject untrusted XML tag names.');
 
+// Bitrix-адаптер можно проверять без ядра через внедрённые репозитории.
+$exportDirectory = $tempDirectory . '/bitrix-export';
+$elementRepository = new Project\Bitrix\IBlock\ElementRepository(
+    static fn (): bool => true,
+    null,
+    static fn (...$arguments): array => [[
+        'ID' => 10,
+        'IBLOCK_ID' => 12,
+        'ACTIVE' => 'Y',
+        'NAME' => 'Тестовый товар',
+        'PREVIEW_PICTURE' => 7,
+        'PREVIEW_PAGE_URL' => '/preview/test/',
+        'DETAIL_PAGE_URL' => '/catalog/test/',
+        'PREVIEW_TEXT' => '<p>Краткий &amp; текст</p>',
+        'DETAIL_TEXT' => '<div>Полное описание</div>',
+        'CATALOG_AVAILABLE' => 'Y',
+    ]]
+);
+$sectionRepository = new Project\Bitrix\IBlock\SectionRepository(
+    static fn (): bool => true,
+    null,
+    static function ($order, $filter) {
+        if (isset($filter['ID'])) {
+            return [[
+                'ID' => 5,
+                'NAME' => 'Корневой раздел',
+                'LEFT_MARGIN' => 1,
+                'RIGHT_MARGIN' => 4,
+            ]];
+        }
+
+        return [[
+            'ID' => 6,
+            'NAME' => 'Дочерний раздел',
+            'IBLOCK_SECTION_ID' => 5,
+        ]];
+    }
+);
+
+$exporterConfig = [
+    'sectionIds' => [5],
+    'productIds' => [10],
+    'additionalData' => ['source' => 'test'],
+    'cacheTtl' => 3600,
+    'cacheKey' => 'catalog-export-test',
+];
+$exporter = new Project\Export\BitrixCatalogExporter(
+    12,
+    $urls,
+    $exportDirectory,
+    $exporterConfig,
+    $elementRepository,
+    $sectionRepository,
+    null,
+    static fn (int $fileId): string => '/upload/file' . $fileId . '.jpg'
+);
+$loaded = $exporter->loadData([], true);
+exportExpect(isset($loaded['products'][10]), 'Bitrix exporter must return products keyed by ID.');
+exportExpect(isset($loaded['sections'][6]), 'Bitrix exporter must include descendants of selected sections.');
+exportExpect($loaded['sections'][6]['parentId'] === 5, 'Bitrix exporter must preserve section parent IDs.');
+exportExpect(
+    $loaded['products'][10]['PREVIEW_PICTURE'] === 'https://shop.example.org/upload/file7.jpg',
+    'Bitrix exporter must resolve image IDs to trusted absolute URLs.'
+);
+exportExpect(
+    $loaded['products'][10]['PREVIEW_TEXT'] === 'Краткий & текст',
+    'Bitrix exporter must convert preview HTML to plain text.'
+);
+exportExpect(
+    $loaded['products'][10]['PREVIEW_PAGE_URL'] === 'https://shop.example.org/preview/test/',
+    'Bitrix exporter must resolve preview page URLs against the trusted base URL.'
+);
+
+// Повторная загрузка с теми же параметрами использует кеш и не вызывает репозитории.
+$cachedExporter = new Project\Export\BitrixCatalogExporter(
+    12,
+    $urls,
+    $exportDirectory,
+    $exporterConfig,
+    new Project\Bitrix\IBlock\ElementRepository(
+        static fn (): bool => true,
+        null,
+        static function () {
+            throw new RuntimeException('Cache should prevent the product query.');
+        }
+    ),
+    new Project\Bitrix\IBlock\SectionRepository(
+        static fn (): bool => true,
+        null,
+        static function () {
+            throw new RuntimeException('Cache should prevent the section query.');
+        }
+    ),
+    null,
+    static fn (int $fileId): string => '/upload/file' . $fileId . '.jpg'
+);
+$cachedData = $cachedExporter->loadData([], true);
+exportExpect($cachedData === $loaded, 'Bitrix exporter must restore the complete catalog from cache.');
+
 foreach (glob($tempDirectory . '/*') ?: [] as $file) {
     if (is_file($file)) {
         unlink($file);
