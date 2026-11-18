@@ -151,3 +151,144 @@ Bitrix может вернуть успешный результат `Order::sav
 - при `OrderSaveWarningsException` ответ должен сообщать, что заказ уже создан, и включать его ID. Клиент не должен повторять создание автоматически.
 
 Реализовывать endpoint и JS-вызов имеет смысл после определения конфигурации конкретного сайта: URL обработчика, типа плательщика, обязательных свойств и того, откуда форма получает товар/SKU. В библиотечном сервисе эти настройки не зашиваются.
+
+## Проверка входных данных HTTP/AJAX
+
+Добавлен `Project\Bitrix\Sale\QuickOrderInput`. Он принимает массив параметров запроса, проверяет `productId` и `quantity` и возвращает DTO только с этими двумя значениями.
+
+```php
+use Project\Bitrix\Sale\QuickOrderInput;
+
+$input = QuickOrderInput::fromPayload([
+    'productId' => $request->getPost('productId'),
+    'quantity' => $request->getPost('quantity'),
+]);
+```
+
+Строковый ID допускается, только если состоит из положительных десятичных цифр и помещается в `int`. Количество может быть целым или дробным; ноль, отрицательные, нечисловые, `INF` и `NAN` отклоняются. Верхний предел количества определяется правилами магазина.
+
+DTO намеренно не содержит `userId`. Контроллер получает идентификатор пользователя из `Bitrix\Main\Engine\CurrentUser`, а не из POST.
+
+Автономная проверка: `composer test:d7-quick-order-input`.
+
+## Пример AJAX-контроллера в модуле сайта
+
+Библиотека не регистрирует универсальный контроллер и не создаёт endpoint. Контроллер размещается в модуле конкретного сайта: идентификатор модуля, namespace, настройки типа плательщика и коды свойств зависят от проекта.
+
+Ниже — каркас действия. Замените `My\Shop`, `my.shop`, получение настроек и проверку контактов на реализацию своего модуля. Не используйте условные ID настроек в production.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace My\Shop\Controller;
+
+use Bitrix\Main\Engine\ActionFilter\HttpMethod;
+use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
+use InvalidArgumentException;
+use Project\Bitrix\Sale\OrderManager;
+use Project\Bitrix\Sale\OrderSaveWarningsException;
+use Project\Bitrix\Sale\QuickOrder;
+use Project\Bitrix\Sale\QuickOrderInput;
+use Throwable;
+
+final class QuickOrderController extends Controller
+{
+    public function configureActions(): array
+    {
+        return [
+            'create' => [
+                // Заменяем только общий фильтр метода; Authentication и Csrf остаются.
+                '-prefilters' => [HttpMethod::class],
+                '+prefilters' => [new HttpMethod([HttpMethod::METHOD_POST])],
+            ],
+        ];
+    }
+
+    public function createAction(
+        mixed $productId,
+        mixed $quantity = 1,
+        CurrentUser $currentUser
+    ): ?array {
+        $userId = (int) $currentUser->getId();
+        if ($userId < 1) {
+            $this->addError(new Error('Для быстрого заказа необходимо войти на сайт.', 'AUTH_REQUIRED'));
+            return null;
+        }
+
+        try {
+            $input = QuickOrderInput::fromPayload([
+                'productId' => $productId,
+                'quantity' => $quantity,
+            ]);
+
+            // Ограничение частоты, идемпотентность, проверка товара и контактов — здесь.
+            // Не принимайте USER_ID, personTypeId, цену или валюту из запроса.
+            $personTypeId = $this->getConfiguredPersonTypeId();
+            $propertyValues = $this->buildValidatedPropertyValues();
+
+            $orderId = $this->createQuickOrder()->create(
+                productId: $input->productId,
+                quantity: $input->quantity,
+                userId: $userId,
+                personTypeId: $personTypeId,
+                propertyValues: $propertyValues,
+            );
+
+            return ['created' => true, 'orderId' => $orderId];
+        } catch (OrderSaveWarningsException $exception) {
+            // Заказ уже сохранён: повторять создание автоматически нельзя.
+            $this->addError(new Error('Заказ создан, но Битрикс вернул предупреждения.', 'ORDER_SAVED_WITH_WARNINGS'));
+            return [
+                'created' => true,
+                'orderId' => $exception->getOrderId(),
+                'warnings' => $exception->getWarnings(),
+            ];
+        } catch (InvalidArgumentException $exception) {
+            $this->addError(new Error($exception->getMessage(), 'INVALID_ORDER_DATA'));
+            return null;
+        } catch (Throwable $exception) {
+            // Подробности исключения запишите в серверный журнал, не раскрывая клиенту.
+            $this->addError(new Error('Не удалось оформить заказ.', 'ORDER_CREATE_FAILED'));
+            return null;
+        }
+    }
+
+    private function createQuickOrder(): QuickOrder
+    {
+        // Передайте конфигурацию и адаптеры конкретного сайта.
+        return new QuickOrder(new OrderManager());
+    }
+
+    private function getConfiguredPersonTypeId(): int
+    {
+        // Получите ID типа плательщика из настроек модуля/сайта.
+        throw new \LogicException('Реализуйте получение типа плательщика из настроек сайта.');
+    }
+
+    private function buildValidatedPropertyValues(): array
+    {
+        // Верните только разрешённые коды свойств после проверки контактов.
+        throw new \LogicException('Реализуйте проверку контактных данных сайта.');
+    }
+}
+```
+
+Пример вызова из JS (замените идентификатор действия на зарегистрированный в своём модуле):
+
+```javascript
+BX.ajax.runAction('my:shop.QuickOrderController.create', {
+    data: { productId: 123, quantity: 1 }
+}).then(function (response) {
+    // Успех: response.data.orderId
+}).catch(function (response) {
+    // Ошибка: response.errors
+});
+```
+
+`BX.ajax.runAction()` передаёт CSRF-токен штатным заголовком. Для изменяющего состояние действия оставьте авторизацию, CSRF и POST-only. `Authentication` проверяет факт входа, но не права на дополнительные объекты — их проверяйте отдельно.
+
+Регистрация namespace контроллера, `defaultNamespace` в `.settings.php` и точный идентификатор действия настраиваются в конкретном модуле. Проверьте пример на целевой версии ядра Битрикс.
