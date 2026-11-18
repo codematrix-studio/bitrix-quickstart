@@ -24,7 +24,7 @@ class SectionView extends ElementView
             return false;
         }
 
-        $path = \\CFile::GetPath($fileId);
+        $path = \CFile::GetPath($fileId);
 
         return empty($path) ? null : $path;
     }
