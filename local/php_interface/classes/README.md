@@ -201,4 +201,4 @@ $pageItems = $paginator->getElements();
 
 ## Highload-блоки
 
-Для работы с Highload-блоками используйте `Project\\Bitrix\\HLBlock\\HlBlockManager` и `HlBlockEntity`. Менеджер подключает модуль `highloadblock` непосредственно перед обращением к API, получает ORM-сущность по ID блока и кеширует её в пределах своего экземпляра. Операции чтения и записи выполняются через D7 ORM. Подробности и примеры приведены в [Bitrix/HLBlock/README.md](Bitrix/HLBlock/README.md).
+Для работы с Highload-блоками используйте `Project\Bitrix\HLBlock\HlBlockManager` и `HlBlockEntity`. Менеджер подключает модуль `highloadblock` непосредственно перед обращением к API, получает ORM-сущность по ID блока и кеширует её в пределах своего экземпляра. Операции чтения и записи выполняются через D7 ORM. Подробности и примеры приведены в [Bitrix/HLBlock/README.md](Bitrix/HLBlock/README.md).
