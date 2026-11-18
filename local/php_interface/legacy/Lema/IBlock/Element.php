@@ -19,6 +19,18 @@ class Element
 
     public static function __callStatic($name, $arguments)
     {
+        // В старом классе модуль подключался при загрузке файла.
+        // Теперь подключаем его только при динамическом вызове D7-метода.
+        if (class_exists('Bitrix\\Main\\Loader')) {
+            if (!\Bitrix\Main\Loader::includeModule('iblock')) {
+                return false;
+            }
+        } elseif (class_exists('CModule')) {
+            if (!\CModule::IncludeModule('iblock')) {
+                return false;
+            }
+        }
+
         $class = ltrim(static::CLASS_NAME, '\\');
         if (class_exists($class) && method_exists($class, $name)) {
             return call_user_func_array([$class, $name], $arguments);
