@@ -124,7 +124,7 @@ namespace {
     checkerExpect($legacy->findId($legacyFilter) === 91, 'Legacy findId() must return the first matching element ID.');
     $arguments = \CIBlockElement::$calls[0] ?? null;
     checkerExpect(
-        $arguments === [[], $legacyFilter, false, ['nTopCount' => 1], ['ID']],
+        $arguments === [false, $legacyFilter, false, ['nTopCount' => 1], ['ID']],
         'Legacy checker must preserve CIBlockElement::GetList() argument order and query limits.'
     );
 
