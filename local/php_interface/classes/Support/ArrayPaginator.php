@@ -143,7 +143,7 @@ class ArrayPaginator
                 throw new LogicException('Bitrix Asset manager is not available.');
             }
 
-            \\Bitrix\\Main\\Page\\Asset::getInstance()->addCss($path);
+            \Bitrix\Main\Page\Asset::getInstance()->addCss($path);
 
             return;
         }
