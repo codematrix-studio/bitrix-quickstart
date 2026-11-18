@@ -13,7 +13,7 @@ class RequiredValidator extends Validator
 
     public function validate(): bool
     {
-        if ($this->value === null) {
+        if ($this->value === null || $this->value === false) {
             return $this->fail();
         }
 
@@ -29,7 +29,7 @@ class RequiredValidator extends Validator
             return $this->fail();
         }
 
-        // Ноль и false — заданные значения, а не пустое поле.
+        // Число 0 и строка "0" — непустые значения.
         return true;
     }
 }
