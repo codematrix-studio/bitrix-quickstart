@@ -176,8 +176,6 @@ class OrderManager
         return $orderId;
     }
 
-    }
-
     private function assertOrderParameters(
         int $userId,
         int $personTypeId,
