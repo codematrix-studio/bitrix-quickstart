@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/QuickOrderInput.php';
 
-use Project\\Bitrix\\Sale\\QuickOrderInput;
+use Project\Bitrix\Sale\QuickOrderInput;
 
 function quickOrderInputExpect(bool $condition, string $message): void
 {
@@ -52,4 +52,4 @@ foreach ($invalidPayloads as $payload) {
 $defaultQuantity = QuickOrderInput::fromPayload(['productId' => 7]);
 quickOrderInputExpect($defaultQuantity->quantity === 1, 'Количество по умолчанию должно быть равно единице.');
 
-echo "Проверки QuickOrderInput пройдены.\\n";
+echo "Проверки QuickOrderInput пройдены.\n";
