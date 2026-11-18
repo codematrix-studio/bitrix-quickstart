@@ -36,7 +36,7 @@
 - `lib/Forms/Form.php` и `lib/Forms/Validators/*`: сохранить правила и формат ошибок, исправить обработку массивов, boolean false, числовых значений, отсутствующих параметров regex и повторный вызов validate.
 - `lib/IBlock/Element.php` и `lib/IBlock/Section.php`: **переработаны** в `Project\\Bitrix\\IBlock\\ElementRepository` и `SectionRepository`; старые статические фасады сохранены адаптерами `Lema\\IBlock\\Element` и `Lema\\IBlock\\Section`.
 - `lib/Common/Helper.php`: **основные универсальные методы переработаны** в `RussianPluralizer`, `JsonEncoder`, `CharsetConverter`, `UrlGenerator`, `PropertyAccessor` и `ImageWatermarker`; старый фасад `Lema\\Common\\Helper` сохранён. Методы работы с URL требуют явного доверенного базового адреса.
-- `lib/Base/Markup.php` и `lib/Seo/OpenGraph.php`: сохранить fluent API, исправить общие статические данные и экранирование атрибутов.
+- `lib/Base/Markup.php` и `lib/Seo/OpenGraph.php`: **переработаны** в `Project\\Seo\\MetaMarkup`; старые классы и fluent API сохранены адаптерами, экранирование атрибутов перенесено на этап вывода.
 - `lib/Base/StaticInstance.php`, `BitrixInstances.php` и `GlobalVars.php`: **переработаны** через `PerClassInstance`, `PerClassBitrixInstance` и `PerClassGlobalProxy`; адаптеры старых базовых классов сохранены.
 
 ### Средний приоритет
@@ -262,3 +262,43 @@ composer test
 5. Для тестов и длительных процессов предусмотрен явный сброс кеша экземпляра через `resetInstance()`.
 
 Добавлен автономный тест `tests/lema_base_instances_smoke.php`; запуск — `composer test:base`. Он проверяет изоляцию экземпляров наследников, глобальных объектов и корректную передачу аргументов. Реальные фасады Bitrix дополнительно проверяются на ядре.
+
+
+## Markup и OpenGraph — переработано
+
+Старые файлы:
+- `lib/Base/Markup.php`;
+- `lib/Seo/OpenGraph.php`.
+
+Новый класс: `Project\\Seo\\MetaMarkup`.
+
+Совместимые адаптеры:
+- `legacy/Lema/Base/Markup.php`;
+- `legacy/Lema/Seo/OpenGraph.php`.
+
+Подробное описание и примеры: [classes/Seo/README.md](../classes/Seo/README.md).
+
+Исправлено:
+1. Убран риск повторного HTML-кодирования значений при многократном вызове `setItem()` и `setItems()`.
+2. Экранирование имени и значения meta-атрибута выполняется в одном месте — при формировании HTML.
+3. Добавлен `try/finally` для сброса внутреннего режима массовой установки элементов.
+4. Сохранено правило переноса `title2` в пустой `title`.
+5. Доступ к `$APPLICATION` проверяется непосредственно при работе с view content.
+
+Тест: `tests/lema_markup_smoke.php`, команда `composer test:markup`.
+
+## ECommerce и GTMFormSubmit — требуют отдельной безопасной переработки
+
+Старые файлы:
+- `lib/Seo/ECommerce.php`;
+- `lib/Seo/GTMFormSubmit.php`.
+
+Пока не переносились. В старой реализации есть риски, которые нельзя переносить ради формальной совместимости:
+
+- `ECommerce::getGoogleCode()` включает ФИО/название компании, email, телефон, адрес и комментарий к заказу в аналитический payload.
+- `GTMFormSubmit` позволяет без ограничений добавлять произвольные значения полей формы; пример библиотеки передаёт контактные данные.
+- JSON вставляется непосредственно внутрь `<script>` без набора флагов `JSON_HEX_TAG`, `JSON_HEX_AMP`, `JSON_HEX_APOS`, `JSON_HEX_QUOT`.
+- Singleton хранит состояние между вызовами, поэтому данные предыдущей формы или заказа могут попасть в следующий payload.
+- `ECommerce` подключает модули `sale` и `iblock` при загрузке файла, а не перед конкретной операцией.
+
+При переработке сохраняем формат событий и структуру товарных данных, но вводим allowlist полей, исключаем персональные данные из аналитики по умолчанию, безопасно кодируем JSON и сбрасываем состояние между заказами/формами. Старые методы будут доступны через адаптеры с документированными изменениями.
