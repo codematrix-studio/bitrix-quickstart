@@ -118,12 +118,12 @@ foreach ($pagination->getPageItems() as $page) {
 
 Доступны методы получения общего количества страниц, текущей страницы, смещения, лимита, предыдущей и следующей страниц. `getPageItems($sidePages)` возвращает номера страниц и маркеры пропущенных диапазонов. Класс не читает `$_GET`, не формирует URL и не выводит HTML — это оставлено компоненту или шаблону.
 
-### `Project\\Support\\PasswordGenerator`
+### `Project\Support\PasswordGenerator`
 
 Генерирует пароль заданной длины с помощью `random_int()`. По умолчанию сохранён набор символов старой функции `generate_pass()`, чтобы не менять допустимый алфавит при миграции. Для нулевой или отрицательной длины возвращается пустая строка; пустой алфавит при положительной длине приводит к исключению.
 
 ```php
-$password = \\Project\\Support\\PasswordGenerator::generate(8);
+$password = \Project\Support\PasswordGenerator::generate(8);
 ```
 
 Для постепенной миграции предусмотрен необязательный адаптер `local/php_interface/legacy/password_generator.php`. Подключать его нужно после Composer autoload. Он сохраняет глобальную функцию `generate_pass($number)`, но не воспроизводит побочный эффект старого файла с присваиванием переменной `$newpass`.
