@@ -76,7 +76,7 @@ class BitrixCatalogExporter
             throw new InvalidArgumentException('Время жизни кеша не может быть отрицательным.');
         }
 
-        $this->cacheKey = (string) ($config['cacheKey'] ?? 'catalog');
+        $this->cacheKey = (string) ($config['cacheKey'] ?? ('catalog_' . $iblockId));
         $this->picturePathResolver = $picturePathResolver === null
             ? null
             : Closure::fromCallable($picturePathResolver);
@@ -111,12 +111,15 @@ class BitrixCatalogExporter
     public function loadData(array $params = [], $return = false)
     {
         $cached = null;
+        $hasCallback = isset($params['callback']);
+        $signature = $this->createSignature($params);
 
-        if (!$this->forceUpdate && $this->cache->isFresh($this->cacheKey, $this->cacheTtl)) {
+        // Callback может менять данные произвольно, поэтому такой результат не кешируем.
+        if (!$hasCallback && !$this->forceUpdate && $this->cache->isFresh($this->cacheKey, $this->cacheTtl)) {
             $cached = $this->cache->get($this->cacheKey);
         }
 
-        if ($this->isValidCache($cached)) {
+        if ($this->isValidCache($cached) && hash_equals((string) ($cached['signature'] ?? ''), $signature)) {
             $this->products = $cached['products'];
             $this->sections = $cached['sections'];
             $this->additionalData = $cached['additionalData'] ?? $this->additionalData;
@@ -126,12 +129,15 @@ class BitrixCatalogExporter
             $this->products = $this->loadProducts($params);
             $this->generatedAt = time();
 
-            $this->cache->put($this->cacheKey, [
-                'generatedAt' => $this->generatedAt,
-                'products' => $this->products,
-                'sections' => $this->sections,
-                'additionalData' => $this->additionalData,
-            ]);
+            if (!$hasCallback) {
+                $this->cache->put($this->cacheKey, [
+                    'signature' => $signature,
+                    'generatedAt' => $this->generatedAt,
+                    'products' => $this->products,
+                    'sections' => $this->sections,
+                    'additionalData' => $this->additionalData,
+                ]);
+            }
         }
 
         $this->forceUpdate = false;
@@ -276,6 +282,32 @@ class BitrixCatalogExporter
         return $this->forceUpdate
             || !$this->cache->isFresh($this->cacheKey, $this->cacheTtl)
             || !$this->isValidCache($this->cache->get($this->cacheKey));
+    }
+
+    private function createSignature(array $params): string
+    {
+        $signatureData = [
+            'iblockId' => $this->iblockId,
+            'sectionIds' => $this->sectionIds,
+            'productIds' => $this->productIds,
+            'additionalData' => $this->additionalData,
+            'query' => [
+                'order' => $params['order'] ?? null,
+                'filter' => $params['filter'] ?? null,
+                'bIncCnt' => $params['bIncCnt'] ?? null,
+                'arNavStartParams' => $params['arNavStartParams'] ?? null,
+                'arSelect' => $params['arSelect'] ?? null,
+                'limit' => $params['limit'] ?? null,
+            ],
+        ];
+
+        try {
+            $json = json_encode($signatureData, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        } catch (\JsonException $exception) {
+            throw new InvalidArgumentException('Параметры выгрузки не удалось сериализовать для кеша.', 0, $exception);
+        }
+
+        return hash('sha256', $json);
     }
 
     private function isValidCache($data): bool
