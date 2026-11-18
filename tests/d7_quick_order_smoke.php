@@ -5,8 +5,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/OrderManager.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/QuickOrder.php';
 
-use Project\\Bitrix\\Sale\\OrderManager;
-use Project\\Bitrix\\Sale\\QuickOrder;
+use Project\Bitrix\Sale\OrderManager;
+use Project\Bitrix\Sale\QuickOrder;
 
 function quickOrderExpect(bool $condition, string $message): void
 {
@@ -172,4 +172,4 @@ try {
 }
 quickOrderExpect($failedItemSaveFailed, 'Ошибка заполнения позиции корзины должна передаваться вызывающему коду.');
 
-echo "Проверки QuickOrder пройдены.\\n";
+echo "Проверки QuickOrder пройдены.\n";
