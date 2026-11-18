@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * Совместимый фасад старого Lema\Seo\YmlExport.
+ * Подключать после Composer autoload и адаптера Lema\Base\XmlExport.
+ */
+
+namespace Lema\Seo;
+
+use Project\Export\YmlCatalogRenderer;
+use Project\Support\UrlGenerator;
+
+class YmlExport extends \Lema\Base\XmlExport
+{
+    public function showData(array $params = [])
+    {
+        // Старый метод ожидал, что loadData() уже был вызван.
+        // Если объект ещё не загружал каталог, загружаем его из кеша или инфоблока.
+        if ($this->getGeneratedAt() === 0) {
+            $this->loadData();
+        }
+
+        $config = [
+            'shopName' => $this->legacyParams['shopName'] ?? null,
+            'companyName' => $this->legacyParams['companyName'] ?? null,
+            'platform' => $this->legacyParams['platform'] ?? '1C-Битрикс',
+            'currencyId' => $this->legacyParams['currencyId'] ?? 'RUB',
+            'currencyRate' => $this->legacyParams['currencyRate'] ?? '1',
+        ];
+
+        $renderer = new YmlCatalogRenderer(
+            new UrlGenerator($this->serverUrl),
+            array_filter($config, static fn ($value) => $value !== null)
+        );
+
+        $xml = $renderer->render(
+            $this->getSections(),
+            $this->getProducts(),
+            $params,
+            $this->getGeneratedAt()
+        );
+
+        if (!empty($params['sendHeader']) && !headers_sent()) {
+            header('Content-Type: application/xml; charset=UTF-8');
+        }
+
+        echo $xml;
+    }
+}
