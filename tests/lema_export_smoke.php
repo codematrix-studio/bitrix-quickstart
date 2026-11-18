@@ -200,6 +200,21 @@ $storedExport = $exportCache->get('catalog-export-test');
 exportExpect(is_array($storedExport), 'Bitrix exporter must write its catalog cache.');
 exportExpect($exportCache->isFresh('catalog-export-test', 3600), 'Bitrix exporter cache must be fresh.');
 
+$cachedExporterForSignature = new Project\Export\BitrixCatalogExporter(
+    12,
+    $urls,
+    $exportDirectory,
+    $exporterConfig,
+    new Project\Bitrix\IBlock\ElementRepository(static fn (): bool => true, null, static fn (): array => []),
+    new Project\Bitrix\IBlock\SectionRepository(static fn (): bool => true, null, static fn (): array => [])
+);
+$signatureMethod = new ReflectionMethod(Project\Export\BitrixCatalogExporter::class, 'createSignature');
+$expectedSignature = $signatureMethod->invoke($cachedExporterForSignature, []);
+exportExpect(
+    ($storedExport['signature'] ?? null) === $expectedSignature,
+    'Bitrix exporter cache signature must be stable for identical settings.'
+);
+
 // Повторная загрузка с теми же параметрами использует кеш и не вызывает репозитории.
 $cachedExporter = new Project\Export\BitrixCatalogExporter(
     12,
