@@ -60,6 +60,27 @@ $html = (new HtmlEscaper())->escape($value, ENT_COMPAT, 'UTF-8');
 
 Значения по умолчанию сохранены: `ENT_QUOTES | ENT_SUBSTITUTE`, UTF-8.
 
+## Совместимость со старым IBlock Validator
+
+Старый класс `Ns\\Bitrix\\Helper\\IBlock\\Validator` использовал два метода:
+
+- `email($email = '', $xss = true)` — возвращал очищенный адрес или `false`;
+- `xss($value = '')` — обрезал внешние пробелы и экранировал HTML.
+
+Для миграции добавлен необязательный адаптер `legacy/Ns/Bitrix/Helper/IBlock/Validator.php`. Он использует `Project\\Support\\HtmlEscaper` и сохраняет особенности старого контракта: при `$xss = false` значение не обрезается, а `email()` возвращает строку, а не boolean.
+
+Пример подключения после Composer autoload:
+
+```php
+require_once __DIR__ . '/legacy/Ns/Bitrix/Helper/IBlock/Validator.php';
+
+$validator = new \\Ns\\Bitrix\\Helper\\IBlock\\Validator();
+$email = $validator->email($rawEmail);
+$name = $validator->xss($rawName);
+```
+
+Это переходный API. В новом коде используйте `Project\\Support\\EmailValidator` для проверки адреса и `Project\\Support\\HtmlEscaper` непосредственно перед HTML-выводом. Не следует хранить HTML-экранированные значения в базе данных.
+
 ## Миграция из lema.lib
 
 Для старого имени `Lema\\Common\\Helper` создан адаптер `local/php_interface/legacy/Lema/Common/Helper.php`.
