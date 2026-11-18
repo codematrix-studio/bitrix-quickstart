@@ -105,7 +105,7 @@ $manager = new \Project\Bitrix\HLBlock\HlBlockManager(
     static function (int $id) use (&$blockLookups): ?array {
         $blockLookups++;
 
-        return $id === 7 ? ['ID' => 7, 'NAME' => 'Тестовый блок'] : null;
+        return in_array($id, [7, 8], true) ? ['ID' => $id, 'NAME' => 'Тестовый блок'] : null;
     },
     static fn (array $block): string => FakeHlBlockDataClass::class
 );
@@ -114,6 +114,9 @@ $entity = $manager->getById(7);
 hlBlockExpect($entity === $manager->getById(7), 'ORM-обёртка должна кешироваться в менеджере.');
 hlBlockExpect($moduleLoads === 1, 'Модуль должен подключаться один раз на кешируемый HL-блок.');
 hlBlockExpect($blockLookups === 1, 'Метаданные блока должны запрашиваться один раз.');
+
+$manager->getById(8);
+hlBlockExpect($moduleLoads === 1, 'Модуль не должен повторно подключаться для другого HL-блока.');
 
 $rows = $entity->getList(['select' => ['ID', 'UF_XML_ID']]);
 hlBlockExpect(count($rows) === 1 && $rows[0]['UF_XML_ID'] === 'first', 'getList() должен возвращать строки ORM.');
