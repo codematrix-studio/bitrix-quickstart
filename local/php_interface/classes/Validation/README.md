@@ -69,7 +69,7 @@ if ($form->validate()) {
 - `validate()` — проверить форму. При повторном вызове ошибки пересчитываются.
 - `getErrors($splitSym = null)` — получить ошибки; при переданном разделителе массив сообщений превращается в строку.
 - `getErrorsCP1251($splitSym = null)` — получить ошибки в Windows-1251.
-- `validators()` — список поддерживаемых правил.
+- `validators()` — карта имён правил на классы валидаторов. Метод можно переопределить в наследнике, чтобы подключить собственный класс.
 
 ### reCAPTCHA
 
@@ -79,7 +79,7 @@ if ($form->validate()) {
 
 ```php
 $form->setRecaptchaVerifier(
-    static function (string $token, array $params, string $field): bool {
+    static function (string $token, ?string $remoteIp, array $options): bool {
         // Здесь вызывается актуальный серверный API CAPTCHA.
         // Проверка должна завершаться отказом при сетевой ошибке.
         return false;
@@ -87,7 +87,15 @@ $form->setRecaptchaVerifier(
 );
 ```
 
-Функция получает токен, параметры правила и имя поля. Если проверяющая функция не задана, правило `recaptcha` всегда возвращает ошибку.
+Функция получает токен, IP-адрес клиента (если он передан в параметрах правила) и параметры правила. Если проверяющая функция не задана или выбросила исключение, правило `recaptcha` возвращает ошибку.
+
+
+
+### Устройство валидаторов
+
+Каждое стандартное правило обслуживается отдельным классом в `Project\\Validation`: `RequiredValidator`, `BooleanValidator`, `EmailValidator`, `IpValidator`, `LengthValidator`, `RegexValidator`, `NumericValidator`, `PhoneValidator`, `UrlValidator` и `RecaptchaValidator`. `FormValidator` создаёт эти классы по карте `validators()`. Поэтому можно переопределить карту в наследнике и добавить собственный валидатор. Старые классы `Lema\\Forms\\Validators\\*` остаются адаптерами к этому механизму.
+
+Базовый `Project\\Validation\\Validator` предоставляет общие методы для значения, параметров, ошибки и настройки `showAllErrors`. Он не вызывает `validate()` в конструкторе: новый код запускает проверку явно. Старый адаптер `LegacyFieldValidator` сохраняет прежнее поведение, при котором проверка вызывается при создании объекта.
 
 ## AjaxForm
 
