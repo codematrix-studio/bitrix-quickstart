@@ -11,7 +11,7 @@ use InvalidArgumentException;
  * Проверяет набор полей по правилам, совместимым с форматом lema.lib.
  *
  * Формат правила: [ "email, phone", "email", ["message" => "..."] ].
- * Класс не очищает HTML и не экранирует значения: это разные задачи.
+ * Класс не очищает HTML и не экранирует вывод.
  */
 class FormValidator
 {
@@ -25,7 +25,6 @@ class FormValidator
         if ($fields !== []) {
             $this->setFields($fields);
         }
-
         if ($rules !== []) {
             $this->setRules($rules);
         }
@@ -84,7 +83,7 @@ class FormValidator
     }
 
     /**
-     * Задаёт проверяющую функцию для reCAPTCHA. Без неё проверка всегда закрывается отказом.
+     * Задаёт проверяющую функцию CAPTCHA. Без неё проверка всегда завершается отказом.
      */
     public function setRecaptchaVerifier(?callable $verifier): static
     {
@@ -95,41 +94,44 @@ class FormValidator
 
     public function validate(): bool
     {
-        // Повторный вызов validate() всегда пересчитывает ошибки с нуля.
+        // Повторная проверка всегда формирует ошибки заново.
         $this->errors = [];
+        $validatorMap = $this->validators();
 
         foreach ($this->rules as $rule) {
-            if (!is_array($rule) || !isset($rule[0], $rule[1]) || !is_string($rule[0]) || !is_string($rule[1])) {
+            if (!is_array($rule) || !isset($rule[0], $rule[1]) || !is_string($rule[1])) {
                 continue;
             }
 
+            $ruleName = strtolower($rule[1]);
             $params = isset($rule[2]) && is_array($rule[2]) ? $rule[2] : [];
-            $fieldNames = preg_split('~\\s*,\\s*~u', $rule[0], -1, PREG_SPLIT_NO_EMPTY);
+            $fieldNames = is_array($rule[0])
+                ? $rule[0]
+                : preg_split('/\s*,\s*/u', (string) $rule[0], -1, PREG_SPLIT_NO_EMPTY);
 
             if ($fieldNames === false) {
                 continue;
             }
 
-            foreach ($fieldNames as $fieldName) {
-                $value = $this->fields[$fieldName] ?? null;
-                $validatorMap = $this->validators();
-                $validatorClass = $validatorMap[$rule[1]] ?? null;
+            $validatorDefinition = $validatorMap[$ruleName] ?? null;
 
-                if (is_string($validatorClass)
-                    && class_exists($validatorClass)
-                    && is_a($validatorClass, LegacyFieldValidator::class, true)
-                ) {
-                    $validator = new $validatorClass($fieldName, $value, $params);
-                    $valid = $validator->validate();
-                    $message = $validator->getError();
-                    $showAllErrors = $validator->showAllErrors();
-                } else {
-                    [$valid, $message] = $this->validateValue($rule[1], $fieldName, $value, $params);
-                    $showAllErrors = (bool) ($params['showAllErrors'] ?? false);
+            foreach ($fieldNames as $fieldName) {
+                $fieldName = (string) $fieldName;
+                if ($fieldName === '') {
+                    continue;
                 }
 
+                $value = $this->fields[$fieldName] ?? null;
+                [$valid, $message, $showAllErrors] = $this->runValidator(
+                    $validatorDefinition,
+                    $ruleName,
+                    $fieldName,
+                    $value,
+                    $params
+                );
+
                 if (!$valid) {
-                    $this->setError($fieldName, $message, $showAllErrors);
+                    $this->setError($fieldName, $this->formatMessage($message, $fieldName, $params), $showAllErrors);
                 }
             }
         }
@@ -169,19 +171,129 @@ class FormValidator
         return $errors;
     }
 
-    protected function checkValue($name, $validator): bool
+    /**
+     * Карта имён правил и классов валидаторов.
+     *
+     * Старые псевдонимы numerical и required сохранены.
+     * Метод можно переопределить в наследнике для подключения собственных правил.
+     */
+    public function validators(): array
     {
-        if (is_callable($validator)) {
-            $result = $validator();
-            return (bool) $result;
+        return [
+            'boolean' => BooleanValidator::class,
+            'recaptcha' => RecaptchaValidator::class,
+            'email' => EmailValidator::class,
+            'ip' => IpValidator::class,
+            'length' => LengthValidator::class,
+            'regex' => RegexValidator::class,
+            'numerical' => NumericValidator::class,
+            'numeric' => NumericValidator::class,
+            'phone' => PhoneValidator::class,
+            'required' => RequiredValidator::class,
+            'url' => UrlValidator::class,
+        ];
+    }
+
+    /**
+     * Поддерживает новые валидаторы, старые классы Lema и строковые псевдонимы
+     * в пользовательских переопределениях validators().
+     */
+    protected function runValidator($definition, string $ruleName, string $field, $value, array $params): array
+    {
+        if (is_string($definition) && class_exists($definition)) {
+            if (is_a($definition, LegacyFieldValidator::class, true)) {
+                if ($ruleName === 'recaptcha' && $this->recaptchaVerifier !== null) {
+                    $params['verifier'] = $this->recaptchaVerifier;
+                }
+
+                /** @var LegacyFieldValidator $validator */
+                $validator = new $definition($field, $value, $params);
+
+                // Старый базовый валидатор выполнял проверку в конструкторе.
+                return [$validator->isValid(), $validator->getError(), $validator->showAllErrors()];
+            }
+
+            if (is_a($definition, Validator::class, true)) {
+                if ($ruleName === 'recaptcha' && $this->recaptchaVerifier !== null) {
+                    $params['verify'] = $this->recaptchaVerifier;
+                }
+
+                /** @var Validator $validator */
+                $validator = new $definition($field, $value, $params);
+                $valid = $validator->validate();
+
+                return [$valid, $validator->getError(), $validator->showAllErrors()];
+            }
+
+            // Пользовательский класс может реализовать старый контракт без наследования.
+            $validator = new $definition($field, $value, $params);
+            if (is_callable([$validator, 'validate'])) {
+                $valid = (bool) $validator->validate();
+                $message = is_callable([$validator, 'getError']) ? $validator->getError() : null;
+                $showAll = is_callable([$validator, 'showAllErrors']) ? (bool) $validator->showAllErrors() : false;
+
+                return [$valid, $message, $showAll];
+            }
+
+            throw new InvalidArgumentException('Класс валидатора не реализует метод validate(): ' . $definition);
         }
 
-        return false;
+        // Совместимость с пользовательскими картами, возвращающими псевдонимы-строки.
+        $alias = is_string($definition) ? strtolower($definition) : $ruleName;
+        [$valid, $message] = $this->validateAlias($alias, $field, $value, $params);
+
+        return [$valid, $message, (bool) ($params['showAllErrors'] ?? $params['show_all_errors'] ?? false)];
+    }
+
+    protected function validateAlias(string $type, string $field, $value, array $params): array
+    {
+        $map = [
+            'boolean' => BooleanValidator::class,
+            'recaptcha' => RecaptchaValidator::class,
+            'email' => EmailValidator::class,
+            'ip' => IpValidator::class,
+            'length' => LengthValidator::class,
+            'regex' => RegexValidator::class,
+            'numeric' => NumericValidator::class,
+            'numerical' => NumericValidator::class,
+            'phone' => PhoneValidator::class,
+            'required' => RequiredValidator::class,
+            'url' => UrlValidator::class,
+        ];
+
+        if (!isset($map[$type])) {
+            // Неизвестное правило, как и в старой библиотеке, пропускается.
+            return [true, null];
+        }
+
+        if ($type === 'recaptcha' && $this->recaptchaVerifier !== null) {
+            $params['verify'] = $this->recaptchaVerifier;
+        }
+
+        $class = $map[$type];
+        $validator = new $class($field, $value, $params);
+        $valid = $validator->validate();
+
+        return [$valid, $validator->getError()];
+    }
+
+    protected function formatMessage($message, string $field, array $params): string
+    {
+        $message = is_scalar($message) ? (string) $message : ('Поле ' . $field . ' заполнено неверно');
+        $replace = ['{name}' => $field];
+
+        foreach ($params as $name => $value) {
+            if (is_scalar($value)) {
+                $replace['{' . $name . '}'] = (string) $value;
+            }
+        }
+
+        return strtr($message, $replace);
     }
 
     protected function setError($name, $error, $showAllErrors = false): void
     {
-        if (!isset($this->errors[$name])) {
+        if (!array_key_exists($name, $this->errors)) {
             $this->errors[$name] = $error;
             return;
         }
@@ -195,135 +307,6 @@ class FormValidator
         }
 
         $this->errors[$name][] = $error;
-    }
-
-    /**
-     * Возвращает список поддерживаемых имён правил.
-     * Старые псевдонимы numerical и required сохранены.
-     */
-    public function validators(): array
-    {
-        return [
-            'boolean' => 'boolean',
-            'recaptcha' => 'recaptcha',
-            'email' => 'email',
-            'ip' => 'ip',
-            'length' => 'length',
-            'regex' => 'regex',
-            'numerical' => 'numeric',
-            'numeric' => 'numeric',
-            'phone' => 'phone',
-            'required' => 'required',
-            'url' => 'url',
-        ];
-    }
-
-    protected function validateValue(string $type, string $field, $value, array $params): array
-    {
-        $messages = [
-            'boolean' => 'Поле {name} должно быть булевым',
-            'recaptcha' => 'Не удалось проверить проверочный код',
-            'email' => 'Неверный формат E-mail',
-            'ip' => 'Неверный формат IP-адреса',
-            'length' => 'Поле {name} должно содержать от {min} до {max} символов',
-            'regex' => 'Неверный формат {name}',
-            'numeric' => 'Поле {name} должно быть числом',
-            'phone' => 'Неверный формат телефона',
-            'required' => 'Введите {name}',
-            'url' => 'Неверный формат URL',
-        ];
-
-        if (!array_key_exists($type, $this->validators())) {
-            return [true, null];
-        }
-
-        // Старое имя правила numerical оставлено как псевдоним numeric.
-        $type = $type === 'numerical' ? 'numeric' : $type;
-
-        $valid = false;
-        switch ($type) {
-            case 'required':
-                $requiredValue = is_string($value) ? trim($value) : $value;
-                $valid = !($requiredValue === null || $requiredValue === '' || (is_array($requiredValue) && $requiredValue === []));
-                break;
-
-            case 'boolean':
-                if (is_bool($value) || $value === 0 || $value === 1 || $value === '0' || $value === '1') {
-                    $valid = true;
-                } elseif (is_string($value)) {
-                    $valid = in_array(strtolower(trim($value)), ['true', 'false', 'yes', 'no', 'on', 'off'], true);
-                }
-                break;
-
-            case 'email':
-                $valid = is_string($value) && $value !== '' && filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
-                break;
-
-            case 'ip':
-                $valid = is_string($value) && filter_var($value, FILTER_VALIDATE_IP) !== false;
-                break;
-
-            case 'length':
-                $lengthValue = is_string($value) ? trim($value) : (is_scalar($value) ? (string) $value : '');
-                $length = self::unicodeLength($lengthValue);
-                $min = isset($params['min']) ? max(0, (int) $params['min']) : null;
-                $max = isset($params['max']) ? max(0, (int) $params['max']) : null;
-                $valid = ($min === null || $length >= $min) && ($max === null || $length <= $max);
-                break;
-
-            case 'regex':
-                $pattern = $params['pattern'] ?? null;
-                if (is_string($pattern) && $pattern !== '' && is_string($value)) {
-                    $result = @preg_match($pattern, $value);
-                    $valid = $result === 1;
-                }
-                break;
-
-            case 'numeric':
-                $valid = is_scalar($value) && $value !== '' && is_numeric($value);
-                break;
-
-            case 'phone':
-                $valid = is_string($value) && preg_match(
-                    '~^\\s*(?:(?:\\+?\\s*?7)|(?:8))?\\s*[-(]?\\d{3}[)]?\\s*[-]?\\d{3}\\s*[-]?\\d{2}\\s*[-]?\\d{2}\\s*$~',
-                    $value
-                ) === 1;
-                break;
-
-            case 'url':
-                $valid = is_string($value) && filter_var($value, FILTER_VALIDATE_URL) !== false;
-                break;
-
-            case 'recaptcha':
-                if ($this->recaptchaVerifier !== null && is_string($value) && $value !== '') {
-                    $valid = (bool) ($this->recaptchaVerifier)($value, $params, $field);
-                }
-                break;
-        }
-
-        if ($valid) {
-            return [true, null];
-        }
-
-        $message = $params['message'] ?? ($messages[$type] ?? 'Некорректное значение поля {name}');
-        $replacements = ['{name}' => $field];
-
-        foreach ($params as $name => $paramValue) {
-            if (is_scalar($paramValue)) {
-                $replacements['{' . $name . '}'] = (string) $paramValue;
-            }
-        }
-
-        return [false, strtr((string) $message, $replacements)];
-    }
-
-    private static function unicodeLength(string $value): int
-    {
-        if (preg_match_all('/./us', $value, $matches) !== false) {
-            return count($matches[0]);
-        }
-
-        return strlen($value);
     }
 
     private static function convertToWindows1251(string $value): string
