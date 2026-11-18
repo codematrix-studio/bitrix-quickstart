@@ -198,3 +198,7 @@ $pageItems = $paginator->getElements();
 Добавлены `Project\Export\BitrixCatalogExporter`, `Project\Export\YmlCatalogRenderer`, `Project\Export\XmlEscaper` и `Project\Support\JsonFileCache`.
 
 Подробная документация: [Export/README.md](Export/README.md). Там описаны настройка доверенного URL, параметры кеша, старые адаптеры `Lema\Base\XmlExport` и `Lema\Seo\YmlExport`, а также отличия новой реализации от исходной библиотеки.
+
+## Highload-блоки
+
+Для работы с Highload-блоками используйте `Project\Bitrix\HLBlock\HlBlockManager` и `HlBlockEntity`. Менеджер подключает модуль `highloadblock` непосредственно перед обращением к API, получает ORM-сущность по ID блока и кеширует её в пределах своего экземпляра. Операции чтения и записи выполняются через D7 ORM. Подробности и примеры приведены в [Bitrix/HLBlock/README.md](Bitrix/HLBlock/README.md).
