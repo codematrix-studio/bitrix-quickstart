@@ -163,7 +163,8 @@ class OrderManager
             }
         }
 
-        $this->assertResult($order->save(), 'сохранить заказ');
+        $saveResult = $order->save();
+        $this->assertResult($saveResult, 'сохранить заказ');
 
         if (!is_callable([$order, 'getId'])) {
             throw new RuntimeException('После сохранения заказа невозможно получить его ID.');
