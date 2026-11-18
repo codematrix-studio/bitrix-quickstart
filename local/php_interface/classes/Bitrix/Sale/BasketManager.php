@@ -234,6 +234,8 @@ class BasketManager
         if ($this->fuserProvider !== null) {
             $fuserId = ($this->fuserProvider)();
         } else {
+            $this->includeModule('sale');
+
             if (!class_exists(\Bitrix\Sale\Fuser::class)) {
                 throw new RuntimeException('Класс Bitrix\Sale\Fuser недоступен.');
             }
