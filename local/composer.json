@@ -21,6 +21,7 @@
             "@test:compatibility",
             "@test:forms",
             "@test:iblock",
+            "@test:iblock-validator",
             "@test:helper",
             "@test:base",
             "@test:markup",
@@ -30,6 +31,7 @@
         "test:helper": "php ../tests/lema_helper_smoke.php",
         "test:base": "php ../tests/lema_base_instances_smoke.php",
         "test:markup": "php ../tests/lema_markup_smoke.php",
-        "test:export": "php ../tests/lema_export_smoke.php"
+        "test:export": "php ../tests/lema_export_smoke.php",
+        "test:iblock-validator": "php ../tests/iblock_validator_compatibility_smoke.php"
     }
 }
