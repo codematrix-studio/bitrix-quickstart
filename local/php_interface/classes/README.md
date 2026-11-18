@@ -144,7 +144,7 @@ $password = \Project\Support\PasswordGenerator::generate(8);
 Пример нового API:
 
 ```php
-$paginator = new \\Project\\Support\\ArrayPaginator($items, 20);
+$paginator = new \Project\Support\ArrayPaginator($items, 20);
 $paginator->start(count($items));
 $pageItems = $paginator->getElements();
 ```
@@ -152,7 +152,7 @@ $pageItems = $paginator->getElements();
 Совместимый вызов после подключения адаптера:
 
 ```php
-$paginator = \\Lema\\Base\\Paginator::get();
+$paginator = \Lema\Base\Paginator::get();
 $paginator->setElements($items)->setPerPage(20)->start(count($items));
 $pageItems = $paginator->getElements();
 ```
