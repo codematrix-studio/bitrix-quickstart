@@ -16,7 +16,7 @@
 ## Пример
 
 ```php
-use Project\\Bitrix\\Sale\\OrderManager;
+use Project\Bitrix\Sale\OrderManager;
 
 $orderManager = new OrderManager();
 
@@ -74,8 +74,8 @@ Smoke-тест не требует ядра Битрикс. Он проверя�
 Для сценариев, в которых нельзя изменять постоянную корзину покупателя, используйте `createFromBasket()`. Метод принимает явно сформированную D7-корзину, пересчитывает её и передаёт в общий процесс создания заказа. Он не вызывает загрузчик корзины FUSER.
 
 ```php
-use Bitrix\\Sale\\Basket;
-use Project\\Bitrix\\Sale\\OrderManager;
+use Bitrix\Sale\Basket;
+use Project\Bitrix\Sale\OrderManager;
 
 $basket = Basket::create($siteId);
 $item = $basket->createItem('catalog', $productId);
