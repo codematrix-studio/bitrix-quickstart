@@ -94,3 +94,25 @@ composer test:helper
 ```bash
 composer test
 ```
+
+
+## Базовые классы экземпляров
+
+### PerClassInstance
+
+`Project\\Support\\PerClassInstance` хранит отдельный экземпляр для каждого класса-наследника. Это исключает ситуацию, когда два разных наследника получают один и тот же объект из общего унаследованного статического свойства.
+
+- `get(): static` — получить или создать экземпляр текущего класса;
+- `resetInstance(): void` — сбросить экземпляр текущего класса.
+
+### PerClassGlobalProxy
+
+`Project\\Support\\PerClassGlobalProxy` получает глобальный объект по имени, которое возвращает метод-наследник `globalName()`. Кеш объектов изолирован по классу. Магический вызов `__call()` передаёт аргументы метода отдельно, а не одним массивом.
+
+### Перенос из lema.lib
+
+- `Lema\\Base\\StaticInstance` использует `PerClassInstance`;
+- `Lema\\Base\\GlobalVars` использует `PerClassGlobalProxy`;
+- `Lema\\Base\\BitrixInstances` использует `Project\\Bitrix\\Context\\PerClassBitrixInstance`.
+
+Адаптеры находятся в `local/php_interface/legacy/Lema/Base/`. Тесты запускаются командой `composer test:base`.
