@@ -15,6 +15,11 @@
         "allow-plugins": {}
     },
     "scripts": {
-        "test:compatibility": "php ../tests/lema_compatibility_smoke.php"
+        "test:compatibility": "php ../tests/lema_compatibility_smoke.php",
+        "test:forms": "php ../tests/lema_forms_smoke.php",
+        "test": [
+            "@test:compatibility",
+            "@test:forms"
+        ]
     }
 }
