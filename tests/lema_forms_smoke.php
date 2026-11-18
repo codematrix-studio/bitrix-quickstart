@@ -70,6 +70,15 @@ formsExpect($form->validate(), 'FormValidator must accept a valid form and boole
 formsExpect($form->getField('name') === 'Иван', 'String fields must be trimmed.');
 formsExpect($form->getField('active') === false, 'Boolean false must not be converted to an empty string.');
 
+// required сохраняет старый смысл: false — неотмеченный флажок, а 0 — заданное значение.
+$requiredBoolean = new Project\Validation\FormValidator(
+    [['accepted', 'required'], ['quantity', 'required']],
+    ['accepted' => false, 'quantity' => 0]
+);
+formsExpect(!$requiredBoolean->validate(), 'Required must reject false values.');
+formsExpect(isset($requiredBoolean->getErrors()['accepted']), 'Required must report false as an empty value.');
+formsExpect(!isset($requiredBoolean->getErrors()['quantity']), 'Required must accept numeric zero.');
+
 // Arrays from POST must not trigger trim() type errors.
 $arrayForm = new Project\Validation\FormValidator(
     [['choices', 'required']],
