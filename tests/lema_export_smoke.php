@@ -113,6 +113,17 @@ try {
 }
 exportExpect($invalidTagRejected, 'YML renderer must reject untrusted XML tag names.');
 
+class ExportSmokeCFile
+{
+    public static function GetPath(int $fileId): string
+    {
+        return '/upload/file' . $fileId . '.jpg';
+    }
+}
+if (!class_exists('CFile')) {
+    class_alias(ExportSmokeCFile::class, 'CFile');
+}
+
 // Bitrix-адаптер можно проверять без ядра через внедрённые репозитории.
 $exportDirectory = $tempDirectory . '/bitrix-export';
 $elementRepository = new Project\Bitrix\IBlock\ElementRepository(
@@ -165,9 +176,7 @@ $exporter = new Project\Export\BitrixCatalogExporter(
     $exportDirectory,
     $exporterConfig,
     $elementRepository,
-    $sectionRepository,
-    null,
-    static fn (int $fileId): string => '/upload/file' . $fileId . '.jpg'
+    $sectionRepository
 );
 $loaded = $exporter->loadData([], true);
 exportExpect(isset($loaded['products'][10]), 'Bitrix exporter must return products keyed by ID.');
@@ -205,9 +214,7 @@ $cachedExporter = new Project\Export\BitrixCatalogExporter(
         static function () {
             throw new RuntimeException('Cache should prevent the section query.');
         }
-    ),
-    null,
-    static fn (int $fileId): string => '/upload/file' . $fileId . '.jpg'
+    )
 );
 $cachedData = $cachedExporter->loadData([], true);
 exportExpect($cachedData === $loaded, 'Bitrix exporter must restore the complete catalog from cache.');
