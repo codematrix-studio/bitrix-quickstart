@@ -108,3 +108,77 @@ $preview = $item->previewPicture();
 ```
 
 Для миграции доступны необязательные адаптеры `local/php_interface/legacy/Lema/Template/Item.php` и `local/php_interface/legacy/Lema/Template/Section.php`. После Composer autoload и подключения соответствующего файла старые имена `Lema\Template\Item` и `Lema\Template\Section` продолжают работать. Адаптеры не подключаются автоматически, чтобы не конфликтовать с установленным модулем `lema.lib`.
+
+## Репозитории элементов и разделов
+
+Старые `Lema\\IBlock\\Element` и `Lema\\IBlock\\Section` объединяли D7 ORM и legacy API в статических фасадах. Новая реализация разделяет запросы по репозиториям:
+
+- `Project\\Bitrix\\IBlock\\ElementRepository`;
+- `Project\\Bitrix\\IBlock\\SectionRepository`.
+
+### Пример
+
+```php
+$elements = new \\Project\\Bitrix\\IBlock\\ElementRepository();
+$activeItems = $elements->getListD7($iblockId, [
+    'select' => ['ID', 'NAME', 'CODE'],
+]);
+
+$sections = new \\Project\\Bitrix\\IBlock\\SectionRepository();
+$activeSections = $sections->getList($iblockId, [
+    'order' => ['SORT' => 'ASC'],
+    'arSelect' => ['ID', 'NAME', 'CODE'],
+]);
+```
+
+### Методы ElementRepository
+
+| Метод | Назначение |
+|---|---|
+| `getById($elementId, $params = [])` | Получить элемент через D7 `getByPrimary()` |
+| `getListD7($iblockId, $params = [])` | Получить активные элементы через D7 |
+| `getList($iblockId, $params = [])` | Получить элементы через `CIBlockElement::GetList()` |
+| `getCount($iblockId, $params = [])` | Получить количество через D7 |
+| `getListPagination($iblockId, $params = [])` | Получить текущую выборку с legacy-параметрами навигации |
+| `getAllD7($iblockId, $params = [])` | Получить все подходящие элементы через D7 без принудительного ACTIVE |
+| `getAll($iblockId, $params = [], $pagination = false)` | Старый общий метод для legacy API |
+
+### Методы SectionRepository
+
+| Метод | Назначение |
+|---|---|
+| `getListD7($iblockId, $params = [])` | Активные разделы через D7 |
+| `getList($iblockId, $params = [])` | Разделы через `CIBlockSection::GetList()` |
+| `getAllD7($iblockId, $params = [])` | Все подходящие разделы через D7 без принудительного ACTIVE |
+| `getAll($iblockId, $params = [])` | Общий метод для legacy API |
+
+### Параметры старого API
+
+Публичные методы сохраняют старые ключи массива:
+
+- `order` — сортировка;
+- `filter` — фильтр;
+- `bIncCnt` — группировка/подсчёт для legacy API;
+- `arNavStartParams` — параметры навигации;
+- `arSelect` — выбираемые поля.
+
+Для элементов порядок аргументов `CIBlockElement::GetList` сохранён: сортировка, фильтр, группировка, навигация, выборка. Для разделов сохранён порядок `CIBlockSection::GetList`: сортировка, фильтр, подсчёт, выборка, навигация.
+
+Результат по-прежнему представляет собой массив строк, индексированный по ID. D7-методы `getListD7()` принудительно ограничивают выборку указанным инфоблоком и активными записями. `getAllD7()` ограничивает инфоблок, но не навязывает ACTIVE=Y, как и старый метод.
+
+### Загрузка модуля
+
+Модуль `iblock` больше не подключается побочным эффектом при загрузке PHP-файла. Репозиторий подключает его непосредственно перед запросом и выбрасывает `RuntimeException`, если модуль недоступен. Это делает ошибку явной и позволяет подключать классы в CLI и тестах без установленного ядра.
+
+### Тестирование без ядра
+
+Репозитории принимают необязательные callback-зависимости для загрузчика модуля и запросов. Благодаря этому можно проверить состав и порядок параметров без подмены классов ядра.
+
+Запуск тестов:
+
+```bash
+cd local
+composer test:iblock
+```
+
+Интеграционный тест с реальными `ElementTable`, `SectionTable`, `CIBlockElement` и `CIBlockSection` всё равно необходим на установленном ядре Битрикс.
