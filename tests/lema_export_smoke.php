@@ -255,6 +255,29 @@ $legacyYml = new \Lema\Seo\YmlExport(12, [
 exportExpect($legacyYml instanceof \Lema\Base\XmlExport, 'Legacy YmlExport must extend the legacy XmlExport adapter.');
 exportExpect($legacyYml->setNeedUpdate(true) === true, 'Legacy setNeedUpdate() must retain its boolean return contract.');
 
+$productsProperty = new ReflectionProperty(Project\Export\BitrixCatalogExporter::class, 'products');
+$productsProperty->setValue($legacyYml, [
+    10 => [
+        'ID' => 10,
+        'ACTIVE' => 'Y',
+        'CATALOG_AVAILABLE' => 'Y',
+        'DETAIL_PAGE_URL' => '/catalog/legacy/',
+        'NAME' => 'Старый адаптер',
+    ],
+]);
+$sectionsProperty = new ReflectionProperty(Project\Export\BitrixCatalogExporter::class, 'sections');
+$sectionsProperty->setValue($legacyYml, [5 => ['name' => 'Раздел']]);
+$generatedAtProperty = new ReflectionProperty(Project\Export\BitrixCatalogExporter::class, 'generatedAt');
+$generatedAtProperty->setValue($legacyYml, 1700000000);
+
+ob_start();
+$legacyYml->showData();
+$legacyYmlOutput = ob_get_clean();
+exportExpect(
+    str_contains($legacyYmlOutput, '<name>Старый адаптер</name>'),
+    'Legacy YmlExport::showData() must preserve its echo output contract.'
+);
+
 $legacyBase = new \Lema\Base\XmlExport(12, [
     'serverUrl' => 'https://shop.example.org',
     'storageDir' => '/bitrix/catalog_export/base',
