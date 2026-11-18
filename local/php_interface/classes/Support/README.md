@@ -116,3 +116,15 @@ composer test
 - `Lema\\Base\\BitrixInstances` использует `Project\\Bitrix\\Context\\PerClassBitrixInstance`.
 
 Адаптеры находятся в `local/php_interface/legacy/Lema/Base/`. Тесты запускаются командой `composer test:base`.
+
+
+## JsonFileCache
+
+`Project\Support\JsonFileCache` — файловый кеш массивов в JSON. Подробности описаны в [Export/README.md](../Export/README.md), поскольку класс используется при подготовке XML/YML-каталогов.
+
+- `get($key)` — прочитать массив или получить `null` при отсутствии/повреждении кеша;
+- `put($key, array $data)` — атомарно записать JSON;
+- `isFresh($key, $ttl)` — проверить возраст кеша;
+- `delete($key)` — удалить кеш-файл.
+
+Запись защищена блокировкой `flock()` и выполняется через временный файл с последующим `rename()`. Ключ не может содержать путь или `..`.
