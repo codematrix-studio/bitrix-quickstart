@@ -44,7 +44,7 @@ final class LegacyElementChecker
         }
 
         $result = \CIBlockElement::GetList(
-            [],
+            false,
             $filter,
             false,
             ['nTopCount' => 1],
