@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Project\Validation;
 
-use LogicException;
-
 class RecaptchaValidator extends Validator
 {
     protected function defaultMessage(): string
@@ -16,20 +14,21 @@ class RecaptchaValidator extends Validator
     public function validate(): bool
     {
         $response = $this->stringValue();
-        $verify = $this->options['verify'] ?? null;
+        $verify = $this->options['verify'] ?? $this->options['verifier'] ?? null;
 
-        if ($response === null || trim($response) === '') {
+        if ($response === null || trim($response) === '' || !is_callable($verify)) {
+            // Нет токена или серверной проверки — всегда отказ, без аварийного завершения формы.
             return $this->fail();
         }
 
-        if (!is_callable($verify)) {
-            throw new LogicException(
-                'Для проверки reCAPTCHA необходимо передать callable verify. Секретный ключ нельзя заменять публичным sitekey.'
-            );
-        }
-
         $remoteIp = $this->options['remoteIp'] ?? null;
-        $verified = $verify($response, $remoteIp, $this->options);
+
+        try {
+            $verified = $verify($response, $remoteIp, $this->options);
+        } catch (\Throwable $exception) {
+            // Сетевые ошибки и исключения провайдера не должны разрешать отправку формы.
+            return $this->fail();
+        }
 
         return $verified === true ? true : $this->fail();
     }
