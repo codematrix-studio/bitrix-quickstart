@@ -27,7 +27,8 @@
             "@test:markup",
             "@test:export",
             "@test:template",
-            "@test:page"
+            "@test:page",
+            "@test:asset"
         ],
         "test:iblock": [
             "php ../tests/lema_iblock_smoke.php",
@@ -39,6 +40,7 @@
         "test:export": "php ../tests/lema_export_smoke.php",
         "test:iblock-validator": "php ../tests/iblock_validator_compatibility_smoke.php",
         "test:template": "php ../tests/template_helper_smoke.php",
-        "test:page": "php ../tests/page_path_matcher_smoke.php"
+        "test:page": "php ../tests/page_path_matcher_smoke.php",
+        "test:asset": "php ../tests/asset_manager_smoke.php"
     }
 }

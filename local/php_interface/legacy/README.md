@@ -453,3 +453,10 @@ if (Page::inRootDirectory('catalog')) {
 Исправлено важное поведение старой реализации: проверка границы сегмента. Путь `/catalog-old/` больше не считается частью `/catalog/`. Метод `inRootDir()` проверяет только первый сегмент URL и не совпадает с одноимённым вложенным каталогом.
 
 Автономный тест: `tests/page_path_matcher_smoke.php`; команда запуска из каталога `local`: `composer test:page`. Тест не требует ядра Битрикс. Фасад текущего URL требует HTTP-контекста Bitrix и проверяется интеграционно.
+
+
+## AssetManager
+
+Старый `Lema\\Common\\AssetManager` переработан в `Project\\Bitrix\\Asset\\AssetManager`. Необязательный адаптер `legacy/Lema/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `Lema\\Common\\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
+
+Основная реализация и границы интеграционного тестирования описаны в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md).
