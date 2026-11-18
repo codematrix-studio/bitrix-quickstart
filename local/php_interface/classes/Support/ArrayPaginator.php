@@ -93,9 +93,10 @@ class ArrayPaginator
     public function getPageNumber($globalArrType = 'GET')
     {
         $globalArrType = strtoupper((string) $globalArrType);
-        $allowed = ['GET', 'POST', 'REQUEST', 'COOKIE', 'SESSION'];
+        $allowed = ['GET', 'POST', 'REQUEST', 'COOKIE', 'COOKIES', 'SESSION'];
+        $sourceKey = $globalArrType === 'COOKIES' ? '_COOKIE' : '_' . $globalArrType;
         $source = in_array($globalArrType, $allowed, true)
-            ? $GLOBALS['_' . $globalArrType] ?? []
+            ? ($GLOBALS[$sourceKey] ?? [])
             : ($_REQUEST ?? []);
 
         $page = isset($source[$this->pagerName]) && is_scalar($source[$this->pagerName])
@@ -167,9 +168,10 @@ class ArrayPaginator
         $pages = empty($totalPages) ? (int) ceil($count / $pageSize) : max(0, (int) $totalPages);
         $page = min($page, max(1, $pages));
 
-        $remove = [$this->pagerName];
-        $url = static function ($value) use ($APPLICATION, $remove, $this->pagerName): string {
-            $query = $value === null ? '' : $this->pagerName . '=' . $value;
+        $parameterName = $this->pagerName;
+        $remove = [$parameterName];
+        $url = static function ($value) use ($APPLICATION, $remove, $parameterName): string {
+            $query = $value === null ? '' : $parameterName . '=' . $value;
             return htmlspecialchars(
                 (string) $APPLICATION->GetCurPageParam($query, $remove),
                 ENT_QUOTES | ENT_SUBSTITUTE,
