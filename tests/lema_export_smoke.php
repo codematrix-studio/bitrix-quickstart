@@ -219,6 +219,18 @@ $cachedExporter = new Project\Export\BitrixCatalogExporter(
 $cachedData = $cachedExporter->loadData([], true);
 exportExpect($cachedData === $loaded, 'Bitrix exporter must restore the complete catalog from cache.');
 
+foreach (glob($exportDirectory . '/*') ?: [] as $file) {
+    if (is_file($file)) {
+        unlink($file);
+    }
+}
+foreach (glob($exportDirectory . '/.*') ?: [] as $file) {
+    if (is_file($file) && basename($file) !== '.' && basename($file) !== '..') {
+        unlink($file);
+    }
+}
+rmdir($exportDirectory);
+
 foreach (glob($tempDirectory . '/*') ?: [] as $file) {
     if (is_file($file)) {
         unlink($file);
