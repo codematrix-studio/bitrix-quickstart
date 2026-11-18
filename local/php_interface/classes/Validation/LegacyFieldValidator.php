@@ -36,7 +36,8 @@ class LegacyFieldValidator
             [$this->checkField => $this->checkValue]
         );
 
-        $form->setRecaptchaVerifier($this->additionalParams['verifier'] ?? null);
+        $verifier = $this->additionalParams['verifier'] ?? null;
+        $form->setRecaptchaVerifier(is_callable($verifier) ? $verifier : null);
         $valid = $form->validate();
         $this->hasError = !$valid;
         $this->showAllErrors = (bool) ($this->additionalParams['showAllErrors'] ?? false);
