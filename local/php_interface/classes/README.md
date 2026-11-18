@@ -15,3 +15,31 @@ Composer PSR-4 в `local/composer.json` связывает namespace `Project\\`
 ```bash
 composer dump-autoload --working-dir=local
 ```
+
+## Добавленные базовые классы
+
+### `Project\Support\EmailValidator`
+
+Проверяет синтаксическую корректность email через `FILTER_VALIDATE_EMAIL`.
+Не выполняет DNS-проверку и не подтверждает существование почтового ящика.
+
+```php
+$validator = new \Project\Support\EmailValidator();
+
+if ($validator->isValid($email)) {
+    // Адрес имеет допустимый формат.
+}
+```
+
+### `Project\Support\HtmlEscaper`
+
+Кодирует специальные HTML-символы для вывода в HTML-текст или атрибут в кавычках.
+Используйте его непосредственно при выводе данных, а не как универсальную очистку входных данных.
+
+```php
+$escaper = new \Project\Support\HtmlEscaper();
+
+echo $escaper->escape($value);
+```
+
+Оба класса не зависят от API Битрикс и не требуют сторонних Composer-пакетов.
