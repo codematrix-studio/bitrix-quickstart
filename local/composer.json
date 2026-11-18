@@ -13,5 +13,8 @@
     "config": {
         "sort-packages": true,
         "allow-plugins": {}
+    },
+    "scripts": {
+        "test:compatibility": "php ../tests/lema_compatibility_smoke.php"
     }
 }
