@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Project\\Bitrix\\HLBlock;
+namespace Project\Bitrix\HLBlock;
 
 use InvalidArgumentException;
 use RuntimeException;
