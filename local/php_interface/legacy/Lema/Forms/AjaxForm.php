@@ -7,6 +7,6 @@
 
 namespace Lema\Forms;
 
-class AjaxForm extends \\Project\\Validation\\AjaxForm
+class AjaxForm extends \Project\Validation\AjaxForm
 {
 }
