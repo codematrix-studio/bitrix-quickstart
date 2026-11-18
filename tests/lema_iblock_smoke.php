@@ -86,6 +86,39 @@ iblockExpect($sectionLegacyArgs[2] === true, 'Section include-count argument mus
 iblockExpect($sectionLegacyArgs[3] === ['ID', 'NAME'], 'Section select argument must retain its legacy position.');
 iblockExpect($sectionLegacyArgs[4]['nPageSize'] === 5, 'Section navigation argument must retain its legacy position.');
 
+// Legacy getListPagination() must preserve NavStart() and NavNext(true).
+class IblockPaginationResult
+{
+    public int $pageSize = 0;
+    private int $position = 0;
+
+    public function NavStart(int $pageSize): void
+    {
+        $this->pageSize = $pageSize;
+    }
+
+    public function NavNext(bool $showAll = false)
+    {
+        if ($this->position++ > 0) {
+            return false;
+        }
+
+        return ['ID' => 91, 'FORMATTED' => $showAll];
+    }
+}
+
+$paginationResult = new IblockPaginationResult();
+$paginatedRepository = new Project\Bitrix\IBlock\ElementRepository(
+    static fn (): bool => true,
+    null,
+    static fn (...$arguments) => $paginationResult
+);
+$paginatedRows = $paginatedRepository->getListPagination(15, [
+    'arNavStartParams' => ['nPageSize' => 7],
+]);
+iblockExpect($paginationResult->pageSize === 7, 'getListPagination must call NavStart with the configured page size.');
+iblockExpect(($paginatedRows[91]['FORMATTED'] ?? false) === true, 'getListPagination must preserve NavNext(true) output.');
+
 // Old class names and constants remain available through explicit adapters.
 iblockExpect(\Lema\IBlock\Element::CLASS_NAME === '\\Bitrix\\Iblock\\ElementTable', 'Legacy Element class constant must remain available.');
 iblockExpect(\Lema\IBlock\Section::OLD_CLASS_NAME === '\\CIBlockSection', 'Legacy Section class constant must remain available.');
