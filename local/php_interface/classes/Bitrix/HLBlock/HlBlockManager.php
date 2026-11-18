@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Project\\Bitrix\\HLBlock;
+namespace Project\Bitrix\HLBlock;
 
 use Closure;
 use InvalidArgumentException;
@@ -79,7 +79,7 @@ class HlBlockManager
             return false;
         }
 
-        return \\Bitrix\\Main\\Loader::includeModule('highloadblock');
+        return \Bitrix\Main\Loader::includeModule('highloadblock');
     }
 
     /**
@@ -94,7 +94,7 @@ class HlBlockManager
                 throw new RuntimeException('Класс HighloadBlockTable недоступен.');
             }
 
-            $result = \\Bitrix\\Highloadblock\\HighloadBlockTable::getById($id);
+            $result = \Bitrix\Highloadblock\HighloadBlockTable::getById($id);
             $block = is_object($result) && method_exists($result, 'fetch') ? $result->fetch() : null;
         }
 
@@ -122,7 +122,7 @@ class HlBlockManager
             throw new RuntimeException('Класс HighloadBlockTable недоступен.');
         }
 
-        $entity = \\Bitrix\\Highloadblock\\HighloadBlockTable::compileEntity($block);
+        $entity = \Bitrix\Highloadblock\HighloadBlockTable::compileEntity($block);
 
         if (!is_object($entity) || !method_exists($entity, 'getDataClass')) {
             throw new RuntimeException('Битрикс не смог скомпилировать ORM-сущность HL-блока.');
