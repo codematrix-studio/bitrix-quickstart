@@ -249,15 +249,31 @@ final class YmlCatalogRenderer
         }
 
         if (isset($parts['scheme']) || isset($parts['host'])) {
-            if (!isset($parts['scheme'], $parts['host'])
-                || strtolower($parts['scheme']) !== strtolower((string) $base['scheme'])
-                || strtolower($parts['host']) !== strtolower((string) $base['host'])
-                || (int) ($parts['port'] ?? 0) !== (int) ($base['port'] ?? 0)
+            $baseScheme = strtolower((string) ($base['scheme'] ?? ''));
+            $baseHost = strtolower((string) ($base['host'] ?? ''));
+            $urlScheme = strtolower((string) ($parts['scheme'] ?? ''));
+            $urlHost = strtolower((string) ($parts['host'] ?? ''));
+            $defaultPort = $baseScheme === 'https' ? 443 : 80;
+            $basePort = (int) ($base['port'] ?? $defaultPort);
+            $urlPort = (int) ($parts['port'] ?? ($urlScheme === 'https' ? 443 : 80));
+
+            if ($urlScheme !== $baseScheme
+                || $urlHost !== $baseHost
+                || $urlPort !== $basePort
+                || isset($parts['user'])
+                || isset($parts['pass'])
             ) {
                 throw new InvalidArgumentException('Внешний URL товара не соответствует доверенному домену каталога.');
             }
 
-            $value = ($parts['path'] ?? '/')
+            $path = $parts['path'] ?? '/';
+            if ($appendTrailingSlash && !isset($parts['query']) && !isset($parts['fragment'])) {
+                $path = rtrim($path, '/') . '/';
+            }
+
+            return $urlScheme . '://' . $urlHost
+                . (isset($parts['port']) ? ':' . (int) $parts['port'] : '')
+                . $path
                 . (isset($parts['query']) ? '?' . $parts['query'] : '')
                 . (isset($parts['fragment']) ? '#' . $parts['fragment'] : '');
         }
