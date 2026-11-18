@@ -64,6 +64,14 @@ class LegacyFieldValidator
     protected function setAdditionalParams(array $additional = []): void
     {
         $this->additionalParams = $additional;
+
+        foreach ($additional as $name => $value) {
+            $method = 'setData' . ucfirst((string) $name);
+            if (method_exists($this, $method)) {
+                $this->{$method}($value);
+            }
+        }
+
         $this->showAllErrors = (bool) ($additional['showAllErrors'] ?? false);
         if (isset($additional['message']) && is_scalar($additional['message'])) {
             $this->errorMessage = (string) $additional['message'];
