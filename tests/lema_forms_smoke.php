@@ -70,7 +70,7 @@ $invalidForm = new Project\Validation\FormValidator(
     ['title' => '   ']
 );
 formsExpect(!$invalidForm->validate(), 'Whitespace-only required values must be rejected.');
-formsExpect(is_array($invalidForm->getErrors()['title']), 'showAllErrors=false must keep the first error only.');
+formsExpect(is_string($invalidForm->getErrors()['title']), 'showAllErrors=false must keep the first error only.');
 
 $allErrorsForm = new Project\Validation\FormValidator(
     [
