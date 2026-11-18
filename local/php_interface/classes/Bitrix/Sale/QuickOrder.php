@@ -19,20 +19,20 @@ class QuickOrder
     private OrderManager $orderManager;
     private ?Closure $basketFactory;
     private ?Closure $siteProvider;
-    private ?Closure $currencyProvider;
+    private ?Closure $providerNameResolver;
     private ?Closure $moduleLoader;
 
     public function __construct(
         OrderManager $orderManager,
         ?callable $basketFactory = null,
         ?callable $siteProvider = null,
-        ?callable $currencyProvider = null,
+        ?callable $providerNameResolver = null,
         ?callable $moduleLoader = null
     ) {
         $this->orderManager = $orderManager;
         $this->basketFactory = $basketFactory === null ? null : Closure::fromCallable($basketFactory);
         $this->siteProvider = $siteProvider === null ? null : Closure::fromCallable($siteProvider);
-        $this->currencyProvider = $currencyProvider === null ? null : Closure::fromCallable($currencyProvider);
+        $this->providerNameResolver = $providerNameResolver === null ? null : Closure::fromCallable($providerNameResolver);
         $this->moduleLoader = $moduleLoader === null ? null : Closure::fromCallable($moduleLoader);
     }
 
@@ -67,9 +67,8 @@ class QuickOrder
         $this->assertResult(
             $item->setFields([
                 'QUANTITY' => $quantity,
-                'CURRENCY' => $this->getCurrency(),
                 'LID' => $siteId,
-                'PRODUCT_PROVIDER_CLASS' => 'CCatalogProductProvider',
+                'PRODUCT_PROVIDER_CLASS' => $this->getProviderName(),
             ]),
             'добавить товар во временную корзину'
         );
@@ -121,25 +120,25 @@ class QuickOrder
         return $siteId;
     }
 
-    private function getCurrency(): string
+    private function getProviderName(): string
     {
-        if ($this->currencyProvider !== null) {
-            $currency = ($this->currencyProvider)();
+        if ($this->providerNameResolver !== null) {
+            $providerName = ($this->providerNameResolver)();
         } else {
-            $this->includeModule('currency');
+            $this->includeModule('catalog');
 
-            if (!class_exists(\Bitrix\Currency\CurrencyManager::class)) {
-                throw new RuntimeException('Класс CurrencyManager недоступен.');
+            if (!class_exists(\\Bitrix\\Catalog\\Product\\Basket::class)) {
+                throw new RuntimeException('Класс провайдера каталога недоступен.');
             }
 
-            $currency = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
+            $providerName = \\Bitrix\\Catalog\\Product\\Basket::getDefaultProviderName();
         }
 
-        if (!is_string($currency) || $currency === '') {
-            throw new RuntimeException('Не удалось определить базовую валюту.');
+        if (!is_string($providerName) || $providerName === '') {
+            throw new RuntimeException('Не удалось определить стандартный провайдер каталога.');
         }
 
-        return $currency;
+        return $providerName;
     }
 
     private function includeModule(string $moduleId): void
