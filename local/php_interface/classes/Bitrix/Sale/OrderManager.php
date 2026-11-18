@@ -20,6 +20,7 @@ class OrderManager
     private ?Closure $orderFactory;
     private ?Closure $deliveryResolver;
     private ?Closure $paySystemResolver;
+    private ?Closure $paySystemObjectResolver;
     private ?Closure $siteProvider;
 
     public function __construct(
@@ -27,12 +28,14 @@ class OrderManager
         ?callable $orderFactory = null,
         ?callable $deliveryResolver = null,
         ?callable $paySystemResolver = null,
-        ?callable $siteProvider = null
+        ?callable $siteProvider = null,
+        ?callable $paySystemObjectResolver = null
     ) {
         $this->basketLoader = $basketLoader === null ? null : Closure::fromCallable($basketLoader);
         $this->orderFactory = $orderFactory === null ? null : Closure::fromCallable($orderFactory);
         $this->deliveryResolver = $deliveryResolver === null ? null : Closure::fromCallable($deliveryResolver);
         $this->paySystemResolver = $paySystemResolver === null ? null : Closure::fromCallable($paySystemResolver);
+        $this->paySystemObjectResolver = $paySystemObjectResolver === null ? null : Closure::fromCallable($paySystemObjectResolver);
         $this->siteProvider = $siteProvider === null ? null : Closure::fromCallable($siteProvider);
     }
 
@@ -357,11 +360,15 @@ class OrderManager
 
     private function getPaySystemObject(int $paySystemId): ?object
     {
-        if (!class_exists(\Bitrix\Sale\PaySystem\Manager::class)) {
-            throw new RuntimeException('Менеджер платёжных систем недоступен.');
-        }
+        if ($this->paySystemObjectResolver !== null) {
+            $paySystem = ($this->paySystemObjectResolver)($paySystemId);
+        } else {
+            if (!class_exists(\Bitrix\Sale\PaySystem\Manager::class)) {
+                throw new RuntimeException('Менеджер платёжных систем недоступен.');
+            }
 
-        $paySystem = \Bitrix\Sale\PaySystem\Manager::getObjectById($paySystemId);
+            $paySystem = \Bitrix\Sale\PaySystem\Manager::getObjectById($paySystemId);
+        }
 
         return is_object($paySystem) ? $paySystem : null;
     }
