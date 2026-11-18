@@ -191,3 +191,10 @@ $pageItems = $paginator->getElements();
 Добавлен `Project\\Seo\\MetaMarkup` — генератор meta-тегов с экранированием HTML-атрибутов при выводе. Старые `Lema\\Base\\Markup` и `Lema\\Seo\\OpenGraph` доступны через адаптеры.
 
 Документация и примеры: [Seo/README.md](../Seo/README.md).
+
+
+## Экспорт XML/YML
+
+Добавлены `Project\Export\BitrixCatalogExporter`, `Project\Export\YmlCatalogRenderer`, `Project\Export\XmlEscaper` и `Project\Support\JsonFileCache`.
+
+Подробная документация: [Export/README.md](Export/README.md). Там описаны настройка доверенного URL, параметры кеша, старые адаптеры `Lema\Base\XmlExport` и `Lema\Seo\YmlExport`, а также отличия новой реализации от исходной библиотеки.
