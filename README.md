@@ -74,4 +74,4 @@ local/
 composer test
 ```
 
-Отдельно можно запустить `composer test:compatibility` и `composer test:forms`. GitHub Actions проверяет синтаксис и тесты на PHP 8.1–8.4. Интеграционные проверки на установленном ядре Битрикс выполняются отдельно.
+Отдельно можно запустить `composer test:compatibility`, `composer test:forms` и `composer test:iblock`. GitHub Actions проверяет синтаксис и тесты на PHP 8.1–8.4. Интеграционные проверки на установленном ядре Битрикс выполняются отдельно.
