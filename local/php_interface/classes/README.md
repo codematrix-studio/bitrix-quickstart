@@ -74,3 +74,20 @@ echo $preview->create($element['PREVIEW_TEXT'], 200);
 Для генерации символьного кода используйте `Project\Bitrix\IBlock\ElementCodeGenerator`. Для сокращения текста подходит независимый от Битрикс `Project\Support\TextPreview`.
 
 Подробности и примеры приведены в [Bitrix/IBlock/README.md](Bitrix/IBlock/README.md).
+
+### `Project\\Support\\FlashMessageBag`
+
+Хранит flash-сообщения в переданном массиве сессионного хранилища. Не запускает сессию самостоятельно, не формирует HTML и не экранирует сообщения.
+
+```php
+$messages = new \\Project\\Support\\FlashMessageBag($_SESSION);
+
+$messages->add('Изменения сохранены');
+
+// Получить и удалить сообщения:
+foreach ($messages->pull() as $message) {
+    echo $escaper->escape($message);
+}
+```
+
+Для повторного чтения без удаления используйте `all()`, для очистки — `clear()`. Экранируйте сообщения при выводе в соответствии с HTML-контекстом.
