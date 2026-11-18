@@ -11,7 +11,7 @@ use InvalidArgumentException;
  */
 final class PasswordGenerator
 {
-    public const DEFAULT_ALPHABET = 'abcdefghijklm noprstuvxyzABCDEFGHIJKLM NOPRSTUVXYZ1234567890.,()[]!?&^%@*$<>/|+-{}\`~';
+    public const DEFAULT_ALPHABET = 'abcdefghijklmnoprstuvxyzABCDEFGHIJKLMNOPRSTUVXYZ1234567890.,()[]!?&^%@*$<>/|+-{}' . '`' . '~';
 
     public static function generate(int $length, string $alphabet = self::DEFAULT_ALPHABET): string
     {
