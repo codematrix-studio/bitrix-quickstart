@@ -202,3 +202,8 @@ $pageItems = $paginator->getElements();
 ## Highload-блоки
 
 Для работы с Highload-блоками используйте `Project\Bitrix\HLBlock\HlBlockManager` и `HlBlockEntity`. Менеджер подключает модуль `highloadblock` непосредственно перед обращением к API, получает ORM-сущность по ID блока и кеширует её в пределах своего экземпляра. Операции чтения и записи выполняются через D7 ORM. Подробности и примеры приведены в [Bitrix/HLBlock/README.md](Bitrix/HLBlock/README.md).
+
+
+## Списки товаров пользователя
+
+`Project\\Support\\ProductIdList` нормализует ID товаров для избранного, подписок и других списков. Он не выбирает способ хранения: пользовательское поле, cookie или отдельная таблица подключаются на уровне интеграции. Описание и примеры: [Support/README.md](Support/README.md#productidlist).
