@@ -60,7 +60,7 @@ $emptyAsset = new class {
     public function addJs(string $file): void {}
     public function addCss(string $file): void {}
 };
-$emptyManager = new AssetManager($emptyAsset, static function (array $extensions): void {});
+$emptyManager = new \\Project\\Bitrix\\Asset\\AssetManager($emptyAsset, static function (array $extensions): void {});
 $emptyManager->addJs([])->addCss([]);
 
 $invalidFileFailed = false;
@@ -81,7 +81,7 @@ assetExpect($invalidExtensionFailed, 'Некорректные имена рас
 
 $invalidAssetFailed = false;
 try {
-    new AssetManager(new stdClass());
+    new \\Project\\Bitrix\\Asset\\AssetManager(new stdClass());
 } catch (InvalidArgumentException) {
     $invalidAssetFailed = true;
 }
@@ -89,7 +89,7 @@ assetExpect($invalidAssetFailed, 'Объект без методов addJs/addCs
 
 $missingBitrixFailed = false;
 try {
-    (new AssetManager())->addJs('/local/app.js');
+    (new \\Project\\Bitrix\\Asset\\AssetManager())->addJs('/local/app.js');
 } catch (RuntimeException $exception) {
     $missingBitrixFailed = str_contains($exception->getMessage(), 'Bitrix');
 }
