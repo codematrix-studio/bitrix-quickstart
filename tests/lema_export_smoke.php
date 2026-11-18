@@ -302,8 +302,8 @@ rmdir($exportDirectory);
 $legacyStorageRoot = $documentRoot . '/bitrix/catalog_export';
 foreach (glob($legacyStorageRoot . '/*') ?: [] as $directory) {
     if (is_dir($directory)) {
-        foreach (glob($directory . '/*') ?: [] as $file) {
-            if (is_file($file)) {
+        foreach (array_merge(glob($directory . '/*') ?: [], glob($directory . '/.*') ?: []) as $file) {
+            if (is_file($file) && basename($file) !== '.' && basename($file) !== '..') {
                 unlink($file);
             }
         }
