@@ -12,9 +12,9 @@ class Section
     const CLASS_NAME = '\\Bitrix\\Iblock\\SectionTable';
     const OLD_CLASS_NAME = '\\CIBlockSection';
 
-    private static function repository(): \Project\Bitrix\IBlock\\SectionRepository
+    private static function repository(): \Project\Bitrix\IBlock\SectionRepository
     {
-        return new \Project\Bitrix\IBlock\\SectionRepository();
+        return new \Project\Bitrix\IBlock\SectionRepository();
     }
 
     public static function __callStatic($name, $arguments)
