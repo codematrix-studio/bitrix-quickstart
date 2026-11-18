@@ -9,7 +9,7 @@
 
 namespace Lema\Base;
 
-class Paginator extends \\Project\\Support\\ArrayPaginator
+class Paginator extends \Project\Support\ArrayPaginator
 {
     protected static $instance = null;
 }
