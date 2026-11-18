@@ -35,7 +35,7 @@
 
 - `lib/Forms/Form.php` и `lib/Forms/Validators/*`: сохранить правила и формат ошибок, исправить обработку массивов, boolean false, числовых значений, отсутствующих параметров regex и повторный вызов validate.
 - `lib/IBlock/Element.php` и `lib/IBlock/Section.php`: **переработаны** в `Project\\Bitrix\\IBlock\\ElementRepository` и `SectionRepository`; старые статические фасады сохранены адаптерами `Lema\\IBlock\\Element` и `Lema\\IBlock\\Section`.
-- `lib/Common/Helper.php`: разобрать утилиты по отдельным ответственностям; не переносить небезопасное построение абсолютного URL из Host-заголовка.
+- `lib/Common/Helper.php`: **основные универсальные методы переработаны** в `RussianPluralizer`, `JsonEncoder`, `CharsetConverter`, `UrlGenerator`, `PropertyAccessor` и `ImageWatermarker`; старый фасад `Lema\\Common\\Helper` сохранён. Методы работы с URL требуют явного доверенного базового адреса.
 - `lib/Base/Markup.php` и `lib/Seo/OpenGraph.php`: сохранить fluent API, исправить общие статические данные и экранирование атрибутов.
 - `lib/Base/StaticInstance.php` и `lib/Base/BitrixInstances.php`: исправить совместное использование статического экземпляра между наследниками.
 
@@ -191,3 +191,39 @@ composer test
 7. Отсутствующий модуль или класс ядра приводит к понятному исключению, а не к скрытой ошибке вызова метода.
 
 Для тестирования добавлен `tests/lema_iblock_smoke.php`; запуск — `composer test:iblock` из каталога `local`. Проверки используют внедряемые callbacks и не имитируют полноценное ядро. Интеграционное тестирование на Битрикс ещё предстоит.
+
+
+## Common Helper — частично переработан
+
+Старый файл: `lib/Common/Helper.php`.
+
+Новые классы:
+- `Project\\Support\\RussianPluralizer`;
+- `Project\\Support\\JsonEncoder`;
+- `Project\\Support\\CharsetConverter`;
+- `Project\\Support\\UrlGenerator`;
+- `Project\\Bitrix\\IBlock\\PropertyAccessor`;
+- `Project\\Bitrix\\IBlock\\ImageWatermarker`.
+
+Старый фасад сохранён в `legacy/Lema/Common/Helper.php`. Перечень методов, примеры и ограничения описаны в [classes/Support/README.md](../classes/Support/README.md).
+
+### Обратная совместимость
+
+Сохранены старые имена методов: `pluralize()`, `pluralizeN()`, `enc()`, `getJson()`, `utf8ToCP1251()`, `getFullUrl()`, `getImageWatermark()`, `getImageWatermarkSrc()`, `propEmpty()`, `propFilled()`, `prop()`, `propValue()`, `escPropValue()`.
+
+Для `getFullUrl()` добавлена обязательная настройка доверенного домена через `Helper::setBaseUrl()`. Это намеренное изменение: прежний метод брал имя хоста из контекста запроса, что могло приводить к формированию ссылок на подставленный Host. Для платёжных callback/return URL домен должен задаваться конфигурацией проекта, а не заголовком запроса.
+
+### Найденные особенности старой реализации
+
+1. `pluralize()` проверял только целочисленный остаток и не обрабатывал отрицательные числа ожидаемым образом.
+2. `enc()` зависит от Bitrix HtmlFilter или `htmlspecialcharsbx()`; при отсутствии обоих вариантов нет независимого fallback.
+3. `getJson()` напрямую возвращает `json_encode()`, поэтому ошибка кодирования может быть проигнорирована вызывающим кодом.
+4. `utf8ToCP1251()` не обрабатывает неудачное преобразование.
+5. `getFullUrl()` формирует абсолютный URL на основе `Server::getServerName()`, зависящего от HTTP-контекста.
+6. `getImageWatermark()` не проверяет наличие `CFile` и константы типа масштабирования; параметры водяного знака объединяются вручную.
+7. `propEmpty()` использует `empty()`, поэтому значение строки `"0"` считается пустым. Это поведение сохранено для совместимости.
+8. `escPropValue()` также считает `"0"` пустым из-за `empty()`. Это поведение сохранено; при необходимости получить ноль используйте `propValue()` и экранируйте его отдельно.
+
+### Тестирование
+
+Добавлен `tests/lema_helper_smoke.php`; запуск — `composer test:helper` из каталога `local`. Тесты проверяют склонение, HTML-кодирование, JSON, Windows-1251, чтение свойств и формирование URL с доверенным доменом. Реальный вызов `CFile::ResizeImageGet()` требует установленного ядра и проверяется отдельно.
