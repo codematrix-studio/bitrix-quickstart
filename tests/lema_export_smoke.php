@@ -195,6 +195,11 @@ exportExpect(
     'Bitrix exporter must resolve preview page URLs against the trusted base URL.'
 );
 
+$exportCache = new Project\Support\JsonFileCache($exportDirectory);
+$storedExport = $exportCache->get('catalog-export-test');
+exportExpect(is_array($storedExport), 'Bitrix exporter must write its catalog cache.');
+exportExpect($exportCache->isFresh('catalog-export-test', 3600), 'Bitrix exporter cache must be fresh.');
+
 // Повторная загрузка с теми же параметрами использует кеш и не вызывает репозитории.
 $cachedExporter = new Project\Export\BitrixCatalogExporter(
     12,
