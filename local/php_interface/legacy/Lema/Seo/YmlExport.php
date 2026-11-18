@@ -14,12 +14,7 @@ class YmlExport extends \Lema\Base\XmlExport
 {
     public function showData(array $params = [])
     {
-        // Старый метод ожидал, что loadData() уже был вызван.
-        // Если объект ещё не загружал каталог, загружаем его из кеша или инфоблока.
-        if ($this->getGeneratedAt() === 0) {
-            $this->loadData();
-        }
-
+        // Как и старый класс, showData() выводит уже загруженные данные.
         $config = [
             'shopName' => $this->legacyParams['shopName'] ?? null,
             'companyName' => $this->legacyParams['companyName'] ?? null,
