@@ -11,12 +11,12 @@ namespace Project\Support;
  */
 final class HtmlEscaper
 {
-    public function escape(string $value): string
+    public function escape(string $value, int $flags = ENT_QUOTES | ENT_SUBSTITUTE, string $encoding = 'UTF-8'): string
     {
         return htmlspecialchars(
             $value,
-            ENT_QUOTES | ENT_SUBSTITUTE,
-            'UTF-8'
+            $flags,
+            $encoding
         );
     }
 }
