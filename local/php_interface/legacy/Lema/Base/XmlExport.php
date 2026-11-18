@@ -22,6 +22,7 @@ class XmlExport extends BitrixCatalogExporter
     protected $sectionsFile = null;
     protected $additionalDataFile = null;
     protected $time = null;
+    protected $needUpdate = false;
     protected array $legacyParams = [];
 
     public function __construct($iblockId, array $params = [])
@@ -34,6 +35,10 @@ class XmlExport extends BitrixCatalogExporter
         $relativeDirectory = (string) ($params['storageDir'] ?? static::DEFAULT_DIR);
         $relativeDirectory = str_replace('\\', '/', $relativeDirectory);
         $segments = explode('/', trim($relativeDirectory, '/'));
+
+        if ($segments === [] || $segments === ['']) {
+            throw new InvalidArgumentException('storageDir не может указывать на корень DOCUMENT_ROOT.');
+        }
 
         foreach ($segments as $segment) {
             if ($segment === '..' || $segment === '.') {
@@ -73,8 +78,34 @@ class XmlExport extends BitrixCatalogExporter
     {
         $result = parent::loadData($params, $return);
         $this->time = $this->getGeneratedAt();
+        $this->needUpdate = false;
 
         return $result;
+    }
+
+    public function setNeedUpdate($additional): bool
+    {
+        $this->needUpdate = parent::setNeedUpdate($additional);
+
+        return $this->needUpdate;
+    }
+
+    protected function isNeedUpdate(): bool
+    {
+        return $this->needUpdate || parent::isNeedUpdate();
+    }
+
+    /**
+     * Старые наследники могли переопределять loadAdditionalData() как источник
+     * дополнительных данных. Вызываем такой метод только при обновлении кеша.
+     */
+    protected function prepareAdditionalData(): void
+    {
+        $method = new \ReflectionMethod($this, 'loadAdditionalData');
+
+        if ($method->getDeclaringClass()->getName() !== BitrixCatalogExporter::class) {
+            $this->loadAdditionalData();
+        }
     }
 
     /**
