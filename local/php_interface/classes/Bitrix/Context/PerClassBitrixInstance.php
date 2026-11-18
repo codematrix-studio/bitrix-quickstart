@@ -18,10 +18,12 @@ abstract class PerClassBitrixInstance
     public static function get()
     {
         $class = static::class;
-        $instance = static::createInstance();
-        self::$instances[$class] = $instance;
 
-        return $instance;
+        if (!array_key_exists($class, self::$instances)) {
+            self::$instances[$class] = static::createInstance();
+        }
+
+        return self::$instances[$class];
     }
 
     public static function resetInstance(): void
