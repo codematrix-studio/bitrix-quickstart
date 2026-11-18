@@ -1,0 +1,17 @@
+{
+    "name": "codematrix-studio/bitrix-quickstart",
+    "description": "Minimal project structure and Composer autoloading for 1C-Bitrix projects",
+    "type": "project",
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Project\\": "php_interface/classes/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {}
+    }
+}
