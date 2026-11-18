@@ -43,3 +43,15 @@ echo $escaper->escape($value);
 ```
 
 Оба класса не зависят от API Битрикс и не требуют сторонних Composer-пакетов.
+
+## Bitrix D7
+
+### `Project\Bitrix\IBlock\ElementChecker`
+
+Проверяет наличие элемента инфоблока по фильтру `ElementTable`:
+
+- `exists(array $filter): bool` — возвращает, найден ли элемент;
+- `findId(array $filter): ?int` — возвращает ID найденного элемента или `null`.
+
+Требует загруженного модуля `iblock`. Пустой фильтр не допускается.
+Подробные примеры находятся в [Bitrix/IBlock/README.md](Bitrix/IBlock/README.md).
