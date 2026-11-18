@@ -427,7 +427,7 @@ $warningManager = new OrderManager(
 $saveWarningsRaised = false;
 try {
     $warningManager->create(101, 2);
-} catch (\\Project\\Bitrix\\Sale\\OrderSaveWarningsException $exception) {
+} catch (\Project\Bitrix\Sale\OrderSaveWarningsException $exception) {
     $saveWarningsRaised = $exception->getOrderId() === 777
         && $exception->getWarnings() === ['Предупреждение проверки заказа'];
 }
