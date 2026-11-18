@@ -6,7 +6,7 @@
 
 namespace Lema\Base;
 
-abstract class BitrixInstances extends \\Project\\Bitrix\\Context\\PerClassBitrixInstance
+abstract class BitrixInstances extends \Project\\Bitrix\\Context\PerClassBitrixInstance
 {
     protected static $instance = null;
 
