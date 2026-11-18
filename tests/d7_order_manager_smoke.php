@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/OrderManager.php';
+require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/OrderSaveWarningsException.php';
 
 use Project\Bitrix\Sale\OrderManager;
 
@@ -17,7 +18,8 @@ class FakeOrderResult
 {
     public function __construct(
         private bool $success = true,
-        private array $errors = []
+        private array $errors = [],
+        private array $warnings = []
     ) {}
 
     public function isSuccess(): bool
@@ -28,6 +30,11 @@ class FakeOrderResult
     public function getErrorMessages(): array
     {
         return $this->errors;
+    }
+
+    public function getWarningMessages(): array
+    {
+        return $this->warnings;
     }
 }
 
@@ -229,6 +236,7 @@ class FakeOrder
     public bool $saveSuccess = true;
     public int $finalActions = 0;
     public int $saveCalls = 0;
+    public array $saveWarnings = [];
 
     public function __construct()
     {
@@ -299,7 +307,7 @@ class FakeOrder
     {
         $this->saveCalls++;
 
-        return new FakeOrderResult($this->saveSuccess, ['Ошибка сохранения заказа']);
+        return new FakeOrderResult($this->saveSuccess, ['Ошибка сохранения заказа'], $this->saveWarnings);
     }
 
     public function getId(): int
@@ -406,6 +414,25 @@ try {
     $deniedDeliveryFailed = true;
 }
 orderManagerExpect($deniedDeliveryFailed, 'Служба доставки, не прошедшая ограничения, должна быть отклонена.');
+
+$warningOrder = new FakeOrder();
+$warningOrder->saveWarnings = ['Предупреждение проверки заказа'];
+$warningManager = new OrderManager(
+    static fn (): FakeOrderBasket => $basket,
+    static fn (): FakeOrder => $warningOrder,
+    null,
+    null,
+    static fn (): string => 's1'
+);
+$saveWarningsRaised = false;
+try {
+    $warningManager->create(101, 2);
+} catch (\\Project\\Bitrix\\Sale\\OrderSaveWarningsException $exception) {
+    $saveWarningsRaised = $exception->getOrderId() === 777
+        && $exception->getWarnings() === ['Предупреждение проверки заказа'];
+}
+orderManagerExpect($saveWarningsRaised, 'Предупреждения после сохранения должны возвращать специальное исключение с ID уже созданного заказа.');
+orderManagerExpect($warningOrder->saveCalls === 1, 'Заказ с предупреждениями должен быть сохранён ровно один раз.');
 
 $failedOrder = new FakeOrder();
 $failedOrder->saveSuccess = false;
