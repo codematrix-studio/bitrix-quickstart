@@ -81,9 +81,8 @@ $basket = Basket::create($siteId);
 $item = $basket->createItem('catalog', $productId);
 $item->setFields([
     'QUANTITY' => $quantity,
-    'CURRENCY' => $currency,
     'LID' => $siteId,
-    'PRODUCT_PROVIDER_CLASS' => 'CCatalogProductProvider',
+    'PRODUCT_PROVIDER_CLASS' => \\Bitrix\\Catalog\\Product\\Basket::getDefaultProviderName(),
 ]);
 
 $orderId = (new OrderManager())->createFromBasket(
