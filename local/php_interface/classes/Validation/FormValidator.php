@@ -223,10 +223,12 @@ class FormValidator
             'url' => 'Неверный формат URL',
         ];
 
-        $type = $this->validators()[$type] ?? null;
-        if ($type === null) {
+        if (!array_key_exists($type, $this->validators())) {
             return [true, null];
         }
+
+        // Старое имя правила numerical оставлено как псевдоним numeric.
+        $type = $type === 'numerical' ? 'numeric' : $type;
 
         $valid = false;
         switch ($type) {
