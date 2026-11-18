@@ -453,3 +453,29 @@ if (Page::inRootDirectory('catalog')) {
 Исправлено важное поведение старой реализации: проверка границы сегмента. Путь `/catalog-old/` больше не считается частью `/catalog/`. Метод `inRootDir()` проверяет только первый сегмент URL и не совпадает с одноимённым вложенным каталогом.
 
 Автономный тест: `tests/page_path_matcher_smoke.php`; команда запуска из каталога `local`: `composer test:page`. Тест не требует ядра Битрикс. Фасад текущего URL требует HTTP-контекста Bitrix и проверяется интеграционно.
+
+## AssetManager — подключение JavaScript и CSS
+
+Старые файлы:
+- `lib/Common/AssetManager.php`;
+- `lib/Common/Asset.php`.
+
+В старом репозитории также есть побайтные дубли в `lib/lib/Common/`; отдельной версии API там нет. Поиск по исходникам обнаружил использование самого AssetManager только в демонстрационном `Common/example.php`. Прочие вызовы `Bitrix\\Main\\Page\\Asset` — прямое использование штатного API и не являются зависимостью от старого класса.
+
+Новая реализация:
+- `Project\\Bitrix\\Asset\\AssetManager` — фасад с внедряемым объектом Asset;
+- `legacy/Lema/Common/Asset.php` — адаптер старого `Asset::get()`;
+- `legacy/Lema/Common/AssetManager.php` — адаптер старого менеджера.
+
+Сохранён старый публичный контракт:
+- конструктор `new Lema\\Common\\AssetManager()` без аргументов;
+- `addCssArray(array $data = [])`;
+- `addJsArray(array $data = [])`;
+- `init(array $data = [])`;
+- цепочка вызовов с возвратом текущего адаптера.
+
+Новая реализация не использует старые singleton-базовые классы. Она передаёт регистрацию напрямую штатному объекту Bitrix Asset. Проверяет типы и пустые значения путей и имён расширений; для тестов принимает callback вместо обязательного обращения к глобальному CJSCore.
+
+Подробности и пример миграции: [Bitrix/Asset/README.md](../classes/Bitrix/Asset/README.md).
+
+Автономная проверка: `tests/bitrix_asset_manager_smoke.php`; запуск — `composer test:asset`. Реальный вывод ресурсов и работа CJSCore на установленном ядре остаются интеграционными проверками.
