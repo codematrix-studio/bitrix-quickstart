@@ -93,3 +93,18 @@ $code = $codeGenerator->generate('Название элемента инфобл
 Пустой фильтр запрещён, чтобы случайно не выполнять поиск по всей таблице. Оба класса выбирают только поле `ID` и ограничивают выборку одной записью.
 
 **Важно:** синтаксис фильтров D7 ORM и Legacy API не полностью совпадает. Передавайте фильтр в формате соответствующего API. Классы не преобразуют фильтры друг в друга и не загружают модуль `iblock` самостоятельно.
+
+## Представление результата инфоблока
+
+`Project\Bitrix\IBlock\ElementView` — объект-обёртка над массивом элемента, полученным из компонента или API Битрикс. Он сохраняет привычные методы старого `Lema\Template\Item`: `get()`, `prop()`, `propValue()`, `propText()`, `getId()`, `getName()`, `previewText()`, `detailText()`, `detailUrl()`, `previewPicture()` и другие.
+
+`Project\Bitrix\IBlock\SectionView` расширяет его и учитывает формат полей изображения раздела (`PICTURE` и `DETAIL_PICTURE`).
+
+```php
+$item = new \Project\Bitrix\IBlock\ElementView($arItem, $editAreaId);
+$name = $item->getName();
+$price = $item->propValue('PRICE');
+$preview = $item->previewPicture();
+```
+
+Для миграции доступны необязательные адаптеры `local/php_interface/legacy/Lema/Template/Item.php` и `local/php_interface/legacy/Lema/Template/Section.php`. После Composer autoload и подключения соответствующего файла старые имена `Lema\Template\Item` и `Lema\Template\Section` продолжают работать. Адаптеры не подключаются автоматически, чтобы не конфликтовать с установленным модулем `lema.lib`.
