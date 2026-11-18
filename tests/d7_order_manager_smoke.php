@@ -378,4 +378,36 @@ try {
 }
 orderManagerExpect($failedSave, 'Ошибка сохранения заказа должна быть передана вызывающему коду.');
 
+$temporaryBasket = new FakeOrderBasket();
+$temporaryOrder = new FakeOrder();
+$permanentBasketLoads = 0;
+$temporaryManager = new OrderManager(
+    static function () use (&$permanentBasketLoads): FakeOrderBasket {
+        $permanentBasketLoads++;
+
+        throw new RuntimeException('Постоянная корзина не должна загружаться для быстрого заказа.');
+    },
+    static fn (): FakeOrder => $temporaryOrder,
+    null,
+    null,
+    static fn (): string => 's1'
+);
+$temporaryOrderId = $temporaryManager->createFromBasket(
+    $temporaryBasket,
+    202,
+    4,
+    ['EMAIL' => 'quick@example.test']
+);
+orderManagerExpect($temporaryOrderId === 777, 'Быстрый заказ должен вернуть ID сохранённого заказа.');
+orderManagerExpect($temporaryOrder->basket !== null, 'Временная корзина должна быть передана в заказ.');
+orderManagerExpect($permanentBasketLoads === 0, 'Создание заказа из временной корзины не должно загружать постоянную корзину пользователя.');
+
+$invalidTemporaryBasketFailed = false;
+try {
+    $temporaryManager->createFromBasket(new stdClass(), 202, 4);
+} catch (RuntimeException) {
+    $invalidTemporaryBasketFailed = true;
+}
+orderManagerExpect($invalidTemporaryBasketFailed, 'Некорректная временная корзина должна отклоняться.');
+
 echo "Проверки OrderManager пройдены.\n";
