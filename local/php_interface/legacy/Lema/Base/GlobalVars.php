@@ -6,7 +6,7 @@
 
 namespace Lema\Base;
 
-abstract class GlobalVars extends \\Project\\Support\\PerClassGlobalProxy
+abstract class GlobalVars extends \Project\\Support\PerClassGlobalProxy
 {
     protected static $object = null;
     protected static $varName = null;
