@@ -20,8 +20,10 @@
         "test": [
             "@test:compatibility",
             "@test:forms",
-            "@test:iblock"
+            "@test:iblock",
+            "@test:helper"
         ],
-        "test:iblock": "php ../tests/lema_iblock_smoke.php"
+        "test:iblock": "php ../tests/lema_iblock_smoke.php",
+        "test:helper": "php ../tests/lema_helper_smoke.php"
     }
 }
