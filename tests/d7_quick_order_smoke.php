@@ -51,12 +51,14 @@ class FakeQuickOrderBasket
     public ?FakeQuickOrderItem $item = null;
     public string $provider = '';
     public int $productId = 0;
+    public bool $itemSaveSuccess = true;
 
     public function createItem(string $provider, int $productId): FakeQuickOrderItem
     {
         $this->provider = $provider;
         $this->productId = $productId;
         $this->item = new FakeQuickOrderItem();
+        $this->item->saveSuccess = $this->itemSaveSuccess;
 
         return $this->item;
     }
@@ -161,7 +163,7 @@ $failedQuickOrder = new QuickOrder(
     static fn (): string => 's1',
     static fn (): string => 'RUB'
 );
-$failedItem->createItem('catalog', 321)->saveSuccess = false;
+$failedItem->itemSaveSuccess = false;
 $failedItemSaveFailed = false;
 try {
     $failedQuickOrder->create(321, 1, 101, 3);
