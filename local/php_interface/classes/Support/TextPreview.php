@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Project\Support;
 
 use InvalidArgumentException;
-use RuntimeException;
 
 /**
  * Converts HTML or plain text into a short, readable plain-text preview.
@@ -25,7 +24,17 @@ final class TextPreview
             throw new InvalidArgumentException('The maximum preview length must be greater than zero.');
         }
 
-        // Preserve word separation when removing common block-level HTML tags.
+        // Remove non-content blocks and preserve separation between block elements.
+        $text = preg_replace(
+            '~<(script|style)\b[^>]*>.*?</\1\s*>~isu',
+            ' ',
+            $text
+        );
+
+        if ($text === null) {
+            throw new InvalidArgumentException('The input contains invalid UTF-8 data.');
+        }
+
         $text = preg_replace(
             '/<(?:br|hr)\b[^>]*>|<\/(?:p|div|li|h[1-6]|blockquote|section|article|tr)\s*>/iu',
             ' ',
