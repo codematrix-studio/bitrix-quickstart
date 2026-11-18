@@ -9,11 +9,22 @@ use Project\Bitrix\Asset\AssetManager as BitrixAssetManager;
 /** Переходный адаптер старого Lema\Common\AssetManager. */
 class AssetManager
 {
+    /** @var array<class-string, static> */
+    private static array $instances = [];
+
     private BitrixAssetManager $manager;
 
     public function __construct()
     {
         $this->manager = new BitrixAssetManager(Asset::get());
+    }
+
+    /** Совместимость с унаследованным StaticInstance::get(). */
+    public static function get(): static
+    {
+        $class = static::class;
+
+        return self::$instances[$class] ??= new static();
     }
 
     /** @param array<int|string, string> $data */

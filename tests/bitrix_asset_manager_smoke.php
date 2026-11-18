@@ -68,4 +68,54 @@ try {
 }
 assetExpect($failed, 'Отсутствующий метод Bitrix Asset должен давать понятную ошибку.');
 
-echo "Проверки AssetManager пройдены.\n";
+class FakeBitrixAsset
+{
+    public static ?self $instance = null;
+    public array $js = [];
+    public array $css = [];
+
+    public static function getInstance(): self
+    {
+        return self::$instance ??= new self();
+    }
+
+    public function addJs(string $file): void
+    {
+        $this->js[] = $file;
+    }
+
+    public function addCss(string $file): void
+    {
+        $this->css[] = $file;
+    }
+}
+
+class CJSCore
+{
+    public static array $initialized = [];
+
+    public static function init(array $extensions): void
+    {
+        self::$initialized = $extensions;
+    }
+}
+
+class_alias(FakeBitrixAsset::class, 'Bitrix\\Main\\Page\\Asset');
+
+require_once __DIR__ . '/../local/php_interface/legacy/Lema/Common/Asset.php';
+require_once __DIR__ . '/../local/php_interface/legacy/Lema/Common/AssetManager.php';
+
+$legacy = new \Lema\Common\AssetManager();
+$legacy
+    ->addCssArray(['/legacy/site.css'])
+    ->init(['legacy-extension'])
+    ->addJsArray(['/legacy/site.js']);
+
+$native = FakeBitrixAsset::getInstance();
+assetExpect($native->css === ['/legacy/site.css'], 'Legacy adapter должен передавать CSS в штатный Asset.');
+assetExpect($native->js === ['/legacy/site.js'], 'Legacy adapter должен передавать JavaScript в штатный Asset.');
+assetExpect(CJSCore::$initialized === ['legacy-extension'], 'Legacy adapter должен вызывать CJSCore::init().');
+assetExpect(\Lema\Common\Asset::get() === $native, 'Старый Asset::get() должен возвращать singleton Bitrix Asset.');
+assetExpect(\Lema\Common\AssetManager::get() === \Lema\Common\AssetManager::get(), 'Старый AssetManager::get() должен сохранять singleton-контракт.');
+
+echo "Проверки AssetManager и legacy-адаптеров пройдены.\n";

@@ -2,9 +2,7 @@
 
 ## AssetManager
 
-Project\Bitrix\Asset\AssetManager — небольшой фасад над штатным объектом Bitrix\Main\Page\Asset. Он не хранит собственный реестр ресурсов и не заменяет механизм Bitrix: все файлы передаются непосредственно в addJs() и addCss().
-
-Пример:
+Project\Bitrix\Asset\AssetManager — фасад над штатным объектом Bitrix\Main\Page\Asset. Он не хранит собственный реестр ресурсов: файлы передаются непосредственно в addJs() и addCss().
 
     use Project\Bitrix\Asset\AssetManager;
     use Bitrix\Main\Page\Asset;
@@ -12,29 +10,15 @@ Project\Bitrix\Asset\AssetManager — небольшой фасад над шт�
     $assets = new AssetManager(Asset::getInstance());
 
     $assets
-        ->addCss([
-            SITE_TEMPLATE_PATH . '/css/site.css',
-            SITE_TEMPLATE_PATH . '/css/theme.css',
-        ])
+        ->addCss([SITE_TEMPLATE_PATH . '/css/site.css'])
         ->init(['fx', 'jquery2'])
         ->addJs([SITE_TEMPLATE_PATH . '/js/site.js']);
 
-### API
+Методы addCss() и addJs() принимают строку или массив строк и возвращают текущий объект. Пути и имена расширений должны быть непустыми строками. Порядок регистрации сохраняется. Пустой массив ничего не добавляет. Существование файлов не проверяется.
 
-- __construct(object $asset, ?callable $extensionInitializer = null) — принимает объект Asset и необязательный обработчик инициализации расширений;
-- addCss(string|array $files): self — регистрирует CSS-файлы;
-- addJs(string|array $files): self — регистрирует JavaScript-файлы;
-- init(array $extensions): self — вызывает CJSCore::init() либо переданный обработчик.
-
-Пути и имена расширений должны быть непустыми строками. Порядок регистрации сохраняется. Пустой массив ничего не добавляет. Класс не проверяет существование файлов: это ответственность проекта и среды развертывания.
-
-Если инициализатор не передан, init() требует доступный CJSCore::init(). При отсутствии метода выбрасывается LogicException.
-
-Передача объекта и callback через конструктор позволяет тестировать регистрацию без ядра Bitrix.
+Метод init() вызывает CJSCore::init(). Для автономных тестов можно передать callback вторым аргументом конструктора. Если CJSCore недоступен и callback не передан, выбрасывается LogicException.
 
 ## Миграция со старого lema.lib
-
-Старый API:
 
     $assets = new \Lema\Common\AssetManager();
     $assets
@@ -42,25 +26,25 @@ Project\Bitrix\Asset\AssetManager — небольшой фасад над шт�
         ->init(['fx', 'jquery2'])
         ->addJsArray(['/js/site.js']);
 
-Необязательные адаптеры находятся в legacy/Lema/Common/Asset.php и legacy/Lema/Common/AssetManager.php. Они сохраняют старые имена классов, конструктор без аргументов, методы addCssArray(), addJsArray(), init() и цепочку вызовов.
+Адаптеры legacy/Lema/Common/Asset.php и legacy/Lema/Common/AssetManager.php сохраняют:
+- старые имена классов;
+- конструктор AssetManager без аргументов;
+- методы addCssArray(), addJsArray() и init();
+- цепочку вызовов;
+- статический AssetManager::get(), унаследованный ранее от StaticInstance;
+- Asset::get(), возвращающий штатный Bitrix Asset.
 
-Подключайте адаптеры явно после Composer autoload и только после отключения исходного модуля lema.lib, чтобы не получить конфликт классов:
+Подключайте адаптеры явно после Composer autoload и только после отключения исходного модуля lema.lib:
 
     require_once __DIR__ . '/legacy/Lema/Common/Asset.php';
     require_once __DIR__ . '/legacy/Lema/Common/AssetManager.php';
 
-Старый Lema\Common\Asset::get() возвращает штатный объект Bitrix\Main\Page\Asset. Новая реализация не наследует старые базовые singleton-классы и не создаёт дополнительное хранилище экземпляра.
+Адаптеры не подключаются автоматически и не наследуют старые базовые singleton-классы. Экземпляр AssetManager::get() хранится отдельно для каждого класса-наследника.
 
 ## Границы проверки
 
-Автономный smoke-тест проверяет передачу файлов, порядок вызовов, fluent API, пустые списки, валидацию и ошибки неподходящего объекта. Он не доказывает фактический вывод тегов в HTML.
+Smoke-тест проверяет регистрацию ресурсов через тестовый объект, порядок вызовов, fluent API, валидацию, CJSCore и legacy-контракты. Он не подтверждает фактический вывод тегов в HTML.
 
-На установленном ядре Bitrix отдельно необходимо проверить:
-- регистрацию файлов в контексте страницы;
-- фактический вывод CSS/JS в нужных областях шаблона;
-- доступность и корректную работу расширений CJSCore;
-- поведение на минимальной и целевой версиях ядра проекта.
+На установленном ядре Bitrix отдельно проверьте регистрацию файлов в контексте страницы, фактический вывод CSS/JS, доступность расширений CJSCore и совместимость с целевой версией ядра.
 
-Запуск автономного теста из каталога local:
-
-    composer test:asset
+Запуск из каталога local: composer test:asset.
