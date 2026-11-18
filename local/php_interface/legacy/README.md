@@ -37,7 +37,7 @@
 - `lib/IBlock/Element.php` и `lib/IBlock/Section.php`: **переработаны** в `Project\\Bitrix\\IBlock\\ElementRepository` и `SectionRepository`; старые статические фасады сохранены адаптерами `Lema\\IBlock\\Element` и `Lema\\IBlock\\Section`.
 - `lib/Common/Helper.php`: **основные универсальные методы переработаны** в `RussianPluralizer`, `JsonEncoder`, `CharsetConverter`, `UrlGenerator`, `PropertyAccessor` и `ImageWatermarker`; старый фасад `Lema\\Common\\Helper` сохранён. Методы работы с URL требуют явного доверенного базового адреса.
 - `lib/Base/Markup.php` и `lib/Seo/OpenGraph.php`: сохранить fluent API, исправить общие статические данные и экранирование атрибутов.
-- `lib/Base/StaticInstance.php` и `lib/Base/BitrixInstances.php`: исправить совместное использование статического экземпляра между наследниками.
+- `lib/Base/StaticInstance.php`, `BitrixInstances.php` и `GlobalVars.php`: **переработаны** через `PerClassInstance`, `PerClassBitrixInstance` и `PerClassGlobalProxy`; адаптеры старых базовых классов сохранены.
 
 ### Средний приоритет
 
@@ -232,3 +232,33 @@ composer test
 ### Результат тестирования Common Helper
 
 `composer test:helper` включён в общий `composer test`. Все автономные тесты и проверка синтаксиса прошли на PHP 8.1, 8.2, 8.3 и 8.4. Проверка водяного знака через реальный `CFile::ResizeImageGet()` остаётся интеграционной и требует ядра Битрикс.
+
+
+## Базовые классы: StaticInstance, BitrixInstances, GlobalVars
+
+Старые классы:
+- `lib/Base/StaticInstance.php`;
+- `lib/Base/BitrixInstances.php`;
+- `lib/Base/GlobalVars.php`.
+
+Новые реализации:
+- `Project\\Support\\PerClassInstance`;
+- `Project\\Bitrix\\Context\\PerClassBitrixInstance`;
+- `Project\\Support\\PerClassGlobalProxy`.
+
+Совместимые адаптеры:
+- `legacy/Lema/Base/StaticInstance.php`;
+- `legacy/Lema/Base/BitrixInstances.php`;
+- `legacy/Lema/Base/GlobalVars.php`.
+
+Подробности: [classes/Support/README.md](../classes/Support/README.md).
+
+### Исправленные проблемы
+
+1. `StaticInstance` больше не использует один унаследованный статический экземпляр для всех классов-наследников. Экземпляр хранится отдельно для каждого класса.
+2. `BitrixInstances` получает объект через метод-наследник, не смешивая результаты разных фасадов. Старый контракт `setInstance()` сохранён в адаптере.
+3. `GlobalVars` хранит разрешённый глобальный объект отдельно для каждого класса. Два наследника с разными именами глобальных переменных больше не получают один и тот же объект.
+4. `GlobalVars::__call()` передаёт аргументы метода через распаковку массива, а не передаёт весь массив одним аргументом.
+5. Для тестов и длительных процессов предусмотрен явный сброс кеша экземпляра через `resetInstance()`.
+
+Добавлен автономный тест `tests/lema_base_instances_smoke.php`; запуск — `composer test:base`. Он проверяет изоляцию экземпляров наследников, глобальных объектов и корректную передачу аргументов. Реальные фасады Bitrix дополнительно проверяются на ядре.
