@@ -82,7 +82,7 @@ $item = $basket->createItem('catalog', $productId);
 $item->setFields([
     'QUANTITY' => $quantity,
     'LID' => $siteId,
-    'PRODUCT_PROVIDER_CLASS' => \Bitrix\\Catalog\\Product\\Basket::getDefaultProviderName(),
+    'PRODUCT_PROVIDER_CLASS' => \Bitrix\Catalog\Product\Basket::getDefaultProviderName(),
 ]);
 
 $orderId = (new OrderManager())->createFromBasket(
