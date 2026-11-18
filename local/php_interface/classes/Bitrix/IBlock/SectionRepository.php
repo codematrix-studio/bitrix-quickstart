@@ -54,7 +54,10 @@ class SectionRepository
         $order = $params['order'] ?? ['SORT' => 'ASC'];
         $filter = is_array($params['filter'] ?? null) ? $params['filter'] : [];
         $filter['IBLOCK_ID'] = (int) $iblockId;
-        $filter = array_replace(['ACTIVE' => 'Y'], $filter);
+        $includeInactive = !empty($params['includeInactive']);
+        if (!$includeInactive) {
+            $filter = array_replace(['ACTIVE' => 'Y'], $filter);
+        }
         $includeCount = $params['bIncCnt'] ?? false;
         $select = $params['arSelect'] ?? [];
         $navigation = $params['arNavStartParams'] ?? false;
@@ -64,6 +67,18 @@ class SectionRepository
             : $this->callLegacyList($order, $filter, $includeCount, $select, $navigation);
 
         return $this->keyRowsById($this->fetchRows($result, true));
+    }
+
+    /**
+     * Legacy-выборка разделов без принудительного фильтра ACTIVE=Y.
+     * Нужна, в частности, для выгрузок, в которых должны присутствовать
+     * отключённые разделы и их дерево.
+     */
+    public function getListIncludingInactive($iblockId, array $params = []): array
+    {
+        $params['includeInactive'] = true;
+
+        return $this->getList($iblockId, $params);
     }
 
     public function getAllD7($iblockId, array $params = []): array
