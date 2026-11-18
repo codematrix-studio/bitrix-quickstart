@@ -383,3 +383,32 @@ composer test
 
 
 Для наследников `Lema\\Base\\XmlExport` сохранена точка расширения: если дочерний класс переопределяет `loadAdditionalData()`, адаптер вызывает этот метод при обновлении кеша. `YmlExport::showData()` ожидает, что `loadData()` уже был вызван, как и исходный класс; сам по себе метод только формирует и выводит подготовленные данные.
+
+## Старый Ns\\Bitrix\\Helper\\IBlock\\Validator
+
+Исходный файл: `ASDAFF/bitrix.quickstart/local/codes/Ns/Bitrix/Helper/IBlock/Validator.php`.
+
+Для миграции добавлен необязательный адаптер: `legacy/Ns/Bitrix/Helper/IBlock/Validator.php`.
+
+Сохранены методы и их наблюдаемое поведение:
+
+- `email($email = '', $xss = true)` — при включённом `$xss` сначала обрезает пробелы и экранирует HTML, затем проверяет адрес; возвращает строку или `false`;
+- `email($email, false)` — не обрезает и не изменяет исходное значение перед проверкой;
+- `xss($value = '')` — обрезает внешние пробелы и экранирует HTML с флагами PHP по умолчанию старой версии.
+
+Адаптер подключается явно после Composer autoload:
+
+```php
+require_once __DIR__ . '/legacy/Ns/Bitrix/Helper/IBlock/Validator.php';
+
+$validator = new \\Ns\\Bitrix\\Helper\\IBlock\\Validator();
+$email = $validator->email($email);
+$name = $validator->xss($name);
+```
+
+Старый класс наследовался от `Ns\\Bitrix\\Helper\\HelperCore`, но сам не использовал его магические методы. Адаптер намеренно не возвращает универсальный `HelperCore` и не поддерживает вызовы `with...()` / `get...()`: этот механизм хранит произвольное состояние без типизации и не является частью контракта двух методов валидатора. Если проектный наследник старого класса использовал это наследование, его нужно мигрировать отдельно.
+
+В новом коде не следует использовать `xss()` для очистки данных перед сохранением. Проверяйте входные данные по назначению, храните исходные значения и экранируйте их при выводе в конкретный контекст. Для этого каркас предоставляет `Project\\Support\\EmailValidator` и `Project\\Support\\HtmlEscaper`.
+
+Автономный тест: `tests/iblock_validator_compatibility_smoke.php`; команда запуска из каталога `local`: `composer test:iblock-validator`. Тест не требует ядра Битрикс.
+
