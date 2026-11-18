@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+ 
+// Минимальный PSR-4 автозагрузчик для автономного запуска без vendor/autoload.php.
+spl_autoload_register(static function (string $class): void {
+    $prefix = 'Project\\';
+    if (!str_starts_with($class, $prefix)) {
+        return;
+    }
+
+    $relative = substr($class, strlen($prefix));
+    $file = __DIR__ . '/../local/php_interface/classes/' . str_replace('\\', '/', $relative) . '.php';
+
+    if (is_file($file)) {
+        require_once $file;
+    }
+});
+
 require_once __DIR__ . '/../local/php_interface/classes/Validation/FormValidator.php';
 require_once __DIR__ . '/../local/php_interface/classes/Validation/LegacyFieldValidator.php';
 require_once __DIR__ . '/../local/php_interface/classes/Validation/AjaxFormActions.php';
@@ -109,3 +125,50 @@ formsExpect(!$legacyAjax->addRecord(0, []), 'AjaxForm must reject an empty ibloc
 formsExpect(isset($legacyAjax->getErrors()['empty_iblock']), 'AjaxForm must retain the legacy error key.');
 
 echo "Проверки Forms/Validators пройдены.\n";
+
+
+// Реестр современного валидатора должен ссылаться на реальные классы.
+formsExpect(
+    $form->validators()['email'] === Project\Validation\EmailValidator::class,
+    'Modern validator registry must expose concrete validator classes.'
+);
+
+// reCAPTCHA без серверного провайдера закрывается отказом, но не роняет форму.
+$captchaForm = new Project\Validation\FormValidator(
+    [['captcha', 'recaptcha']],
+    ['captcha' => 'token']
+);
+formsExpect(!$captchaForm->validate(), 'reCAPTCHA must fail closed when no verifier is configured.');
+
+$captchaForm->setRecaptchaVerifier(static fn (string $token): bool => $token === 'valid-token');
+$captchaForm->setFields(['captcha' => 'valid-token']);
+formsExpect($captchaForm->validate(), 'reCAPTCHA must use the explicitly injected verifier.');
+
+// Старый пользовательский валидатор должен запускаться один раз на одно поле и правило.
+class FormsCountedLegacyValidator extends \Lema\Forms\Validators\Validator
+{
+    protected string $ruleName = 'required';
+    public static int $calls = 0;
+
+    public function validate(): bool
+    {
+        self::$calls++;
+        $this->hasError = false;
+        return true;
+    }
+}
+
+class FormsCustomLegacyForm extends \Lema\Forms\Form
+{
+    public function validators(): array
+    {
+        return array_replace(parent::validators(), [
+            'custom' => FormsCountedLegacyValidator::class,
+        ]);
+    }
+}
+
+$customForm = new FormsCustomLegacyForm([['field', 'custom']], ['field' => 'value']);
+formsExpect($customForm->validate(), 'Custom legacy validators must remain supported.');
+formsExpect(FormsCountedLegacyValidator::$calls === 1, 'Legacy validator must not be executed twice by one validation pass.');
+
