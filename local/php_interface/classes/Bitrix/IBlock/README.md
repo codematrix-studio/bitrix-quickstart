@@ -248,7 +248,7 @@ $elementId = $checker->findId($filter);
 $legacyElementId = $elementId ?? false;
 ```
 
-Для D7 используйте `ElementChecker`, но учитывайте, что формат фильтра `ElementTable` отличается от фильтра `CIBlockElement::GetList()`.
+Для D7 используйте `ElementChecker`, но учитывайте, что формат фильтра `ElementTable` отличается от фильтра `CIBlockElement::GetList()`. В legacy-варианте первый аргумент `GetList()` сохранён как `false`, как в исходном `IBlock\\Checker`.
 
 Пустой фильтр намеренно запрещён: это защищает от случайного запроса ко всем элементам инфоблоков. Модуль `iblock` должен быть подключён до вызова методов.
 
