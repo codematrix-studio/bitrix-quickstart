@@ -38,6 +38,7 @@ class BitrixCatalogExporter
     protected string $cacheKey = 'catalog';
 
     private ?Closure $picturePathResolver;
+    private bool $hasCustomPicturePathResolver = false;
 
     public function __construct(
         int $iblockId,
@@ -51,6 +52,10 @@ class BitrixCatalogExporter
     ) {
         if ($iblockId < 1) {
             throw new InvalidArgumentException('ID инфоблока должен быть положительным числом.');
+        }
+
+        if (!str_starts_with($storageDirectory, '/') && preg_match('/^[A-Za-z]:[\\\\\/]/', $storageDirectory) !== 1) {
+            throw new InvalidArgumentException('Каталог кеша должен быть абсолютным путём.');
         }
 
         $this->iblockId = $iblockId;
@@ -80,6 +85,7 @@ class BitrixCatalogExporter
         $this->picturePathResolver = $picturePathResolver === null
             ? null
             : Closure::fromCallable($picturePathResolver);
+        $this->hasCustomPicturePathResolver = $picturePathResolver !== null;
     }
 
     public function setNeedUpdate($additional): bool
@@ -112,10 +118,11 @@ class BitrixCatalogExporter
     {
         $cached = null;
         $hasCallback = isset($params['callback']);
+        $cacheDisabled = $hasCallback || $this->hasCustomPicturePathResolver;
         $signature = $this->createSignature($params);
 
         // Callback может менять данные произвольно, поэтому такой результат не кешируем.
-        if (!$hasCallback && !$this->forceUpdate && $this->cache->isFresh($this->cacheKey, $this->cacheTtl)) {
+        if (!$cacheDisabled && !$this->forceUpdate && $this->cache->isFresh($this->cacheKey, $this->cacheTtl)) {
             $cached = $this->cache->get($this->cacheKey);
         }
 
@@ -125,11 +132,13 @@ class BitrixCatalogExporter
             $this->additionalData = $cached['additionalData'] ?? $this->additionalData;
             $this->generatedAt = (int) ($cached['generatedAt'] ?? 0);
         } else {
+            $this->prepareAdditionalData();
+            $signature = $this->createSignature($params);
             $this->sections = $this->loadSections();
             $this->products = $this->loadProducts($params);
             $this->generatedAt = time();
 
-            if (!$hasCallback) {
+            if (!$cacheDisabled) {
                 $this->cache->put($this->cacheKey, [
                     'signature' => $signature,
                     'generatedAt' => $this->generatedAt,
@@ -165,6 +174,13 @@ class BitrixCatalogExporter
     public function getGeneratedAt(): int
     {
         return $this->generatedAt;
+    }
+
+    /**
+     * Точка расширения для получения дополнительных данных перед обновлением кеша.
+     */
+    protected function prepareAdditionalData(): void
+    {
     }
 
     /**
@@ -291,6 +307,7 @@ class BitrixCatalogExporter
             'sectionIds' => $this->sectionIds,
             'productIds' => $this->productIds,
             'additionalData' => $this->additionalData,
+            'baseUrl' => $this->urls->getBaseUrl(),
             'query' => [
                 'order' => $params['order'] ?? null,
                 'filter' => $params['filter'] ?? null,
