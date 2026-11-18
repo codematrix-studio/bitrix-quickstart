@@ -247,6 +247,35 @@ try {
 }
 exportExpect($baseShowDataRejected, 'Base XmlExport must explicitly reject an undefined XML format.');
 
+class ExportLegacyCustomYml extends \Lema\Seo\YmlExport
+{
+    public function loadAdditionalData(array $additionalData = []): void
+    {
+        $this->additionalData = ['loadedByLegacyHook' => true];
+    }
+
+    protected function loadSections(): array
+    {
+        return [];
+    }
+
+    protected function loadProducts(array $params = []): array
+    {
+        return [];
+    }
+}
+
+$legacyHookExport = new ExportLegacyCustomYml(12, [
+    'serverUrl' => 'https://shop.example.org',
+    'storageDir' => '/bitrix/catalog_export/hook',
+    'cacheKey' => 'legacy-hook-test',
+]);
+$legacyHookExport->loadData();
+exportExpect(
+    ($legacyHookExport->getAdditionalData()['loadedByLegacyHook'] ?? false) === true,
+    'Legacy subclasses overriding loadAdditionalData() must retain the refresh hook.'
+);
+
 $unsafeStorageRejected = false;
 try {
     new \Lema\Base\XmlExport(12, [
