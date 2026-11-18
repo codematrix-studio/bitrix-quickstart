@@ -23,11 +23,13 @@
             "@test:iblock",
             "@test:helper",
             "@test:base",
-            "@test:markup"
+            "@test:markup",
+            "@test:export"
         ],
         "test:iblock": "php ../tests/lema_iblock_smoke.php",
         "test:helper": "php ../tests/lema_helper_smoke.php",
         "test:base": "php ../tests/lema_base_instances_smoke.php",
-        "test:markup": "php ../tests/lema_markup_smoke.php"
+        "test:markup": "php ../tests/lema_markup_smoke.php",
+        "test:export": "php ../tests/lema_export_smoke.php"
     }
 }
