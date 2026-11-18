@@ -12,16 +12,16 @@ class Form extends \Project\Validation\FormValidator
     public function validators(): array
     {
         return [
-            'boolean' => \\Lema\\Forms\\Validators\\BooleanValidator',
-            'recaptcha' => \\Lema\\Forms\\Validators\\RecaptchaValidator',
-            'email' => \\Lema\\Forms\\Validators\\EmailValidator',
-            'ip' => \\Lema\\Forms\\Validators\\IpValidator',
-            'length' => \\Lema\\Forms\\Validators\\LengthValidator',
-            'regex' => \\Lema\\Forms\\Validators\\RegexValidator',
-            'numerical' => \\Lema\\Forms\\Validators\\NumericValidator',
-            'phone' => \\Lema\\Forms\\Validators\\PhoneValidator',
-            'required' => \\Lema\\Forms\\Validators\\EmptyValidator',
-            'url' => \\Lema\\Forms\\Validators\\UrlValidator',
+            'boolean' => Validators\BooleanValidator::class,
+            'recaptcha' => Validators\RecaptchaValidator::class,
+            'email' => Validators\EmailValidator::class,
+            'ip' => Validators\IpValidator::class,
+            'length' => Validators\LengthValidator::class,
+            'regex' => Validators\RegexValidator::class,
+            'numerical' => Validators\NumericValidator::class,
+            'phone' => Validators\PhoneValidator::class,
+            'required' => Validators\EmptyValidator::class,
+            'url' => Validators\UrlValidator::class,
         ];
     }
 }
