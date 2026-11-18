@@ -84,6 +84,10 @@ class FakeHlBlockDataClass
 
     public static function add(array $fields): FakeHlBlockOperationResult
     {
+        if (($fields['UF_FAIL_ADD'] ?? false) === true) {
+            return new FakeHlBlockOperationResult(false, 0, ['Тестовая ошибка добавления']);
+        }
+
         $id = max(array_keys(self::$rows) ?: [0]) + 1;
         self::$rows[$id] = ['ID' => $id] + $fields;
 
@@ -103,6 +107,10 @@ class FakeHlBlockDataClass
 
     public static function delete(int $id): FakeHlBlockOperationResult
     {
+        if (!isset(self::$rows[$id])) {
+            return new FakeHlBlockOperationResult(false, 0, ['Запись для удаления не найдена']);
+        }
+
         unset(self::$rows[$id]);
 
         return new FakeHlBlockOperationResult();
@@ -200,6 +208,22 @@ try {
     $operationFailureFailed = str_contains($exception->getMessage(), 'Запись не найдена');
 }
 hlBlockExpect($operationFailureFailed, 'Ошибки D7 Result должны попадать в исключение.');
+
+$addFailureFailed = false;
+try {
+    $entity->add(['UF_FAIL_ADD' => true]);
+} catch (RuntimeException $exception) {
+    $addFailureFailed = str_contains($exception->getMessage(), 'Тестовая ошибка добавления');
+}
+hlBlockExpect($addFailureFailed, 'Ошибки D7 Result при добавлении должны попадать в исключение.');
+
+$deleteFailureFailed = false;
+try {
+    $entity->delete(999);
+} catch (RuntimeException $exception) {
+    $deleteFailureFailed = str_contains($exception->getMessage(), 'Запись для удаления не найдена');
+}
+hlBlockExpect($deleteFailureFailed, 'Ошибки D7 Result при удалении должны попадать в исключение.');
 
 $emptyXmlIdFailed = false;
 try {
