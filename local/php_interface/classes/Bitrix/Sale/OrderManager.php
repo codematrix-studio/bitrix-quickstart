@@ -174,6 +174,17 @@ class OrderManager
             throw new RuntimeException('Битрикс не вернул корректный ID сохранённого заказа.');
         }
 
+        $warnings = is_callable([$saveResult, 'getWarningMessages'])
+            ? $saveResult->getWarningMessages()
+            : [];
+
+        if (is_array($warnings) && $warnings !== []) {
+            throw new OrderSaveWarningsException(
+                $orderId,
+                array_map('strval', $warnings)
+            );
+        }
+
         return $orderId;
     }
 
