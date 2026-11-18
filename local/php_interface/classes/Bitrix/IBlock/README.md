@@ -182,3 +182,24 @@ composer test:iblock
 ```
 
 Интеграционный тест с реальными `ElementTable`, `SectionTable`, `CIBlockElement` и `CIBlockSection` всё равно необходим на установленном ядре Битрикс.
+
+
+## Дополнительные утилиты инфоблоков
+
+### PropertyAccessor
+
+`Project\\Bitrix\\IBlock\\PropertyAccessor` содержит статические методы для стандартного массива свойств элемента или раздела:
+
+- `isEmpty($code, $data, $propertiesKey = 'PROPERTIES')`;
+- `isFilled(...)`;
+- `get(...)` — получить массив свойства;
+- `getValue(...)` — получить `VALUE`;
+- `getEscapedValue(...)` — получить скалярное значение, экранированное для HTML.
+
+Класс не обращается к базе данных и не загружает модуль `iblock`. Он работает только с уже полученным массивом.
+
+### ImageWatermarker
+
+`Project\\Bitrix\\IBlock\\ImageWatermarker` инкапсулирует вызов `CFile::ResizeImageGet()` и параметры водяного знака. Он проверяет наличие обязательных полей и класса `CFile`. Если тип масштабирования не передан, требуется штатная константа `BX_RESIZE_IMAGE_PROPORTIONAL`.
+
+Метод `resize()` возвращает штатный результат Битрикс либо `false` при неполных данных. `getSource()` возвращает путь к обработанному изображению или `false`.
