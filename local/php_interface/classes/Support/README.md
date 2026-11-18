@@ -62,28 +62,28 @@ $html = (new HtmlEscaper())->escape($value, ENT_COMPAT, 'UTF-8');
 
 ## Совместимость со старым IBlock Validator
 
-Старый класс `Ns\\Bitrix\\Helper\\IBlock\\Validator` использовал два метода:
+Старый класс `Ns\Bitrix\Helper\IBlock\Validator` использовал два метода:
 
 - `email($email = '', $xss = true)` — возвращал очищенный адрес или `false`;
 - `xss($value = '')` — обрезал внешние пробелы и экранировал HTML.
 
-Для миграции добавлен необязательный адаптер `legacy/Ns/Bitrix/Helper/IBlock/Validator.php`. Он использует `Project\\Support\\HtmlEscaper` и сохраняет особенности старого контракта: при `$xss = false` значение не обрезается, а `email()` возвращает строку, а не boolean.
+Для миграции добавлен необязательный адаптер `legacy/Ns/Bitrix/Helper/IBlock/Validator.php`. Он использует `Project\Support\HtmlEscaper` и сохраняет особенности старого контракта: при `$xss = false` значение не обрезается, а `email()` возвращает строку, а не boolean.
 
 Пример подключения после Composer autoload:
 
 ```php
 require_once __DIR__ . '/legacy/Ns/Bitrix/Helper/IBlock/Validator.php';
 
-$validator = new \\Ns\\Bitrix\\Helper\\IBlock\\Validator();
+$validator = new \Ns\Bitrix\Helper\IBlock\Validator();
 $email = $validator->email($rawEmail);
 $name = $validator->xss($rawName);
 ```
 
-Это переходный API. В новом коде используйте `Project\\Support\\EmailValidator` для проверки адреса и `Project\\Support\\HtmlEscaper` непосредственно перед HTML-выводом. Не следует хранить HTML-экранированные значения в базе данных.
+Это переходный API. В новом коде используйте `Project\Support\EmailValidator` для проверки адреса и `Project\Support\HtmlEscaper` непосредственно перед HTML-выводом. Не следует хранить HTML-экранированные значения в базе данных.
 
 ## Миграция из lema.lib
 
-Для старого имени `Lema\\Common\\Helper` создан адаптер `local/php_interface/legacy/Lema/Common/Helper.php`.
+Для старого имени `Lema\Common\Helper` создан адаптер `local/php_interface/legacy/Lema/Common/Helper.php`.
 
 Сохранены методы:
 - `pluralize()`, `pluralizeN()`;
@@ -95,8 +95,8 @@ $name = $validator->xss($rawName);
 Для `getFullUrl()` теперь обязательно один раз задать доверенный адрес сайта:
 
 ```php
-\\Lema\\Common\\Helper::setBaseUrl('https://example.org');
-$url = \\Lema\\Common\\Helper::getFullUrl('/catalog/');
+\Lema\Common\Helper::setBaseUrl('https://example.org');
+$url = \Lema\Common\Helper::getFullUrl('/catalog/');
 ```
 
 Это осознанное изменение безопасности: нельзя строить платёжные и другие абсолютные ссылки из непроверенного заголовка Host.
@@ -121,20 +121,20 @@ composer test
 
 ### PerClassInstance
 
-`Project\\Support\\PerClassInstance` хранит отдельный экземпляр для каждого класса-наследника. Это исключает ситуацию, когда два разных наследника получают один и тот же объект из общего унаследованного статического свойства.
+`Project\Support\PerClassInstance` хранит отдельный экземпляр для каждого класса-наследника. Это исключает ситуацию, когда два разных наследника получают один и тот же объект из общего унаследованного статического свойства.
 
 - `get(): static` — получить или создать экземпляр текущего класса;
 - `resetInstance(): void` — сбросить экземпляр текущего класса.
 
 ### PerClassGlobalProxy
 
-`Project\\Support\\PerClassGlobalProxy` получает глобальный объект по имени, которое возвращает метод-наследник `globalName()`. Кеш объектов изолирован по классу. Магический вызов `__call()` передаёт аргументы метода отдельно, а не одним массивом.
+`Project\Support\PerClassGlobalProxy` получает глобальный объект по имени, которое возвращает метод-наследник `globalName()`. Кеш объектов изолирован по классу. Магический вызов `__call()` передаёт аргументы метода отдельно, а не одним массивом.
 
 ### Перенос из lema.lib
 
-- `Lema\\Base\\StaticInstance` использует `PerClassInstance`;
-- `Lema\\Base\\GlobalVars` использует `PerClassGlobalProxy`;
-- `Lema\\Base\\BitrixInstances` использует `Project\\Bitrix\\Context\\PerClassBitrixInstance`.
+- `Lema\Base\StaticInstance` использует `PerClassInstance`;
+- `Lema\Base\GlobalVars` использует `PerClassGlobalProxy`;
+- `Lema\Base\BitrixInstances` использует `Project\Bitrix\Context\PerClassBitrixInstance`.
 
 Адаптеры находятся в `local/php_interface/legacy/Lema/Base/`. Тесты запускаются командой `composer test:base`.
 
@@ -153,10 +153,10 @@ composer test
 
 ## PagePathMatcher
 
-`Project\\Support\\PagePathMatcher` проверяет принадлежность URL-каталога другому каталогу без обращения к Bitrix:
+`Project\Support\PagePathMatcher` проверяет принадлежность URL-каталога другому каталогу без обращения к Bitrix:
 
 ```php
-use Project\\Support\\PagePathMatcher;
+use Project\Support\PagePathMatcher;
 
 if (PagePathMatcher::inDirectory('/catalog/item/', '/catalog/')) {
     // Текущий адрес — каталог или его вложенная страница.
@@ -179,4 +179,4 @@ if (PagePathMatcher::inRootDirectory('/catalog/item/', ['catalog', 'news'])) {
 
 ## Регистрация ресурсов Bitrix
 
-Для добавления JS/CSS и инициализации расширений используйте `Project\\Bitrix\\Asset\\AssetManager`. Класс находится в пространстве имён `Project\\Bitrix\\Asset`, поэтому его описание вынесено в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md). Он зависит от ядра Bitrix только при стандартном создании; для автономных тестов поддерживает внедрение объекта Asset и инициализатора CJSCore.
+Для добавления JS/CSS и инициализации расширений используйте `Project\Bitrix\Asset\AssetManager`. Класс находится в пространстве имён `Project\Bitrix\Asset`, поэтому его описание вынесено в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md). Он зависит от ядра Bitrix только при стандартном создании; для автономных тестов поддерживает внедрение объекта Asset и инициализатора CJSCore.

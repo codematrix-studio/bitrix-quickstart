@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Project\\Bitrix\\Asset;
+namespace Project\Bitrix\Asset;
 
 use Closure;
 use InvalidArgumentException;
@@ -11,7 +11,7 @@ use RuntimeException;
 /**
  * Регистрация JavaScript, CSS и расширений ядра Bitrix.
  *
- * По умолчанию использует штатные Bitrix\\Main\\Page\\Asset и CJSCore.
+ * По умолчанию использует штатные Bitrix\Main\Page\Asset и CJSCore.
  * Для автономного тестирования зависимости можно передать явно.
  */
 class AssetManager
@@ -81,7 +81,7 @@ class AssetManager
             throw new RuntimeException('Для инициализации расширений необходимо доступное ядро Bitrix с CJSCore::init().');
         }
 
-        \\CJSCore::init($extensions);
+        \CJSCore::init($extensions);
 
         return $this;
     }
@@ -109,10 +109,10 @@ class AssetManager
     private function asset(): object
     {
         if ($this->asset === null) {
-            $class = 'Bitrix\\Main\\Page\\Asset';
+            $class = 'Bitrix\Main\Page\Asset';
 
             if (!class_exists($class) || !is_callable([$class, 'getInstance'])) {
-                throw new RuntimeException('Не найден Bitrix\\Main\\Page\\Asset::getInstance(). Подключите ядро Bitrix до регистрации ресурсов.');
+                throw new RuntimeException('Не найден Bitrix\Main\Page\Asset::getInstance(). Подключите ядро Bitrix до регистрации ресурсов.');
             }
 
             $asset = $class::getInstance();

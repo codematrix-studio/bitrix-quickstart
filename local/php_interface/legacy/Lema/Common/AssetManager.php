@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Совместимый адаптер старого Lema\\Common\\AssetManager.
+ * Совместимый адаптер старого Lema\Common\AssetManager.
  * Подключать после Composer autoload и только после отключения старого lema.lib.
  */
 
-namespace Lema\\Common;
+namespace Lema\Common;
 
-class AssetManager extends \\Project\\Bitrix\\Asset\\AssetManager
+class AssetManager extends \Project\Bitrix\Asset\AssetManager
 {
     private static ?self $instance = null;
 

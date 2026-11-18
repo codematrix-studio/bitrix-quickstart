@@ -22,11 +22,11 @@
 
 | Старый API | Новый API | Совместимость |
 |---|---|---|
-| `Lema\\Base\\Paginator` | `Project\\Support\\ArrayPaginator` | Есть необязательный адаптер `legacy/Lema/Base/Paginator.php` |
-| `Lema\\Template\\Item` | `Project\\Bitrix\\IBlock\\ElementView` | Есть необязательный адаптер `legacy/Lema/Template/Item.php` |
-| `Lema\\Template\\Section` | `Project\\Bitrix\\IBlock\\SectionView` | Есть необязательный адаптер `legacy/Lema/Template/Section.php` |
-| `Lema\\Template\\TemplateHelper` | `Project\\Bitrix\\IBlock\\TemplateHelper` | Есть необязательный адаптер `legacy/Lema/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
-| `Lema\\Base\\Component` | `Project\\Bitrix\\Component\\ComponentInvoker` | Есть необязательный адаптер `legacy/Lema/Base/Component.php` |
+| `Lema\Base\Paginator` | `Project\Support\ArrayPaginator` | Есть необязательный адаптер `legacy/Lema/Base/Paginator.php` |
+| `Lema\Template\Item` | `Project\Bitrix\IBlock\ElementView` | Есть необязательный адаптер `legacy/Lema/Template/Item.php` |
+| `Lema\Template\Section` | `Project\Bitrix\IBlock\SectionView` | Есть необязательный адаптер `legacy/Lema/Template/Section.php` |
+| `Lema\Template\TemplateHelper` | `Project\Bitrix\IBlock\TemplateHelper` | Есть необязательный адаптер `legacy/Lema/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
+| `Lema\Base\Component` | `Project\Bitrix\Component\ComponentInvoker` | Есть необязательный адаптер `legacy/Lema/Base/Component.php` |
 
 Адаптеры не подключаются автоматически. Их следует подключать после Composer autoload и только при миграции, когда старый модуль `lema.lib` уже отключён. Это предотвращает конфликт классов с исходным модулем.
 
@@ -35,16 +35,16 @@
 ### Высокий приоритет
 
 - `lib/Forms/Form.php` и `lib/Forms/Validators/*`: сохранить правила и формат ошибок, исправить обработку массивов, boolean false, числовых значений, отсутствующих параметров regex и повторный вызов validate.
-- `lib/IBlock/Element.php` и `lib/IBlock/Section.php`: **переработаны** в `Project\\Bitrix\\IBlock\\ElementRepository` и `SectionRepository`; старые статические фасады сохранены адаптерами `Lema\\IBlock\\Element` и `Lema\\IBlock\\Section`.
-- `lib/Common/Helper.php`: **основные универсальные методы переработаны** в `RussianPluralizer`, `JsonEncoder`, `CharsetConverter`, `UrlGenerator`, `PropertyAccessor` и `ImageWatermarker`; старый фасад `Lema\\Common\\Helper` сохранён. Методы работы с URL требуют явного доверенного базового адреса.
-- `lib/Base/Markup.php` и `lib/Seo/OpenGraph.php`: **переработаны** в `Project\\Seo\\MetaMarkup`; старые классы и fluent API сохранены адаптерами, экранирование атрибутов перенесено на этап вывода.
+- `lib/IBlock/Element.php` и `lib/IBlock/Section.php`: **переработаны** в `Project\Bitrix\IBlock\ElementRepository` и `SectionRepository`; старые статические фасады сохранены адаптерами `Lema\IBlock\Element` и `Lema\IBlock\Section`.
+- `lib/Common/Helper.php`: **основные универсальные методы переработаны** в `RussianPluralizer`, `JsonEncoder`, `CharsetConverter`, `UrlGenerator`, `PropertyAccessor` и `ImageWatermarker`; старый фасад `Lema\Common\Helper` сохранён. Методы работы с URL требуют явного доверенного базового адреса.
+- `lib/Base/Markup.php` и `lib/Seo/OpenGraph.php`: **переработаны** в `Project\Seo\MetaMarkup`; старые классы и fluent API сохранены адаптерами, экранирование атрибутов перенесено на этап вывода.
 - `lib/Base/StaticInstance.php`, `BitrixInstances.php` и `GlobalVars.php`: **переработаны** через `PerClassInstance`, `PerClassBitrixInstance` и `PerClassGlobalProxy`; адаптеры старых базовых классов сохранены.
 
 ### Средний приоритет
 
 - `lib/Common/AssetManager.php`, `App.php`, `Request.php`, `Context.php`, `Server.php`, `User.php`: обёртки над Bitrix API, после проверки контракта и версий ядра.
 - `lib/Base/XmlExport.php` и `lib/Seo/YmlExport.php`: переписать кеш и XML-генерацию целиком, сохранив публичные методы и формат результата.
-- `lib/Template/TemplateHelper.php`: **переработан** в `Project\\Bitrix\\IBlock\\TemplateHelper`; методы работы со списками и edit/delete actions сохранены, добавлен необязательный адаптер старого API.
+- `lib/Template/TemplateHelper.php`: **переработан** в `Project\Bitrix\IBlock\TemplateHelper`; методы работы со списками и edit/delete actions сохранены, добавлен необязательный адаптер старого API.
 - `lib/Basket/BasketHandler.php`: отдельно оценить как обёртку над штатной Sale Basket; это перспективнее старой HL-корзины.
 
 ### Не переносить без существенной переработки
@@ -58,7 +58,7 @@
 
 ## Обнаруженные дефекты исходной библиотеки
 
-1. В `include.php` автозагрузчик не проверяет, что имя класса начинается с префикса `Lema\\`, прежде чем удалять первые символы имени.
+1. В `include.php` автозагрузчик не проверяет, что имя класса начинается с префикса `Lema\`, прежде чем удалять первые символы имени.
 2. `StaticInstance::$instance` и `BitrixInstances::$instance` объявлены в базовых классах и не переопределены всеми наследниками. Это создаёт риск общего экземпляра между разными классами.
 3. `GlobalVars::__call()` передаёт массив аргументов одним аргументом вместо распаковки.
 4. `Form::setFields()` вызывает `trim()` для любого значения; массив из POST приводит к ошибке типов на современных PHP.
@@ -70,7 +70,7 @@
 10. `Basket::deleteOldBaskets()` удаляет устаревшие корзины и связанные позиции в общем хранилище, поэтому требует проверки связей и транзакционности.
 11. Установщик копирует файлы в общий `php_interface/include`, а деинсталлятор удаляет их без сохранения исходных файлов, которые могли быть перезаписаны.
 12. В `options.php` выполнение завершается через `return` до основного кода настроек.
-13. `Common/VK.php` объявляет namespace `Lema\\Seo`, хотя лежит в каталоге `Common`; текущий PSR-4 загрузчик не найдёт его по ожидаемому имени `Lema\\Seo\\VK`.
+13. `Common/VK.php` объявляет namespace `Lema\Seo`, хотя лежит в каталоге `Common`; текущий PSR-4 загрузчик не найдёт его по ожидаемому имени `Lema\Seo\VK`.
 
 ## Правило совместимости
 
@@ -101,10 +101,10 @@ composer test:compatibility
 - `lib/Forms/ReCaptcha.php`.
 
 Новая реализация:
-- `Project\\Validation\\FormValidator`;
-- `Project\\Validation\\LegacyFieldValidator`;
-- `Project\\Validation\\AjaxForm`;
-- `Project\\Validation\\AjaxFormActions`.
+- `Project\Validation\FormValidator`;
+- `Project\Validation\LegacyFieldValidator`;
+- `Project\Validation\AjaxForm`;
+- `Project\Validation\AjaxFormActions`.
 
 Подробная документация: [classes/Validation/README.md](../classes/Validation/README.md).
 
@@ -115,8 +115,8 @@ composer test:compatibility
 - Методы `rules()`, `setRules()`, `setFields()`, `getFields()`, `getField()`, `getFieldCP1251()`, `validate()`, `getErrors()`, `getErrorsCP1251()`, `validators()`.
 - Имена правил `boolean`, `recaptcha`, `email`, `ip`, `length`, `regex`, `numerical`, `phone`, `required`, `url`.
 - Старые имена классов формы, AJAX-формы и валидаторов доступны через адаптеры в `legacy/Lema/Forms/`.
-- `Lema\\Forms\\AjaxForm` остаётся наследником `Lema\\Forms\\Form`.
-- Пользовательские валидаторы могут наследоваться от совместимого `Lema\\Forms\\Validators\\Validator`.
+- `Lema\Forms\AjaxForm` остаётся наследником `Lema\Forms\Form`.
+- Пользовательские валидаторы могут наследоваться от совместимого `Lema\Forms\Validators\Validator`.
 
 ### Исправленные дефекты
 
@@ -163,8 +163,8 @@ composer test
 - `lib/IBlock/Section.php`.
 
 Новые классы:
-- `Project\\Bitrix\\IBlock\\ElementRepository`;
-- `Project\\Bitrix\\IBlock\\SectionRepository`.
+- `Project\Bitrix\IBlock\ElementRepository`;
+- `Project\Bitrix\IBlock\SectionRepository`.
 
 Адаптеры старых имён:
 - `legacy/Lema/IBlock/Element.php`;
@@ -199,12 +199,12 @@ composer test
 Старый файл: `lib/Common/Helper.php`.
 
 Новые классы:
-- `Project\\Support\\RussianPluralizer`;
-- `Project\\Support\\JsonEncoder`;
-- `Project\\Support\\CharsetConverter`;
-- `Project\\Support\\UrlGenerator`;
-- `Project\\Bitrix\\IBlock\\PropertyAccessor`;
-- `Project\\Bitrix\\IBlock\\ImageWatermarker`.
+- `Project\Support\RussianPluralizer`;
+- `Project\Support\JsonEncoder`;
+- `Project\Support\CharsetConverter`;
+- `Project\Support\UrlGenerator`;
+- `Project\Bitrix\IBlock\PropertyAccessor`;
+- `Project\Bitrix\IBlock\ImageWatermarker`.
 
 Старый фасад сохранён в `legacy/Lema/Common/Helper.php`. Перечень методов, примеры и ограничения описаны в [classes/Support/README.md](../classes/Support/README.md).
 
@@ -243,9 +243,9 @@ composer test
 - `lib/Base/GlobalVars.php`.
 
 Новые реализации:
-- `Project\\Support\\PerClassInstance`;
-- `Project\\Bitrix\\Context\\PerClassBitrixInstance`;
-- `Project\\Support\\PerClassGlobalProxy`.
+- `Project\Support\PerClassInstance`;
+- `Project\Bitrix\Context\PerClassBitrixInstance`;
+- `Project\Support\PerClassGlobalProxy`.
 
 Совместимые адаптеры:
 - `legacy/Lema/Base/StaticInstance.php`;
@@ -271,7 +271,7 @@ composer test
 - `lib/Base/Markup.php`;
 - `lib/Seo/OpenGraph.php`.
 
-Новый класс: `Project\\Seo\\MetaMarkup`.
+Новый класс: `Project\Seo\MetaMarkup`.
 
 Совместимые адаптеры:
 - `legacy/Lema/Base/Markup.php`;
@@ -383,9 +383,9 @@ composer test
 Автономные проверки: `tests/lema_export_smoke.php`; команда `composer test:export`. Проверяются кеш, XML-экранирование, YML, URL и подготовка данных через внедрённые репозитории. Реальная выгрузка с `CFile`, `CIBlockElement` и `CIBlockSection` на ядре Битрикс пока не выполнялась.
 
 
-Для наследников `Lema\\Base\\XmlExport` сохранена точка расширения: если дочерний класс переопределяет `loadAdditionalData()`, адаптер вызывает этот метод при обновлении кеша. `YmlExport::showData()` ожидает, что `loadData()` уже был вызван, как и исходный класс; сам по себе метод только формирует и выводит подготовленные данные.
+Для наследников `Lema\Base\XmlExport` сохранена точка расширения: если дочерний класс переопределяет `loadAdditionalData()`, адаптер вызывает этот метод при обновлении кеша. `YmlExport::showData()` ожидает, что `loadData()` уже был вызван, как и исходный класс; сам по себе метод только формирует и выводит подготовленные данные.
 
-## Старый Ns\\Bitrix\\Helper\\IBlock\\Validator
+## Старый Ns\Bitrix\Helper\IBlock\Validator
 
 Исходный файл: `ASDAFF/bitrix.quickstart/local/codes/Ns/Bitrix/Helper/IBlock/Validator.php`.
 
@@ -402,14 +402,14 @@ composer test
 ```php
 require_once __DIR__ . '/legacy/Ns/Bitrix/Helper/IBlock/Validator.php';
 
-$validator = new \\Ns\\Bitrix\\Helper\\IBlock\\Validator();
+$validator = new \Ns\Bitrix\Helper\IBlock\Validator();
 $email = $validator->email($email);
 $name = $validator->xss($name);
 ```
 
-Старый класс наследовался от `Ns\\Bitrix\\Helper\\HelperCore`, но сам не использовал его магические методы. Адаптер намеренно не возвращает универсальный `HelperCore` и не поддерживает вызовы `with...()` / `get...()`: этот механизм хранит произвольное состояние без типизации и не является частью контракта двух методов валидатора. Если проектный наследник старого класса использовал это наследование, его нужно мигрировать отдельно.
+Старый класс наследовался от `Ns\Bitrix\Helper\HelperCore`, но сам не использовал его магические методы. Адаптер намеренно не возвращает универсальный `HelperCore` и не поддерживает вызовы `with...()` / `get...()`: этот механизм хранит произвольное состояние без типизации и не является частью контракта двух методов валидатора. Если проектный наследник старого класса использовал это наследование, его нужно мигрировать отдельно.
 
-В новом коде не следует использовать `xss()` для очистки данных перед сохранением. Проверяйте входные данные по назначению, храните исходные значения и экранируйте их при выводе в конкретный контекст. Для этого каркас предоставляет `Project\\Support\\EmailValidator` и `Project\\Support\\HtmlEscaper`.
+В новом коде не следует использовать `xss()` для очистки данных перед сохранением. Проверяйте входные данные по назначению, храните исходные значения и экранируйте их при выводе в конкретный контекст. Для этого каркас предоставляет `Project\Support\EmailValidator` и `Project\Support\HtmlEscaper`.
 
 Автономный тест: `tests/iblock_validator_compatibility_smoke.php`; команда запуска из каталога `local`: `composer test:iblock-validator`. Тест не требует ядра Битрикс.
 
@@ -418,20 +418,20 @@ $name = $validator->xss($name);
 
 ## Page — проверка текущего раздела сайта
 
-Старый класс `Lema\\Common\\Page` перенесён в два слоя:
+Старый класс `Lema\Common\Page` перенесён в два слоя:
 
-- `Project\\Support\\PagePathMatcher` — независимая от Bitrix логика сопоставления путей;
-- `Project\\Bitrix\\Context\\Page` — получение текущего каталога через HTTP-запрос Bitrix;
+- `Project\Support\PagePathMatcher` — независимая от Bitrix логика сопоставления путей;
+- `Project\Bitrix\Context\Page` — получение текущего каталога через HTTP-запрос Bitrix;
 - `legacy/Lema/Common/Page.php` — необязательный адаптер старых статических методов.
 
 Старый код:
 
 ```php
-if (\\Lema\\Common\\Page::inDir(['/catalog/', '/news/'])) {
+if (\Lema\Common\Page::inDir(['/catalog/', '/news/'])) {
     // ...
 }
 
-if (\\Lema\\Common\\Page::inRootDir('catalog')) {
+if (\Lema\Common\Page::inRootDir('catalog')) {
     // ...
 }
 ```
@@ -439,7 +439,7 @@ if (\\Lema\\Common\\Page::inRootDir('catalog')) {
 Новый API:
 
 ```php
-use Project\\Bitrix\\Context\\Page;
+use Project\Bitrix\Context\Page;
 
 if (Page::inDirectory(['/catalog/', '/news/'])) {
     // ...
@@ -457,6 +457,6 @@ if (Page::inRootDirectory('catalog')) {
 
 ## AssetManager
 
-Старый `Lema\\Common\\AssetManager` переработан в `Project\\Bitrix\\Asset\\AssetManager`. Необязательный адаптер `legacy/Lema/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `Lema\\Common\\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
+Старый `Lema\Common\AssetManager` переработан в `Project\Bitrix\Asset\AssetManager`. Необязательный адаптер `legacy/Lema/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `Lema\Common\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
 
 Основная реализация и границы интеграционного тестирования описаны в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md).

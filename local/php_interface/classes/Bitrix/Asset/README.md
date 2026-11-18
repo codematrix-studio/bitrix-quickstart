@@ -2,16 +2,16 @@
 
 ## AssetManager
 
-`Project\\Bitrix\\Asset\\AssetManager` — небольшой фасад над штатными механизмами регистрации ресурсов Bitrix:
+`Project\Bitrix\Asset\AssetManager` — небольшой фасад над штатными механизмами регистрации ресурсов Bitrix:
 
-- `Bitrix\\Main\\Page\\Asset::getInstance()->addJs()`;
-- `Bitrix\\Main\\Page\\Asset::getInstance()->addCss()`;
+- `Bitrix\Main\Page\Asset::getInstance()->addJs()`;
+- `Bitrix\Main\Page\Asset::getInstance()->addCss()`;
 - `CJSCore::init()` для зарегистрированных расширений ядра.
 
 Пример:
 
 ```php
-use Project\\Bitrix\\Asset\\AssetManager;
+use Project\Bitrix\Asset\AssetManager;
 
 $assets = new AssetManager();
 
@@ -56,13 +56,13 @@ $assets = new AssetManager($fakeAsset, $extensionInitializer);
 ```php
 require_once __DIR__ . '/legacy/Lema/Common/AssetManager.php';
 
-$assets = \\Lema\\Common\\AssetManager::get();
+$assets = \Lema\Common\AssetManager::get();
 $assets->addCssArray(['/local/templates/site/style.css']);
 ```
 
 Адаптер подключается вручную после Composer autoload. Не подключайте его одновременно с исходным модулем `lema.lib`, иначе возникнет конфликт имён классов.
 
-Старый класс `Lema\\Common\\Asset` не переносится: он только дублировал получение singleton-объекта Bitrix Asset и не добавлял самостоятельного поведения.
+Старый класс `Lema\Common\Asset` не переносится: он только дублировал получение singleton-объекта Bitrix Asset и не добавлял самостоятельного поведения.
 
 ## Границы проверки
 
