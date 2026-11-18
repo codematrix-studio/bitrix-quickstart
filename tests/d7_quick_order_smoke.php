@@ -98,7 +98,7 @@ $quickOrder = new QuickOrder(
         return $basket;
     },
     static fn (): string => 's1',
-    static fn (): string => 'RUB'
+    static fn (): string => 'Bitrix\\Catalog\\Product\\CatalogProvider'
 );
 
 $orderId = $quickOrder->create(
@@ -118,10 +118,9 @@ quickOrderExpect($basket->provider === 'catalog', 'Товар должен до�
 quickOrderExpect($basket->productId === 321, 'В корзину должен попасть запрошенный товар.');
 quickOrderExpect($basket->item?->fields === [
     'QUANTITY' => 2.5,
-    'CURRENCY' => 'RUB',
     'LID' => 's1',
-    'PRODUCT_PROVIDER_CLASS' => 'CCatalogProductProvider',
-], 'Позиция должна получать только серверные поля товара и количество.');
+    'PRODUCT_PROVIDER_CLASS' => 'Bitrix\\Catalog\\Product\\CatalogProvider',
+], 'Позиция должна получать количество и стандартный провайдер каталога; цена и валюта рассчитываются провайдером.');
 quickOrderExpect($manager->basket === $basket, 'В менеджер заказа должна передаваться временная корзина.');
 quickOrderExpect($manager->arguments === [
     101,
@@ -161,7 +160,7 @@ $failedQuickOrder = new QuickOrder(
     $manager,
     static fn (): FakeQuickOrderBasket => $failedItem,
     static fn (): string => 's1',
-    static fn (): string => 'RUB'
+    static fn (): string => 'Bitrix\\Catalog\\Product\\CatalogProvider'
 );
 $failedItem->itemSaveSuccess = false;
 $failedItemSaveFailed = false;
