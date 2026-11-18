@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Project\\Bitrix\\Sale;
+namespace Project\Bitrix\Sale;
 
 use Closure;
 use InvalidArgumentException;
@@ -92,7 +92,7 @@ class QuickOrder
         } else {
             $this->includeModule('sale');
             $this->includeModule('catalog');
-            $basket = \\Bitrix\\Sale\\Basket::create($siteId);
+            $basket = \Bitrix\Sale\Basket::create($siteId);
         }
 
         if (!is_object($basket) || !is_callable([$basket, 'createItem'])) {
@@ -107,11 +107,11 @@ class QuickOrder
         if ($this->siteProvider !== null) {
             $siteId = ($this->siteProvider)();
         } else {
-            if (!class_exists(\\Bitrix\\Main\\Context::class)) {
+            if (!class_exists(\Bitrix\Main\Context::class)) {
                 throw new RuntimeException('Контекст Bitrix недоступен: невозможно определить текущий сайт.');
             }
 
-            $siteId = \\Bitrix\\Main\\Context::getCurrent()->getSite();
+            $siteId = \Bitrix\Main\Context::getCurrent()->getSite();
         }
 
         if (!is_string($siteId) || $siteId === '') {
@@ -128,11 +128,11 @@ class QuickOrder
         } else {
             $this->includeModule('currency');
 
-            if (!class_exists(\\Bitrix\\Currency\\CurrencyManager::class)) {
+            if (!class_exists(\Bitrix\Currency\CurrencyManager::class)) {
                 throw new RuntimeException('Класс CurrencyManager недоступен.');
             }
 
-            $currency = \\Bitrix\\Currency\\CurrencyManager::getBaseCurrency();
+            $currency = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
         }
 
         if (!is_string($currency) || $currency === '') {
@@ -147,8 +147,8 @@ class QuickOrder
         if ($this->moduleLoader !== null) {
             $loaded = ($this->moduleLoader)($moduleId);
         } else {
-            $loaded = class_exists(\\Bitrix\\Main\\Loader::class)
-                && \\Bitrix\\Main\\Loader::includeModule($moduleId);
+            $loaded = class_exists(\Bitrix\Main\Loader::class)
+                && \Bitrix\Main\Loader::includeModule($moduleId);
         }
 
         if ($loaded !== true) {
