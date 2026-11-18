@@ -33,6 +33,11 @@ class FirstBitrixFacade extends \Lema\Base\BitrixInstances
     {
         static::$instance = (object) ['value' => 'first-bitrix'];
     }
+
+    public static function currentInstance()
+    {
+        return static::$instance;
+    }
 }
 
 class SecondBitrixFacade extends \Lema\Base\BitrixInstances
@@ -40,6 +45,11 @@ class SecondBitrixFacade extends \Lema\Base\BitrixInstances
     public static function setInstance()
     {
         static::$instance = (object) ['value' => 'second-bitrix'];
+    }
+
+    public static function currentInstance()
+    {
+        return static::$instance;
     }
 }
 
@@ -80,6 +90,7 @@ $secondBitrix = SecondBitrixFacade::get();
 baseExpect($firstBitrix->value === 'first-bitrix', 'First Bitrix facade must return its own instance.');
 baseExpect($secondBitrix->value === 'second-bitrix', 'Second Bitrix facade must return its own instance.');
 baseExpect(FirstBitrixFacade::get()->value === 'first-bitrix', 'Bitrix facade instances must not leak between subclasses.');
+baseExpect(FirstBitrixFacade::currentInstance()->value === 'first-bitrix', 'Legacy static instance property must be restored for the current subclass.');
 
 baseExpect(FirstGlobalProxy::get() === $GLOBALS['LEMA_GLOBAL_FIRST'], 'First global proxy must resolve its configured global.');
 baseExpect(SecondGlobalProxy::get() === $GLOBALS['LEMA_GLOBAL_SECOND'], 'Second global proxy must resolve a different global.');
