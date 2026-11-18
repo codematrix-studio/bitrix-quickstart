@@ -127,11 +127,11 @@ class QuickOrder
         } else {
             $this->includeModule('catalog');
 
-            if (!class_exists(\\Bitrix\\Catalog\\Product\\Basket::class)) {
+            if (!class_exists(\Bitrix\\Catalog\\Product\\Basket::class)) {
                 throw new RuntimeException('Класс провайдера каталога недоступен.');
             }
 
-            $providerName = \\Bitrix\\Catalog\\Product\\Basket::getDefaultProviderName();
+            $providerName = \Bitrix\\Catalog\\Product\\Basket::getDefaultProviderName();
         }
 
         if (!is_string($providerName) || $providerName === '') {
