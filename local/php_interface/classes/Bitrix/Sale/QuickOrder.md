@@ -209,9 +209,9 @@ final class QuickOrderController extends Controller
     }
 
     public function createAction(
+        CurrentUser $currentUser,
         mixed $productId,
-        mixed $quantity = 1,
-        CurrentUser $currentUser
+        mixed $quantity = 1
     ): ?array {
         $userId = (int) $currentUser->getId();
         if ($userId < 1) {
@@ -241,7 +241,7 @@ final class QuickOrderController extends Controller
             return ['created' => true, 'orderId' => $orderId];
         } catch (OrderSaveWarningsException $exception) {
             // Заказ уже сохранён: повторять создание автоматически нельзя.
-            $this->addError(new Error('Заказ создан, но Битрикс вернул предупреждения.', 'ORDER_SAVED_WITH_WARNINGS'));
+            // Клиент должен показать предупреждение и не отправлять запрос повторно.
             return [
                 'created' => true,
                 'orderId' => $exception->getOrderId(),
