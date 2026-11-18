@@ -3,8 +3,12 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Asset/AssetManager.php';
+require_once __DIR__ . '/../local/php_interface/legacy/Lema/Common/AssetManager.php';
 
-use Project\Bitrix\Asset\AssetManager;
+
+
+class AssetManagerChildOne extends \Lema\Common\AssetManager {}
+class AssetManagerChildTwo extends \Lema\Common\AssetManager {}
 
 function assetExpect(bool $condition, string $message): void
 {
@@ -29,7 +33,7 @@ $asset = new class {
 };
 
 $initialized = [];
-$manager = new AssetManager($asset, static function (array $extensions) use (&$initialized): void {
+$manager = new \Project\Bitrix\Asset\AssetManager($asset, static function (array $extensions) use (&$initialized): void {
     $initialized = $extensions;
 });
 
@@ -56,7 +60,7 @@ $emptyAsset = new class {
     public function addJs(string $file): void {}
     public function addCss(string $file): void {}
 };
-$emptyManager = new AssetManager($emptyAsset, static function (array $extensions): void {});
+$emptyManager = new \Project\Bitrix\Asset\AssetManager($emptyAsset, static function (array $extensions): void {});
 $emptyManager->addJs([])->addCss([]);
 
 $invalidFileFailed = false;
@@ -77,7 +81,7 @@ assetExpect($invalidExtensionFailed, 'Некорректные имена рас
 
 $invalidAssetFailed = false;
 try {
-    new AssetManager(new stdClass());
+    new \Project\Bitrix\Asset\AssetManager(new stdClass());
 } catch (InvalidArgumentException) {
     $invalidAssetFailed = true;
 }
@@ -85,10 +89,37 @@ assetExpect($invalidAssetFailed, 'Объект без методов addJs/addCs
 
 $missingBitrixFailed = false;
 try {
-    (new AssetManager())->addJs('/local/app.js');
+    (new \Project\Bitrix\Asset\AssetManager())->addJs('/local/app.js');
 } catch (RuntimeException $exception) {
     $missingBitrixFailed = str_contains($exception->getMessage(), 'Bitrix');
 }
 assetExpect($missingBitrixFailed, 'Без ядра Bitrix должна возвращаться понятная ошибка.');
+
+$legacyFirst = \Lema\Common\AssetManager::get();
+assetExpect(
+    $legacyFirst === \Lema\Common\AssetManager::get(),
+    'Повторный вызов get() должен возвращать singleton одного класса.'
+);
+
+$childOne = AssetManagerChildOne::get();
+$childTwo = AssetManagerChildTwo::get();
+assetExpect($childOne instanceof AssetManagerChildOne, 'Наследник должен получать экземпляр собственного класса.');
+assetExpect($childTwo instanceof AssetManagerChildTwo, 'Второй наследник должен получать экземпляр собственного класса.');
+assetExpect($childOne !== $childTwo, 'Разные наследники не должны разделять singleton.');
+
+AssetManagerChildOne::resetInstance();
+assetExpect(
+    AssetManagerChildTwo::get() === $childTwo,
+    'Сброс singleton одного наследника не должен затрагивать другой класс.'
+);
+$childOneAfterReset = AssetManagerChildOne::get();
+assetExpect(
+    $childOneAfterReset instanceof AssetManagerChildOne && $childOneAfterReset !== $childOne,
+    'После resetInstance() должен создаваться новый экземпляр.'
+);
+assetExpect(
+    \Lema\Common\AssetManager::get() === $legacyFirst,
+    'Сброс singleton наследника не должен затрагивать экземпляр базового адаптера.'
+);
 
 echo "Проверки AssetManager пройдены.\n";
