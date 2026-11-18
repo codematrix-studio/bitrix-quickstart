@@ -85,22 +85,15 @@ class OrderManager
             );
         }
 
-        if ($deliveryId !== null) {
-            $this->addDelivery($order, $deliveryId);
-        }
-
-        if ($paySystemId !== null) {
-            $this->addPayment($order, $paySystemId);
-        }
+        $shipment = $deliveryId !== null ? $this->addDelivery($order, $deliveryId) : null;
+        $payment = $paySystemId !== null ? $this->addPayment($order, $paySystemId) : null;
 
         $this->assertResult($order->doFinalAction(true), 'выполнить финальный расчёт заказа');
 
         // Финальный расчёт может изменить стоимость заказа (скидки, доставка, налоги).
         // Обновляем сумму оплаты и повторно проверяем ограничения сервисов.
-        if ($paySystemId !== null) {
-            $payments = $order->getPaymentCollection();
-            $payment = $payments->getLastItem();
-            if (!is_object($payment) || !is_callable([$payment, 'setField'])) {
+        if ($payment !== null && $paySystemId !== null) {
+            if (!is_callable([$payment, 'setField'])) {
                 throw new RuntimeException('Не удалось получить созданную оплату после расчёта.');
             }
 
@@ -114,10 +107,8 @@ class OrderManager
             }
         }
 
-        if ($deliveryId !== null) {
-            $shipments = $order->getShipmentCollection();
-            $shipment = $shipments->getLastItem();
-            if (!is_object($shipment) || !isset($this->getAvailableDeliveries($shipment)[$deliveryId])) {
+        if ($shipment !== null && $deliveryId !== null) {
+            if (!isset($this->getAvailableDeliveries($shipment)[$deliveryId])) {
                 throw new InvalidArgumentException('Служба доставки стала недоступна после финального расчёта заказа.');
             }
         }
@@ -235,7 +226,7 @@ class OrderManager
         }
     }
 
-    private function addDelivery(object $order, int $deliveryId): void
+    private function addDelivery(object $order, int $deliveryId): object
     {
         $collection = $order->getShipmentCollection();
         if (!is_object($collection) || !is_callable([$collection, 'createItem'])) {
@@ -290,9 +281,11 @@ class OrderManager
         }
 
         $this->assertResult($collection->calculateDelivery(), 'рассчитать стоимость доставки');
+
+        return $shipment;
     }
 
-    private function addPayment(object $order, int $paySystemId): void
+    private function addPayment(object $order, int $paySystemId): object
     {
         $collection = $order->getPaymentCollection();
         if (!is_object($collection) || !is_callable([$collection, 'createItem'])) {
@@ -321,6 +314,8 @@ class OrderManager
         }
 
         $payment->setPaySystemService($paySystem);
+
+        return $payment;
     }
 
     private function getAvailableDeliveries(object $shipment): array
