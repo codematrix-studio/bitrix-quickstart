@@ -1,0 +1,36 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.local.php
+/local/php_interface/config/const.php
+/local/php_interface/dbconn.php
+/.settings.php
+/bitrix/php_interface/dbconn.php
+
+# Bitrix core and user data
+/bitrix/
+/upload/
+/backup/
+/backups/
+/restore/
+/tmp/
+/temp/
+/logs/
+
+# Composer
+/local/vendor/
+/vendor/
+*.phar
+
+# IDE and operating system
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and caches
+*.log
+/cache/
+/local/cache/
