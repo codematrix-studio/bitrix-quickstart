@@ -126,6 +126,7 @@ class OrderManager
         );
 
         $this->setPropertyValues($order, $propertyValues);
+        $this->validateRequiredProperties($order);
 
         if ($comments !== null) {
             $this->assertResult(
@@ -294,6 +295,57 @@ class OrderManager
             $this->assertResult(
                 $property->setValue($value),
                 sprintf('установить значение свойства заказа %s', $code)
+            );
+        }
+    }
+
+    private function validateRequiredProperties(object $order): void
+    {
+        $collection = $order->getPropertyCollection();
+        if (!is_iterable($collection)) {
+            throw new RuntimeException('Коллекция свойств заказа не поддерживает перебор.');
+        }
+
+        $errors = [];
+
+        foreach ($collection as $property) {
+            if (!is_object($property)
+                || !is_callable([$property, 'isRequired'])
+                || !is_callable([$property, 'getPropertyId'])
+                || !is_callable([$property, 'getValue'])
+                || !is_callable([$property, 'checkRequiredValue'])
+            ) {
+                throw new RuntimeException('Элемент коллекции свойств заказа не поддерживает проверку обязательности.');
+            }
+
+            if (!$property->isRequired()) {
+                continue;
+            }
+
+            $result = $property->checkRequiredValue(
+                $property->getPropertyId(),
+                $property->getValue()
+            );
+
+            if (!is_object($result) || !is_callable([$result, 'isSuccess'])) {
+                throw new RuntimeException('Не удалось проверить обязательное свойство заказа.');
+            }
+
+            if ($result->isSuccess()) {
+                continue;
+            }
+
+            $messages = is_callable([$result, 'getErrorMessages']) ? $result->getErrorMessages() : [];
+            if (is_array($messages) && $messages !== []) {
+                $errors = array_merge($errors, $messages);
+            } else {
+                $errors[] = 'Не заполнено обязательное свойство заказа.';
+            }
+        }
+
+        if ($errors !== []) {
+            throw new InvalidArgumentException(
+                'Не заполнены обязательные свойства заказа: ' . implode('; ', $errors)
             );
         }
     }
