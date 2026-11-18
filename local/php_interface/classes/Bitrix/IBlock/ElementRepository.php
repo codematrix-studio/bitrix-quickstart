@@ -109,11 +109,44 @@ class ElementRepository
     }
 
     /**
-     * Старый метод возвращал только строки текущей страницы, без HTML навигации.
+     * Старый метод дополнительно вызывал NavStart() и читал результат через NavNext(true).
+     * Сохраняем этот контракт для шаблонов, рассчитывающих на форматированный результат.
      */
     public function getListPagination($iblockId, array $params = []): array
     {
-        return $this->getList($iblockId, $params);
+        $this->ensureModule();
+
+        $order = $params['order'] ?? ['SORT' => 'ASC'];
+        $filter = is_array($params['filter'] ?? null) ? $params['filter'] : [];
+        $filter['IBLOCK_ID'] = (int) $iblockId;
+        $filter = array_replace(['ACTIVE' => 'Y'], $filter);
+        $groupBy = $params['bIncCnt'] ?? false;
+        $navigation = $params['arNavStartParams'] ?? false;
+        $select = $params['arSelect'] ?? [];
+
+        $result = $this->legacyList !== null
+            ? ($this->legacyList)($order, $filter, $groupBy, $navigation, $select)
+            : $this->callLegacyList($order, $filter, $groupBy, $navigation, $select);
+
+        if (is_object($result) && method_exists($result, 'NavStart') && method_exists($result, 'NavNext')) {
+            $pageSize = is_array($navigation) ? (int) ($navigation['nPageSize'] ?? 0) : 0;
+            if ($pageSize < 1) {
+                throw new RuntimeException('Для getListPagination необходимо указать arNavStartParams[nPageSize].');
+            }
+
+            $result->NavStart($pageSize);
+            $rows = [];
+            while ($row = $result->NavNext(true)) {
+                if (is_array($row)) {
+                    $rows[] = $row;
+                }
+            }
+
+            return $this->keyRowsById($rows);
+        }
+
+        // Callback-адаптеры и тестовые источники могут сразу возвращать массив.
+        return $this->keyRowsById($this->fetchRows($result, true));
     }
 
     public function getAllD7($iblockId, array $params = []): array
