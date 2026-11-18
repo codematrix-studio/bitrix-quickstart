@@ -91,6 +91,34 @@ class OrderManager
         }
 
         $this->assertResult($order->doFinalAction(true), 'выполнить финальный расчёт заказа');
+
+        // Финальный расчёт может изменить стоимость заказа (скидки, доставка, налоги).
+        // Обновляем сумму оплаты и повторно проверяем ограничения сервисов.
+        if ($paySystemId !== null) {
+            $payments = $order->getPaymentCollection();
+            $payment = $payments->getLastItem();
+            if (!is_object($payment) || !is_callable([$payment, 'setField'])) {
+                throw new RuntimeException('Не удалось получить созданную оплату после расчёта.');
+            }
+
+            $this->assertResult(
+                $payment->setField('SUM', $order->getPrice()),
+                'обновить сумму оплаты после расчёта заказа'
+            );
+
+            if (!isset($this->getAvailablePaySystems($payment)[$paySystemId])) {
+                throw new InvalidArgumentException('Платёжная система стала недоступна после финального расчёта заказа.');
+            }
+        }
+
+        if ($deliveryId !== null) {
+            $shipments = $order->getShipmentCollection();
+            $shipment = $shipments->getLastItem();
+            if (!is_object($shipment) || !isset($this->getAvailableDeliveries($shipment)[$deliveryId])) {
+                throw new InvalidArgumentException('Служба доставки стала недоступна после финального расчёта заказа.');
+            }
+        }
+
         $this->assertResult($order->save(), 'сохранить заказ');
 
         if (!is_callable([$order, 'getId'])) {
@@ -155,6 +183,10 @@ class OrderManager
             'setPersonTypeId',
             'setBasket',
             'getPropertyCollection',
+            'getBasket',
+            'getPrice',
+            'getCurrency',
+            'setField',
             'getShipmentCollection',
             'getPaymentCollection',
             'doFinalAction',
@@ -312,7 +344,7 @@ class OrderManager
             $this->includeModule('sale');
             $paySystems = \Bitrix\Sale\PaySystem\Manager::getListWithRestrictions(
                 $payment,
-                \Bitrix\Sale\PaySystem\Manager::MODE_CLIENT
+                \Bitrix\Sale\Services\Base\RestrictionManager::MODE_CLIENT
             );
         }
 
