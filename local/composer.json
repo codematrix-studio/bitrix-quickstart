@@ -32,7 +32,9 @@
             "@test:file-icons",
             "@test:hlblock",
             "@test:d7-basket",
-            "@test:d7-order"
+            "@test:d7-order",
+            "@test:d7-quick-order",
+            "@test:d7-quick-order-input"
         ],
         "test:iblock": [
             "php ../tests/lema_iblock_smoke.php",
@@ -49,6 +51,8 @@
         "test:file-icons": "php ../tests/file_type_icon_resolver_smoke.php",
         "test:hlblock": "php ../tests/hlblock_smoke.php",
         "test:d7-basket": "php ../tests/d7_basket_manager_smoke.php",
-        "test:d7-order": "php ../tests/d7_order_manager_smoke.php"
+        "test:d7-order": "php ../tests/d7_order_manager_smoke.php",
+        "test:d7-quick-order": "php ../tests/d7_quick_order_smoke.php",
+        "test:d7-quick-order-input": "php ../tests/d7_quick_order_input_smoke.php"
     }
 }
