@@ -75,12 +75,12 @@ echo $preview->create($element['PREVIEW_TEXT'], 200);
 
 Подробности и примеры приведены в [Bitrix/IBlock/README.md](Bitrix/IBlock/README.md).
 
-### `Project\\Support\\FlashMessageBag`
+### `Project\Support\FlashMessageBag`
 
 Хранит flash-сообщения в переданном массиве сессионного хранилища. Не запускает сессию самостоятельно, не формирует HTML и не экранирует сообщения.
 
 ```php
-$messages = new \\Project\\Support\\FlashMessageBag($_SESSION);
+$messages = new \Project\Support\FlashMessageBag($_SESSION);
 
 $messages->add('Изменения сохранены');
 
