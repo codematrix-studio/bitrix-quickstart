@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Project\\Support;
+namespace Project\Support;
 
 use InvalidArgumentException;
 
