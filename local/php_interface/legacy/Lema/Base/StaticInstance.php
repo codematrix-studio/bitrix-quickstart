@@ -6,7 +6,7 @@
 
 namespace Lema\Base;
 
-abstract class StaticInstance extends \\Project\\Support\\PerClassInstance
+abstract class StaticInstance extends \Project\\Support\PerClassInstance
 {
     protected static $instance = null;
 
