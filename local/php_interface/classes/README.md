@@ -177,3 +177,10 @@ $pageItems = $paginator->getElements();
 Подробное описание правил, параметров, сообщений об ошибках, CAPTCHA и миграции: [Validation/README.md](Validation/README.md).
 
 Для старого API подготовлены адаптеры `Lema\\Forms\\Form`, `Lema\\Forms\\AjaxForm` и все использовавшиеся валидаторы. Они находятся в `local/php_interface/legacy/Lema/Forms/` и подключаются явно. Список изменений и исправленных дефектов приведён в `local/php_interface/legacy/README.md`.
+
+
+## Утилиты Support
+
+В `Project\\Support` добавлены универсальные классы из старой `Lema\\Common\\Helper`: `RussianPluralizer`, `JsonEncoder`, `CharsetConverter` и `UrlGenerator`. Также расширен `HtmlEscaper`, чтобы можно было передавать флаги и кодировку.
+
+Описание и примеры: [Support/README.md](Support/README.md). Старое имя `Lema\\Common\\Helper` сохранено в необязательном адаптере `legacy/Lema/Common/Helper.php`.
