@@ -180,3 +180,8 @@ if (PagePathMatcher::inRootDirectory('/catalog/item/', ['catalog', 'news'])) {
 ## Регистрация ресурсов Bitrix
 
 Для добавления JS/CSS и инициализации расширений используйте `Project\Bitrix\Asset\AssetManager`. Класс находится в пространстве имён `Project\Bitrix\Asset`, поэтому его описание вынесено в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md). Он зависит от ядра Bitrix только при стандартном создании; для автономных тестов поддерживает внедрение объекта Asset и инициализатора CJSCore.
+
+
+## FileTypeIconResolver
+
+`Project\\Support\\FileTypeIconResolver` сопоставляет MIME-типы с CSS-классами иконок. Таблица расширяется через конструктор, неизвестный тип получает резервный класс. Bitrix-интеграция `Project\\Bitrix\\File\\FileIconResolver` пытается определить MIME по содержимому локального файла через Fileinfo и использует метаданные Bitrix как резервный источник. Подробности: [FileTypeIconResolver.md](FileTypeIconResolver.md).

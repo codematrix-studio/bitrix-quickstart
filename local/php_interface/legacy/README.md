@@ -460,3 +460,8 @@ if (Page::inRootDirectory('catalog')) {
 Старый `Lema\Common\AssetManager` переработан в `Project\Bitrix\Asset\AssetManager`. Необязательный адаптер `legacy/Lema/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `Lema\Common\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
 
 Основная реализация и границы интеграционного тестирования описаны в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md).
+
+
+## Files Checker
+
+Старый `Ns\\Bitrix\\Helper\\Files\\Checker::chooseFileIcoClass($id)` заменён адаптером `legacy/Ns/Bitrix/Helper/Files/Checker.php`. Он делегирует определение иконки классу `Project\\Bitrix\\File\\FileIconResolver`. Глобальные MIME-константы старой реализации не создаются, а `HelperCore` не наследуется, поскольку его магическое состояние не использовалось. Подробности: [FileTypeIconResolver.md](../classes/Support/FileTypeIconResolver.md).
