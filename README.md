@@ -53,7 +53,7 @@ local/
 
 В `local/php_interface/classes/` постепенно собираются универсальные классы CodeMatrix Studio. Сейчас среди них есть:
 
-- `Support` — утилиты, пагинация, сообщения, генерация паролей и текстовые преобразования;
+- `Support` — утилиты, пагинация, сообщения, генерация паролей, текстовые преобразования и базовые классы экземпляров ([описание](local/php_interface/classes/Support/README.md));
 - `Bitrix/IBlock` — работа с элементами и разделами инфоблоков;
 - `Bitrix/Component` — вспомогательная работа со штатными компонентами;
 - `Validation` — проверка форм и входных данных.
@@ -74,4 +74,4 @@ local/
 composer test
 ```
 
-Отдельно можно запустить `composer test:compatibility`, `composer test:forms` и `composer test:iblock`. GitHub Actions проверяет синтаксис и тесты на PHP 8.1–8.4. Интеграционные проверки на установленном ядре Битрикс выполняются отдельно.
+Отдельно можно запустить `composer test:compatibility`, `composer test:forms`, `composer test:iblock`, `composer test:helper` и `composer test:base`. GitHub Actions проверяет синтаксис и тесты на PHP 8.1–8.4. Интеграционные проверки на установленном ядре Битрикс выполняются отдельно.
