@@ -19,6 +19,7 @@ class HlBlockManager
     private ?Closure $moduleLoader;
     private ?Closure $blockFinder;
     private ?Closure $entityCompiler;
+    private bool $moduleLoaded = false;
 
     /** @var array<int, HlBlockEntity> */
     private array $entities = [];
@@ -64,6 +65,10 @@ class HlBlockManager
 
     private function ensureModule(): void
     {
+        if ($this->moduleLoaded) {
+            return;
+        }
+
         $loaded = $this->moduleLoader !== null
             ? ($this->moduleLoader)()
             : $this->loadModule();
@@ -71,6 +76,8 @@ class HlBlockManager
         if ($loaded !== true) {
             throw new RuntimeException('Не удалось подключить модуль Битрикс highloadblock.');
         }
+
+        $this->moduleLoaded = true;
     }
 
     private function loadModule(): bool
