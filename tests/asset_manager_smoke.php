@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Asset/AssetManager.php';
+require_once __DIR__ . '/../local/php_interface/legacy/Lema/Common/AssetManager.php';
+
+class AssetManagerChildOne extends \\Lema\\Common\\AssetManager {}
+class AssetManagerChildTwo extends \\Lema\\Common\\AssetManager {}
 
 use Project\Bitrix\Asset\AssetManager;
 
