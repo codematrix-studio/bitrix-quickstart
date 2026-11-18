@@ -5,10 +5,10 @@ declare(strict_types=1);
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Asset/AssetManager.php';
 require_once __DIR__ . '/../local/php_interface/legacy/Lema/Common/AssetManager.php';
 
-use Project\\Bitrix\\Asset\\AssetManager;
 
-class AssetManagerChildOne extends \\Lema\\Common\\AssetManager {}
-class AssetManagerChildTwo extends \\Lema\\Common\\AssetManager {}
+
+class AssetManagerChildOne extends \Lema\Common\AssetManager {}
+class AssetManagerChildTwo extends \Lema\Common\AssetManager {}
 
 function assetExpect(bool $condition, string $message): void
 {
@@ -33,7 +33,7 @@ $asset = new class {
 };
 
 $initialized = [];
-$manager = new AssetManager($asset, static function (array $extensions) use (&$initialized): void {
+$manager = new \\Project\\Bitrix\\Asset\\AssetManager($asset, static function (array $extensions) use (&$initialized): void {
     $initialized = $extensions;
 });
 
@@ -95,9 +95,9 @@ try {
 }
 assetExpect($missingBitrixFailed, 'Без ядра Bitrix должна возвращаться понятная ошибка.');
 
-$legacyFirst = \\Lema\\Common\\AssetManager::get();
+$legacyFirst = \Lema\Common\AssetManager::get();
 assetExpect(
-    $legacyFirst === \\Lema\\Common\\AssetManager::get(),
+    $legacyFirst === \Lema\Common\AssetManager::get(),
     'Повторный вызов get() должен возвращать singleton одного класса.'
 );
 
@@ -118,8 +118,8 @@ assetExpect(
     'После resetInstance() должен создаваться новый экземпляр.'
 );
 assetExpect(
-    \\Lema\\Common\\AssetManager::get() === $legacyFirst,
+    \Lema\Common\AssetManager::get() === $legacyFirst,
     'Сброс singleton наследника не должен затрагивать экземпляр базового адаптера.'
 );
 
-echo "Проверки AssetManager пройдены.\\n";
+echo "Проверки AssetManager пройдены.\n";
