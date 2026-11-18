@@ -112,14 +112,24 @@ class FormValidator
 
             foreach ($fieldNames as $fieldName) {
                 $value = $this->fields[$fieldName] ?? null;
-                [$valid, $message] = $this->validateValue($rule[1], $fieldName, $value, $params);
+                $validatorMap = $this->validators();
+                $validatorClass = $validatorMap[$rule[1]] ?? null;
+
+                if (is_string($validatorClass)
+                    && class_exists($validatorClass)
+                    && is_a($validatorClass, LegacyFieldValidator::class, true)
+                ) {
+                    $validator = new $validatorClass($fieldName, $value, $params);
+                    $valid = $validator->validate();
+                    $message = $validator->getError();
+                    $showAllErrors = $validator->showAllErrors();
+                } else {
+                    [$valid, $message] = $this->validateValue($rule[1], $fieldName, $value, $params);
+                    $showAllErrors = (bool) ($params['showAllErrors'] ?? false);
+                }
 
                 if (!$valid) {
-                    $this->setError(
-                        $fieldName,
-                        $message,
-                        (bool) ($params['showAllErrors'] ?? false)
-                    );
+                    $this->setError($fieldName, $message, $showAllErrors);
                 }
             }
         }
