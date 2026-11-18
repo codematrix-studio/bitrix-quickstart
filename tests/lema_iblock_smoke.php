@@ -119,6 +119,19 @@ $paginatedRows = $paginatedRepository->getListPagination(15, [
 iblockExpect($paginationResult->pageSize === 7, 'getListPagination must call NavStart with the configured page size.');
 iblockExpect(($paginatedRows[91]['FORMATTED'] ?? false) === true, 'getListPagination must preserve NavNext(true) output.');
 
+// Export-oriented section query must be able to include inactive sections.
+$allSectionArgs = null;
+$allSections = new Project\Bitrix\IBlock\SectionRepository(
+    static fn (): bool => true,
+    null,
+    static function (...$arguments) use (&$allSectionArgs): array {
+        $allSectionArgs = $arguments;
+        return [['ID' => 77, 'NAME' => 'Inactive section']];
+    }
+);
+$allSections->getListIncludingInactive(4, ['filter' => ['ID' => [77]]]);
+iblockExpect(!array_key_exists('ACTIVE', $allSectionArgs[1]), 'getListIncludingInactive must not force ACTIVE=Y.');
+
 // Old class names and constants remain available through explicit adapters.
 iblockExpect(\Lema\IBlock\Element::CLASS_NAME === '\\Bitrix\\Iblock\\ElementTable', 'Legacy Element class constant must remain available.');
 iblockExpect(\Lema\IBlock\Section::OLD_CLASS_NAME === '\\CIBlockSection', 'Legacy Section class constant must remain available.');
