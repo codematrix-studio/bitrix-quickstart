@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../local/php_interface/classes/Bitrix/HLBlock/HlBlockRepository.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/HLBlock/HlBlockEntity.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/HLBlock/HlBlockManager.php';
 
@@ -59,7 +60,21 @@ class FakeHlBlockDataClass
 
     public static function getList(array $parameters): FakeHlBlockQueryResult
     {
-        return new FakeHlBlockQueryResult(array_values(self::$rows));
+        $rows = array_values(self::$rows);
+        $filter = $parameters['filter']['=UF_XML_ID'] ?? null;
+
+        if (is_string($filter)) {
+            $rows = array_values(array_filter(
+                $rows,
+                static fn (array $row): bool => ($row['UF_XML_ID'] ?? null) === $filter
+            ));
+        }
+
+        if (isset($parameters['limit'])) {
+            $rows = array_slice($rows, 0, (int) $parameters['limit']);
+        }
+
+        return new FakeHlBlockQueryResult($rows);
     }
 
     public static function getByPrimary(int $id, array $parameters): FakeHlBlockQueryResult
@@ -96,6 +111,7 @@ class FakeHlBlockDataClass
 
 $moduleLoads = 0;
 $blockLookups = 0;
+$entityCompilations = 0;
 $manager = new \Project\Bitrix\HLBlock\HlBlockManager(
     static function () use (&$moduleLoads): bool {
         $moduleLoads++;
@@ -105,35 +121,48 @@ $manager = new \Project\Bitrix\HLBlock\HlBlockManager(
     static function (int $id) use (&$blockLookups): ?array {
         $blockLookups++;
 
-        return in_array($id, [7, 8], true) ? ['ID' => $id, 'NAME' => 'Тестовый блок'] : null;
+        return in_array($id, [7, 8], true)
+            ? ['ID' => $id, 'NAME' => 'Тестовый блок']
+            : null;
     },
-    static fn (array $block): string => FakeHlBlockDataClass::class
+    static function (array $block) use (&$entityCompilations): string {
+        $entityCompilations++;
+
+        return FakeHlBlockDataClass::class;
+    }
 );
 
 $entity = $manager->getById(7);
 hlBlockExpect($entity === $manager->getById(7), 'ORM-обёртка должна кешироваться в менеджере.');
-hlBlockExpect($moduleLoads === 1, 'Модуль должен подключаться один раз на кешируемый HL-блок.');
-hlBlockExpect($blockLookups === 1, 'Метаданные блока должны запрашиваться один раз.');
+hlBlockExpect($moduleLoads === 1, 'Модуль должен подключаться один раз.');
+hlBlockExpect($blockLookups === 1, 'Метаданные должны запрашиваться один раз для одного ID.');
+hlBlockExpect($entityCompilations === 1, 'ORM-класс должен компилироваться один раз для одного ID.');
 
 $manager->getById(8);
 hlBlockExpect($moduleLoads === 1, 'Модуль не должен повторно подключаться для другого HL-блока.');
+hlBlockExpect($blockLookups === 2, 'Для другого ID должны загружаться собственные метаданные.');
+hlBlockExpect($entityCompilations === 2, 'Для другого ID должна компилироваться собственная сущность.');
 
 $rows = $entity->getList(['select' => ['ID', 'UF_XML_ID']]);
-hlBlockExpect(count($rows) === 1 && $rows[0]['UF_XML_ID'] === 'first', 'getList() должен возвращать строки ORM.');
+hlBlockExpect(count($rows) === 1 && $rows[0]['UF_XML_ID'] === 'first', 'getList() должен возвращать массив записей.');
 hlBlockExpect(
     $entity->getById(1, ['ID', 'UF_NAME'])['UF_NAME'] === 'Первая запись',
     'getById() должен возвращать найденную запись.'
 );
 hlBlockExpect($entity->getById(999) === null, 'Для отсутствующей записи getById() должен возвращать null.');
+hlBlockExpect(
+    $entity->findByXmlId('first')['ID'] === 1,
+    'findByXmlId() должен находить запись по UF_XML_ID.'
+);
 
 $newId = $entity->add(['UF_XML_ID' => 'second', 'UF_NAME' => 'Вторая запись']);
 hlBlockExpect($newId === 2, 'add() должен возвращать ID созданной записи.');
-hlBlockExpect($entity->update($newId, ['UF_NAME' => 'Обновлённая запись']), 'update() должен подтверждать успешное обновление.');
+hlBlockExpect($entity->update($newId, ['UF_NAME' => 'Обновлённая запись']), 'update() должен возвращать true при успехе.');
 hlBlockExpect(
     $entity->getById($newId)['UF_NAME'] === 'Обновлённая запись',
     'После update() должны возвращаться обновлённые данные.'
 );
-hlBlockExpect($entity->delete($newId), 'delete() должен подтверждать успешное удаление.');
+hlBlockExpect($entity->delete($newId), 'delete() должен возвращать true при успехе.');
 hlBlockExpect($entity->getById($newId) === null, 'Удалённая запись не должна находиться.');
 
 $invalidIdFailed = false;
@@ -171,5 +200,13 @@ try {
     $operationFailureFailed = str_contains($exception->getMessage(), 'Запись не найдена');
 }
 hlBlockExpect($operationFailureFailed, 'Ошибки D7 Result должны попадать в исключение.');
+
+$emptyXmlIdFailed = false;
+try {
+    $entity->findByXmlId(' ');
+} catch (InvalidArgumentException) {
+    $emptyXmlIdFailed = true;
+}
+hlBlockExpect($emptyXmlIdFailed, 'Пустой UF_XML_ID должен отклоняться.');
 
 echo "Проверки HLBlock пройдены.\n";
