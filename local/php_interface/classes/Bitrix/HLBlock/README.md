@@ -12,7 +12,7 @@
 Для работы используется числовой ID HL-блока. Поле `NAME` не применяется в качестве технического идентификатора: это название, которое не гарантирует уникальность.
 
 ```php
-use Project\Bitrix\HLBlock\\HlBlockManager;
+use Project\Bitrix\HLBlock\HlBlockManager;
 
 $manager = new HlBlockManager();
 $records = $manager->getById(7);
