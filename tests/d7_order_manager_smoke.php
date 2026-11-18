@@ -76,6 +76,27 @@ class FakeOrderOrderableBasket
 class FakeOrderProperty
 {
     public array $values = [];
+    public bool $required = false;
+
+    public function isRequired(): bool
+    {
+        return $this->required;
+    }
+
+    public function getPropertyId(): int
+    {
+        return 10;
+    }
+
+    public function getValue(): mixed
+    {
+        return $this->values === [] ? '' : end($this->values);
+    }
+
+    public function checkRequiredValue(int $propertyId, mixed $value): FakeOrderResult
+    {
+        return new FakeOrderResult($propertyId === 10 && $value !== '', ['Обязательное свойство EMAIL не заполнено']);
+    }
 
     public function setValue(mixed $value): FakeOrderResult
     {
@@ -85,13 +106,18 @@ class FakeOrderProperty
     }
 }
 
-class FakeOrderPropertyCollection
+class FakeOrderPropertyCollection implements IteratorAggregate
 {
     public FakeOrderProperty $email;
 
     public function __construct()
     {
         $this->email = new FakeOrderProperty();
+    }
+
+    public function getIterator(): Traversable
+    {
+        return new ArrayIterator([$this->email]);
     }
 
     public function getItemByOrderPropertyCode(string $code): ?FakeOrderProperty
@@ -202,6 +228,7 @@ class FakeOrder
     public array $fields = [];
     public bool $saveSuccess = true;
     public int $finalActions = 0;
+    public int $saveCalls = 0;
 
     public function __construct()
     {
@@ -270,6 +297,8 @@ class FakeOrder
 
     public function save(): FakeOrderResult
     {
+        $this->saveCalls++;
+
         return new FakeOrderResult($this->saveSuccess, ['Ошибка сохранения заказа']);
     }
 
@@ -327,6 +356,24 @@ orderManagerExpect($order->payments->getLastItem()->service === $paySystem, 'Д�
 orderManagerExpect($order->finalActions === 1, 'Финальный расчёт должен быть выполнен один раз.');
 orderManagerExpect($deliveryChecks === 2, 'Ограничения доставки должны проверяться до и после финального расчёта.');
 orderManagerExpect($paySystemChecks === 2, 'Ограничения оплаты должны проверяться до и после финального расчёта.');
+
+$requiredOrder = new FakeOrder();
+$requiredOrder->properties->email->required = true;
+$requiredPropertyManager = new OrderManager(
+    static fn (): FakeOrderBasket => $basket,
+    static fn (): FakeOrder => $requiredOrder,
+    null,
+    null,
+    static fn (): string => 's1'
+);
+$requiredPropertyFailed = false;
+try {
+    $requiredPropertyManager->create(101, 2);
+} catch (InvalidArgumentException $exception) {
+    $requiredPropertyFailed = str_contains($exception->getMessage(), 'EMAIL не заполнено');
+}
+orderManagerExpect($requiredPropertyFailed, 'Незаполненное обязательное свойство должно отклоняться до сохранения.');
+orderManagerExpect($requiredOrder->saveCalls === 0, 'Заказ с незаполненным обязательным свойством не должен сохраняться.');
 
 $invalidUserFailed = false;
 try {
