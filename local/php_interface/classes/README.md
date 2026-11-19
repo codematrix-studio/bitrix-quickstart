@@ -237,3 +237,6 @@ $pageItems = $paginator->getElements();
 ## Пользовательские типы свойств инфоблоков
 
 Для строкового свойства «Да/Нет» используйте `Project\Bitrix\IBlock\Property\YesNoProperty`. Тип автоматически регистрируется через `OnIBlockPropertyBuildList` в `local/php_interface/include/handlers.php`. Описание регистрации, формата значений и проверки: [Bitrix/IBlock/Property/README.md](Bitrix/IBlock/Property/README.md).
+
+
+Для строкового свойства цвета в формате HEX используйте `Project\Bitrix\IBlock\Property\ColorProperty`. Тип автоматически регистрируется через `OnIBlockPropertyBuildList`. Описание и формат хранения: [Bitrix/IBlock/Property/README.md](Bitrix/IBlock/Property/README.md).

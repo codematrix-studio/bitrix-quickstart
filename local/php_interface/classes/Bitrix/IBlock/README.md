@@ -335,3 +335,6 @@ foreach ($view->items() as $item) {
 ## Пользовательские типы свойств инфоблоков
 
 Пользовательские типы свойств размещаются в каталоге `Property`. Первая реализация — строковое свойство «Да/Нет» с флажком: `Project\Bitrix\IBlock\Property\YesNoProperty`. Подробности: [Property/README.md](Property/README.md).
+
+
+Для выбора и хранения HEX-цвета используйте `Project\Bitrix\IBlock\Property\ColorProperty`. Подробности: [Property/README.md](Property/README.md).
