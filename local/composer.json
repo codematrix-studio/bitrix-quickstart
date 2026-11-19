@@ -17,9 +17,11 @@
     "scripts": {
         "test:compatibility": "php ../tests/lema_compatibility_smoke.php",
         "test:forms": "php ../tests/lema_forms_smoke.php",
+        "test:video-url-parser": "php ../tests/video_url_parser_smoke.php",
         "test": [
             "@test:compatibility",
             "@test:forms",
+            "@test:video-url-parser",
             "@test:iblock",
             "@test:iblock-validator",
             "@test:helper",
