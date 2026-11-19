@@ -7,10 +7,10 @@ namespace Project\Bitrix\Component;
 use LogicException;
 
 /**
- * Base class for invoking Bitrix components with reusable default parameters.
+ * Базовый класс для вызова компонентов Bitrix с повторно используемыми параметрами по умолчанию.
  *
- * Unlike the legacy Lema implementation, getParams() does not mutate shared
- * static defaults when a caller supplies overrides.
+ * В отличие от старой реализации Lema, getParams() не изменяет общие
+ * статические параметры по умолчанию при передаче переопределений.
  */
 abstract class ComponentInvoker
 {
