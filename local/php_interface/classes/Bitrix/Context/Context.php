@@ -20,6 +20,11 @@ final class Context extends PerClassBitrixInstance
             throw new RuntimeException('Не удалось получить контекст Bitrix.');
         }
 
-        return $application->getContext();
+        $context = $application->getContext();
+        if (!is_object($context)) {
+            throw new RuntimeException('Приложение Bitrix вернуло некорректный контекст.');
+        }
+
+        return $context;
     }
 }

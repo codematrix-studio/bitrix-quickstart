@@ -17,6 +17,11 @@ final class Request extends PerClassBitrixInstance
             throw new RuntimeException('Контекст Bitrix не предоставляет HTTP-запрос.');
         }
 
-        return $context->getRequest();
+        $request = $context->getRequest();
+        if (!is_object($request)) {
+            throw new RuntimeException('Контекст Bitrix вернул некорректный HTTP-запрос.');
+        }
+
+        return $request;
     }
 }

@@ -28,6 +28,7 @@
             "@test:export",
             "@test:template",
             "@test:page",
+            "@test:context",
             "@test:asset",
             "@test:file-icons",
             "@test:hlblock",
@@ -55,6 +56,7 @@
         "test:d7-order": "php ../tests/d7_order_manager_smoke.php",
         "test:d7-quick-order": "php ../tests/d7_quick_order_smoke.php",
         "test:d7-quick-order-input": "php ../tests/d7_quick_order_input_smoke.php",
-        "test:product-list": "php ../tests/product_id_list_smoke.php"
+        "test:product-list": "php ../tests/product_id_list_smoke.php",
+        "test:context": "php ../tests/bitrix_context_smoke.php"
     }
 }
