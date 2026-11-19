@@ -227,3 +227,8 @@ $pageItems = $paginator->getElements();
 ## Контекст Bitrix
 
 Для доступа к объектам текущего запроса используйте `Project\\Bitrix\\Context\\Context` и `Request`. Проверки URL-каталогов выполняет `Project\\Bitrix\\Context\\Page`. Объекты получаются лениво и кешируются раздельно по классу. Подробности, примеры и ограничения: [Bitrix/Context/README.md](Bitrix/Context/README.md). Автономная проверка: `composer test:context`.
+
+
+## SEO и аналитика
+
+Новые классы `Project\\Seo\\Analytics\\BitrixECommerce` и `GtmFormEvent` формируют ecommerce- и GTM-события без передачи персональных данных и значений полей форм. JSON для inline `script` кодируется через `ScriptRenderer` с защитными флагами. Подробности, примеры и ограничения совместимости: [Seo/Analytics/README.md](Seo/Analytics/README.md).

@@ -465,3 +465,189 @@ if (Page::inRootDirectory('catalog')) {
 ## Files Checker
 
 Старый `Ns\\Bitrix\\Helper\\Files\\Checker::chooseFileIcoClass($id)` заменён адаптером `legacy/Ns/Bitrix/Helper/Files/Checker.php`. Он делегирует определение иконки классу `Project\\Bitrix\\File\\FileIconResolver`. Глобальные MIME-константы старой реализации не создаются, а `HelperCore` не наследуется, поскольку его магическое состояние не использовалось. Подробности: [FileTypeIconResolver.md](../classes/Support/FileTypeIconResolver.md).
+
+
+## ECommerce и GTMFormSubmit — безопасная переработка
+
+Старые файлы:
+- `lib/Seo/ECommerce.php`;
+- `lib/Seo/GTMFormSubmit.php`.
+
+Новая реализация:
+- `Project\\Seo\\Analytics\\BitrixECommerce`;
+- `Project\\Seo\\Analytics\\GtmFormEvent`;
+- `Project\\Seo\\Analytics\\ScriptRenderer`.
+
+Совместимые адаптеры:
+- `legacy/Lema/Seo/ECommerce.php`;
+- `legacy/Lema/Seo/GTMFormSubmit.php`.
+
+Сохранены основные публичные методы старых классов. Намеренные изменения безопасности:
+- ФИО, email, телефон, адрес и комментарии заказа исключены из Google payload;
+- значения полей формы не сохраняются и не попадают в GTM, в том числе через старые `setElement()` и `setElements()`;
+- JSON кодируется с защитными флагами для контекста HTML script;
+- кеши сбрасываются при загрузке другого заказа, а состояние GTM singleton — после вывода события;
+- модули Bitrix не подключаются при подключении файлов классов.
+
+Метод `getOrderProps()` сохранён для серверного кода и может содержать персональные данные. Его результат нельзя передавать в аналитику. Подробности: [classes/Seo/Analytics/README.md](../classes/Seo/Analytics/README.md).
+
+Автономный тест: `tests/seo_analytics_smoke.php`; команда `composer test:seo-analytics`. Тест не требует ядра Bitrix. Интеграционное поведение Sale/ORM необходимо проверить на установленном ядре.
+
+
+## XmlExport и YmlExport — переработано
+
+Старые файлы:
+- `lib/Base/XmlExport.php`;
+- `lib/Seo/YmlExport.php`.
+
+Найдены следующие проблемы.
+
+### XmlExport
+
+1. `additionalData.json` проверяется в `isNeedUpdate()`, но нигде не записывается. Из-за этого кеш постоянно считается устаревшим.
+2. `loadAdditionalData()` только заменяет свойство в памяти и не сохраняет файл.
+3. Ошибки `file_get_contents()`, `file_put_contents()` и `json_decode()` не проверяются.
+4. Запись JSON выполняется напрямую в конечный файл: при параллельных запросах или прерывании процесса можно получить частичный кеш.
+5. Нет блокировки кеша и атомарной замены файлов.
+6. `limit` применяется после получения полного списка элементов, а не к запросу.
+7. `storageDir` напрямую соединяется с document root; требуется нормализация пути и защита от выхода за разрешённую директорию.
+8. Абсолютные URL изображений и страниц собираются конкатенацией строк, без проверки уже абсолютных URL и без единого правила завершающего слеша.
+9. Загрузка разделов делает дополнительный запрос для каждого родительского раздела.
+10. `showData()` в базовом классе — незаконченная заглушка.
+
+### YmlExport
+
+1. Имя магазина и компании берутся из `$_SERVER['HTTP_HOST']`. Это позволяет подменять их заголовком Host.
+2. URL магазина, URL товара и изображения выводятся без XML-экранирования.
+3. Названия категорий и часть атрибутов выводятся без экранирования.
+4. `id`, `parentId`, `name`, `unit` и другие атрибуты могут содержать символы, нарушающие XML.
+5. Имена XML-тегов берутся из `params['fields']` без проверки допустимости.
+6. Текстовые значения экранируются через HTML-функцию `htmlspecialcharsbx()`, а не через отдельный XML-слой.
+7. Дата каталога зависит от времени изменения файла секций, а не от единого времени формирования выгрузки.
+
+### План новой реализации
+
+- отдельный кеш JSON с проверкой ошибок, блокировкой и атомарной записью;
+- единая конфигурация доверенного URL магазина и директории выгрузки;
+- отдельный XML-экранировщик для текста и атрибутов;
+- allowlist имён тегов для пользовательских полей;
+- корректная обработка пустых/невалидных кеш-файлов;
+- сохранение старых методов `loadData()`, `loadSections()`, `loadAdditionalData()`, `getProducts()`, `getSections()`, `getAdditionalData()`, `showData()`;
+- адаптеры для старых классов с явной настройкой базового URL и директории.
+
+### Новая реализация
+
+- `Project\Support\JsonFileCache` — атомарный JSON-кеш с блокировкой, проверкой ошибок и TTL.
+- `Project\Export\XmlEscaper` — отдельное экранирование XML-текста и атрибутов, удаление недопустимых XML 1.0 управляющих символов.
+- `Project\Export\YmlCatalogRenderer` — формирование YML из подготовленных массивов без зависимости от Bitrix.
+- `Project\Export\BitrixCatalogExporter` — получение товаров/разделов через репозитории, нормализация данных и кеширование.
+- `Lema\Base\XmlExport` и `Lema\Seo\YmlExport` — необязательные адаптеры старых имён.
+
+### Сохранённая совместимость
+
+- Конструктор `XmlExport($iblockId, array $params = [])` сохранён.
+- Сохранены `setNeedUpdate()`, `loadData()`, `loadAdditionalData()`, `getAdditionalData()`, `getProducts()`, `getSections()` и `showData()`.
+- `YmlExport::showData()` по-прежнему выводит XML через `echo` и поддерживает `sendHeader`.
+- Сохранены ключи `storageDir`, `serverUrl`, `productIds`, `sectionIds`, `additionalData`, `fields` и `params`.
+
+### Исправления и намеренные изменения
+
+1. Кеш теперь хранится одним файлом и обновляется атомарно; старые три JSON-файла больше не используются.
+2. `additionalData` сохраняется и восстанавливается из кеша.
+3. Подпись кеша включает ID инфоблока, выбранные ID, дополнительные данные и параметры запроса.
+4. Если передан произвольный `callback`, кеш отключается, чтобы не отдавать результат чужой функции.
+5. `productIds`, ранее объявленный, но не применявшийся, теперь действительно ограничивает список товаров.
+6. Разделы выбираются вместе с потомками; неактивные разделы не отбрасываются.
+7. Абсолютные ссылки формируются только от доверенного адреса. Внешние домены в ссылках товаров отклоняются.
+8. `serverUrl` теперь обязателен. Его нельзя автоматически получать из `HTTP_HOST`.
+9. `storageDir` остаётся путём относительно `DOCUMENT_ROOT`, но переходы `..` запрещены.
+10. Вывод всегда UTF-8; `SITE_CHARSET` больше не определяет кодировку выгрузки.
+11. Базовый `XmlExport::showData()` теперь выбрасывает `LogicException`, поскольку старая реализация выводила заглушку, а не XML-документ.
+
+Подробное описание, примеры конфигурации и ограничения: [classes/Export/README.md](../classes/Export/README.md).
+
+Автономные проверки: `tests/lema_export_smoke.php`; команда `composer test:export`. Проверяются кеш, XML-экранирование, YML, URL и подготовка данных через внедрённые репозитории. Реальная выгрузка с `CFile`, `CIBlockElement` и `CIBlockSection` на ядре Битрикс пока не выполнялась.
+
+
+Для наследников `Lema\Base\XmlExport` сохранена точка расширения: если дочерний класс переопределяет `loadAdditionalData()`, адаптер вызывает этот метод при обновлении кеша. `YmlExport::showData()` ожидает, что `loadData()` уже был вызван, как и исходный класс; сам по себе метод только формирует и выводит подготовленные данные.
+
+## Старый Ns\Bitrix\Helper\IBlock\Validator
+
+Исходный файл: `ASDAFF/bitrix.quickstart/local/codes/Ns/Bitrix/Helper/IBlock/Validator.php`.
+
+Для миграции добавлен необязательный адаптер: `legacy/Ns/Bitrix/Helper/IBlock/Validator.php`.
+
+Сохранены методы и их наблюдаемое поведение:
+
+- `email($email = '', $xss = true)` — при включённом `$xss` сначала обрезает пробелы и экранирует HTML, затем проверяет адрес; возвращает строку или `false`;
+- `email($email, false)` — не обрезает и не изменяет исходное значение перед проверкой;
+- `xss($value = '')` — обрезает внешние пробелы и экранирует HTML с флагами PHP по умолчанию старой версии.
+
+Адаптер подключается явно после Composer autoload:
+
+```php
+require_once __DIR__ . '/legacy/Ns/Bitrix/Helper/IBlock/Validator.php';
+
+$validator = new \Ns\Bitrix\Helper\IBlock\Validator();
+$email = $validator->email($email);
+$name = $validator->xss($name);
+```
+
+Старый класс наследовался от `Ns\Bitrix\Helper\HelperCore`, но сам не использовал его магические методы. Адаптер намеренно не возвращает универсальный `HelperCore` и не поддерживает вызовы `with...()` / `get...()`: этот механизм хранит произвольное состояние без типизации и не является частью контракта двух методов валидатора. Если проектный наследник старого класса использовал это наследование, его нужно мигрировать отдельно.
+
+В новом коде не следует использовать `xss()` для очистки данных перед сохранением. Проверяйте входные данные по назначению, храните исходные значения и экранируйте их при выводе в конкретный контекст. Для этого каркас предоставляет `Project\Support\EmailValidator` и `Project\Support\HtmlEscaper`.
+
+Автономный тест: `tests/iblock_validator_compatibility_smoke.php`; команда запуска из каталога `local`: `composer test:iblock-validator`. Тест не требует ядра Битрикс.
+
+
+
+
+## Page — проверка текущего раздела сайта
+
+Старый класс `Lema\Common\Page` перенесён в два слоя:
+
+- `Project\Support\PagePathMatcher` — независимая от Bitrix логика сопоставления путей;
+- `Project\Bitrix\Context\Page` — получение текущего каталога через HTTP-запрос Bitrix;
+- `legacy/Lema/Common/Page.php` — необязательный адаптер старых статических методов.
+
+Старый код:
+
+```php
+if (\Lema\Common\Page::inDir(['/catalog/', '/news/'])) {
+    // ...
+}
+
+if (\Lema\Common\Page::inRootDir('catalog')) {
+    // ...
+}
+```
+
+Новый API:
+
+```php
+use Project\Bitrix\Context\Page;
+
+if (Page::inDirectory(['/catalog/', '/news/'])) {
+    // ...
+}
+
+if (Page::inRootDirectory('catalog')) {
+    // ...
+}
+```
+
+Исправлено важное поведение старой реализации: проверка границы сегмента. Путь `/catalog-old/` больше не считается частью `/catalog/`. Метод `inRootDir()` проверяет только первый сегмент URL и не совпадает с одноимённым вложенным каталогом.
+
+Автономный тест: `tests/page_path_matcher_smoke.php`; команда запуска из каталога `local`: `composer test:page`. Тест не требует ядра Битрикс. Фасад текущего URL требует HTTP-контекста Bitrix и проверяется интеграционно.
+
+
+## AssetManager
+
+Старый `Lema\Common\AssetManager` переработан в `Project\Bitrix\Asset\AssetManager`. Необязательный адаптер `legacy/Lema/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `Lema\Common\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
+
+Основная реализация и границы интеграционного тестирования описаны в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md).
+
+
+## Files Checker
+
+Старый `Ns\\Bitrix\\Helper\\Files\\Checker::chooseFileIcoClass($id)` заменён адаптером `legacy/Ns/Bitrix/Helper/Files/Checker.php`. Он делегирует определение иконки классу `Project\\Bitrix\\File\\FileIconResolver`. Глобальные MIME-константы старой реализации не создаются, а `HelperCore` не наследуется, поскольку его магическое состояние не использовалось. Подробности: [FileTypeIconResolver.md](../classes/Support/FileTypeIconResolver.md).
