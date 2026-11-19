@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Project\Support;
 
 /**
- * Escapes text for safe insertion into an HTML text or quoted-attribute context.
+ * Экранирует текст для безопасной вставки в текст HTML или значение атрибута в кавычках.
  *
- * This is output encoding, not a replacement for context-specific validation.
+ * Это кодирование при выводе, а не замена проверке данных с учётом контекста.
  */
 final class HtmlEscaper
 {
