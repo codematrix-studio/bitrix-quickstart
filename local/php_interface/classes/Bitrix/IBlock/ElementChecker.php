@@ -9,14 +9,14 @@ use InvalidArgumentException;
 use LogicException;
 
 /**
- * Checks whether an information-block element matching a filter exists.
+ * Проверяет, существует ли элемент инфоблока, соответствующий фильтру.
  *
- * The filter uses the Bitrix D7 ORM filter syntax.
+ * Фильтр задаётся в формате ORM D7 Bitrix.
  */
 final class ElementChecker
 {
     /**
-     * Returns true when at least one element matches the filter.
+     * Возвращает true, если фильтру соответствует хотя бы один элемент.
      *
      * @param array<string, mixed> $filter
      */
@@ -26,7 +26,7 @@ final class ElementChecker
     }
 
     /**
-     * Returns the ID of the first matching element, or null when none exists.
+     * Возвращает ID первого найденного элемента или null, если совпадений нет.
      *
      * @param array<string, mixed> $filter
      */
