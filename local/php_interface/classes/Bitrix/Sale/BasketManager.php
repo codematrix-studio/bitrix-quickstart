@@ -179,6 +179,19 @@ class BasketManager
         return (float) $this->basket()->getPrice();
     }
 
+    /**
+     * Возвращает стоимость корзины до применения скидок, если её поддерживает ядро.
+     */
+    public function getBasePrice(): float
+    {
+        $basket = $this->basket();
+        if (!is_callable([$basket, 'getBasePrice'])) {
+            throw new RuntimeException('Текущая версия D7 Sale не предоставляет Basket::getBasePrice().');
+        }
+
+        return (float) $basket->getBasePrice();
+    }
+
     private function basket(): object
     {
         if ($this->basket !== null) {
@@ -229,7 +242,12 @@ class BasketManager
         return $siteId;
     }
 
-    private function getFuserId(): int
+    /**
+     * Возвращает ID FUSER текущего покупателя.
+     *
+     * Метод сохраняет совместимость с прежним BasketHandler.
+     */
+    public function getFuserId(): int
     {
         if ($this->fuserProvider !== null) {
             $fuserId = ($this->fuserProvider)();
@@ -250,7 +268,8 @@ class BasketManager
         return $fuserId;
     }
 
-    private function getCurrency(): string
+    /** Возвращает базовую валюту текущего сайта. */
+    public function getCurrency(): string
     {
         if ($this->currencyProvider !== null) {
             $currency = ($this->currencyProvider)();

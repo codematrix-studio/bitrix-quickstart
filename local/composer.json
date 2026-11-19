@@ -37,7 +37,8 @@
             "@test:d7-quick-order",
             "@test:d7-quick-order-input",
             "@test:product-list",
-            "@test:seo-analytics"
+            "@test:seo-analytics",
+            "@test:d7-basket-handler"
         ],
         "test:iblock": [
             "php ../tests/lema_iblock_smoke.php",
@@ -59,6 +60,7 @@
         "test:d7-quick-order-input": "php ../tests/d7_quick_order_input_smoke.php",
         "test:product-list": "php ../tests/product_id_list_smoke.php",
         "test:context": "php ../tests/bitrix_context_smoke.php",
-        "test:seo-analytics": "php ../tests/seo_analytics_smoke.php"
+        "test:seo-analytics": "php ../tests/seo_analytics_smoke.php",
+        "test:d7-basket-handler": "php ../tests/d7_basket_handler_smoke.php"
     }
 }
