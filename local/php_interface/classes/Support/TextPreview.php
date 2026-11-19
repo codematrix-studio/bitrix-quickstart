@@ -7,16 +7,16 @@ namespace Project\Support;
 use InvalidArgumentException;
 
 /**
- * Converts HTML or plain text into a short, readable plain-text preview.
+ * Преобразует HTML или обычный текст в короткий и удобочитаемый текстовый фрагмент.
  */
 final class TextPreview
 {
     private const DEFAULT_MAX_LENGTH = 300;
 
     /**
-     * Creates a plain-text preview, cutting at a word boundary when possible.
+     * Создаёт текстовый фрагмент, по возможности обрезая его по границе слова.
      *
-     * The maximum length is measured in Unicode grapheme clusters.
+     * Максимальная длина измеряется в графемных кластерах Unicode.
      */
     public function create(string $text, int $maxLength = self::DEFAULT_MAX_LENGTH): string
     {
@@ -24,7 +24,7 @@ final class TextPreview
             throw new InvalidArgumentException('The maximum preview length must be greater than zero.');
         }
 
-        // Remove non-content blocks and preserve separation between block elements.
+        // Удаляет блоки, не содержащие основного текста, и сохраняет разделение между блочными элементами.
         $text = preg_replace(
             '~<(script|style)\b[^>]*>.*?</\1\s*>~isu',
             ' ',
@@ -73,7 +73,7 @@ final class TextPreview
 
         $preview = implode('', array_slice($characters, 0, $maxLength));
 
-        // Avoid leaving a partial final word when a word boundary is available.
+        // Не оставляет часть последнего слова, если доступна граница слова.
         if (preg_match('/^(.*)\s+\S*$/us', $preview, $wordBoundary) === 1) {
             $preview = rtrim($wordBoundary[1]);
         }
