@@ -7,10 +7,19 @@
  * Классы обработчиков размещайте в local/php_interface/classes/.
  */
 
+use Bitrix\Main\EventManager;
+use Project\Bitrix\IBlock\Property\YesNoProperty;
+
+// Пользовательский тип свойства инфоблока «Да/Нет».
+if (class_exists(EventManager::class)) {
+    EventManager::getInstance()->addEventHandler(
+        'iblock',
+        'OnIBlockPropertyBuildList',
+        [YesNoProperty::class, 'getUserTypeDescription']
+    );
+}
+
 // Пример регистрации обработчика:
-//
-// use Bitrix\Main\EventManager;
-//
 // EventManager::getInstance()->addEventHandler(
 //     'main',
 //     'OnBeforeUserRegister',
