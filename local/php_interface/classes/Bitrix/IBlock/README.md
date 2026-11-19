@@ -139,7 +139,6 @@ $activeSections = $sections->getList($iblockId, [
 | `getCount($iblockId, $params = [])` | Получить количество элементов через D7; возвращается целое число |
 | `getListD7($iblockId, $params = [])` | Получить активные элементы через D7 |
 | `getList($iblockId, $params = [])` | Получить элементы через `CIBlockElement::GetList()` |
-| `getCount($iblockId, $params = [])` | Получить количество через D7 |
 | `getListPagination($iblockId, $params = [])` | Получить текущую выборку с legacy-параметрами навигации |
 | `getAllD7($iblockId, $params = [])` | Получить все подходящие элементы через D7 без принудительного ACTIVE |
 | `getAll($iblockId, $params = [], $pagination = false)` | Старый общий метод для legacy API |
