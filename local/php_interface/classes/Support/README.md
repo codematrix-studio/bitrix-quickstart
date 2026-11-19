@@ -211,9 +211,9 @@ $json = $list->toJson();
 
 ## VideoUrlParser
 
-\`Project\\Support\\VideoUrlParser\` разбирает ссылки YouTube, Rutube и Vimeo без API и внешних зависимостей:
+`Project\\Support\\VideoUrlParser` разбирает ссылки YouTube, Rutube и Vimeo без API и внешних зависимостей:
 
-\`\`\`php
+```php
 use Project\\Support\\VideoUrlParser;
 
 $video = VideoUrlParser::parse('https://youtu.be/dQw4w9WgXcQ');
@@ -224,8 +224,8 @@ if ($video !== null) {
     echo $video['url']; // каноническая ссылка
     echo $video['embed_url']; // ссылка для iframe
 }
-\`\`\`
+```
 
-Поддерживаются обычные и короткие ссылки, YouTube Shorts и embed-адреса, ссылки Rutube и Vimeo, включая адреса их плееров. Для неподдерживаемых или некорректных адресов возвращается \`null\`. Превью не загружаются: для этого потребовалась бы отдельная интеграция с видеохостингом.
+Поддерживаются обычные и короткие ссылки, YouTube Shorts и embed-адреса, ссылки Rutube и Vimeo, включая адреса их плееров. Для неподдерживаемых или некорректных адресов возвращается `null`. Превью не загружаются: для этого потребовалась бы отдельная интеграция с видеохостингом.
 
-Проверки: \`cd local && composer test:video-url-parser\`.
+Проверки: `cd local && composer test:video-url-parser`.
