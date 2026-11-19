@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Compatibility adapter for the legacy Lema\Base\Component class.
- * Load after Composer autoloading.
+ * Адаптер совместимости со старым классом Lema\Base\Component.
+ * Подключайте файл после загрузки Composer autoloader.
  */
 
 namespace Lema\Base;
