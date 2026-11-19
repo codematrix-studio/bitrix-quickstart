@@ -40,7 +40,8 @@
             "@test:seo-analytics",
             "@test:d7-basket-handler",
             "@test:yes-no-property",
-            "@test:color-property"
+            "@test:color-property",
+            "@test:youtube-property"
         ],
         "test:iblock": [
             "php ../tests/lema_iblock_smoke.php",
@@ -65,6 +66,7 @@
         "test:seo-analytics": "php ../tests/seo_analytics_smoke.php",
         "test:d7-basket-handler": "php ../tests/d7_basket_handler_smoke.php",
         "test:yes-no-property": "php ../tests/iblock_yes_no_property_smoke.php",
-        "test:color-property": "php ../tests/iblock_color_property_smoke.php"
+        "test:color-property": "php ../tests/iblock_color_property_smoke.php",
+        "test:youtube-property": "php ../tests/iblock_youtube_property_smoke.php"
     }
 }

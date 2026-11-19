@@ -240,3 +240,6 @@ $pageItems = $paginator->getElements();
 
 
 Для строкового свойства цвета в формате HEX используйте `Project\Bitrix\IBlock\Property\ColorProperty`. Тип автоматически регистрируется через `OnIBlockPropertyBuildList`. Описание и формат хранения: [Bitrix/IBlock/Property/README.md](Bitrix/IBlock/Property/README.md).
+
+
+Для свойства со ссылками на видео YouTube используйте `Project\Bitrix\IBlock\Property\YouTubeProperty`. Тип автоматически регистрируется через `OnIBlockPropertyBuildList`; в хранилище попадает только ID проверенного видео. Подробности: [Bitrix/IBlock/Property/README.md](Bitrix/IBlock/Property/README.md).
