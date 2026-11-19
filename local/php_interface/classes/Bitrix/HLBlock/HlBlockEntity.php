@@ -9,9 +9,6 @@ use RuntimeException;
 
 /**
  * Выполняет операции над записями одного HL-блока через D7 ORM.
- *
- * Класс не знает ID самого HL-блока: он работает с уже скомпилированным
- * ORM-классом, который передаёт HlBlockManager.
  */
 class HlBlockEntity
 {
@@ -29,7 +26,9 @@ class HlBlockEntity
 
         foreach (['getList', 'getByPrimary', 'add', 'update', 'delete'] as $method) {
             if (!is_callable([$dataClass, $method])) {
-                throw new InvalidArgumentException(sprintf('ORM-класс HL-блока не поддерживает метод %s().', $method));
+                throw new InvalidArgumentException(
+                    sprintf('ORM-класс HL-блока не поддерживает метод %s().', $method)
+                );
             }
         }
 
@@ -45,11 +44,17 @@ class HlBlockEntity
     {
         $result = ($this->dataClass)::getList($parameters);
 
-        if (!is_object($result) || !method_exists($result, 'fetchAll')) {
+        if (!is_object($result) || !is_callable([$result, 'fetchAll'])) {
             throw new RuntimeException('ORM HL-блока вернул некорректный результат списка.');
         }
 
-        return $result->fetchAll();
+        $rows = $result->fetchAll();
+
+        if (!is_array($rows)) {
+            throw new RuntimeException('Метод fetchAll() вернул некорректный список записей HL-блока.');
+        }
+
+        return $rows;
     }
 
     /**
@@ -62,13 +67,35 @@ class HlBlockEntity
         $this->assertId($id);
         $result = ($this->dataClass)::getByPrimary($id, ['select' => $select]);
 
-        if (!is_object($result) || !method_exists($result, 'fetch')) {
+        if (!is_object($result) || !is_callable([$result, 'fetch'])) {
             throw new RuntimeException('ORM HL-блока вернул некорректный результат поиска.');
         }
 
         $row = $result->fetch();
 
         return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Ищет запись по UF_XML_ID.
+     *
+     * Метод применим только к блокам, в которых создано такое пользовательское поле.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findByXmlId(string $xmlId, array $select = ['*']): ?array
+    {
+        if (trim($xmlId) === '') {
+            throw new InvalidArgumentException('UF_XML_ID не может быть пустым.');
+        }
+
+        $rows = $this->getList([
+            'select' => $select,
+            'filter' => ['=UF_XML_ID' => $xmlId],
+            'limit' => 1,
+        ]);
+
+        return $rows[0] ?? null;
     }
 
     /**
@@ -83,7 +110,7 @@ class HlBlockEntity
         $result = ($this->dataClass)::add($fields);
         $this->assertSuccessfulResult($result, 'добавить запись');
 
-        if (!method_exists($result, 'getId')) {
+        if (!is_callable([$result, 'getId'])) {
             throw new RuntimeException('Результат добавления HL-блока не содержит ID записи.');
         }
 
@@ -128,7 +155,7 @@ class HlBlockEntity
 
     private function assertSuccessfulResult($result, string $operation): void
     {
-        if (!is_object($result) || !method_exists($result, 'isSuccess')) {
+        if (!is_object($result) || !is_callable([$result, 'isSuccess'])) {
             throw new RuntimeException(sprintf('Не удалось %s: ORM вернул некорректный результат.', $operation));
         }
 
@@ -136,7 +163,7 @@ class HlBlockEntity
             return;
         }
 
-        $messages = method_exists($result, 'getErrorMessages') ? $result->getErrorMessages() : [];
+        $messages = is_callable([$result, 'getErrorMessages']) ? $result->getErrorMessages() : [];
         $details = is_array($messages) ? implode('; ', $messages) : '';
 
         throw new RuntimeException(sprintf(
