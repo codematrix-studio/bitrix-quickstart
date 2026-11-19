@@ -232,3 +232,8 @@ $pageItems = $paginator->getElements();
 ## SEO и аналитика
 
 Новые классы `Project\\Seo\\Analytics\\BitrixECommerce` и `GtmFormEvent` формируют ecommerce- и GTM-события без передачи персональных данных и значений полей форм. JSON для inline `script` кодируется через `ScriptRenderer` с защитными флагами. Подробности, примеры и ограничения совместимости: [Seo/Analytics/README.md](Seo/Analytics/README.md).
+
+
+## Пользовательские типы свойств инфоблоков
+
+Для строкового свойства «Да/Нет» используйте `Project\Bitrix\IBlock\Property\YesNoProperty`. Тип автоматически регистрируется через `OnIBlockPropertyBuildList` в `local/php_interface/include/handlers.php`. Описание регистрации, формата значений и проверки: [Bitrix/IBlock/Property/README.md](Bitrix/IBlock/Property/README.md).
