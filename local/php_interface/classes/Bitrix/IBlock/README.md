@@ -111,20 +111,20 @@ $preview = $item->previewPicture();
 
 ## Репозитории элементов и разделов
 
-Старые `Lema\\IBlock\\Element` и `Lema\\IBlock\\Section` объединяли D7 ORM и legacy API в статических фасадах. Новая реализация разделяет запросы по репозиториям:
+Старые `Lema\IBlock\Element` и `Lema\IBlock\Section` объединяли D7 ORM и legacy API в статических фасадах. Новая реализация разделяет запросы по репозиториям:
 
-- `Project\\Bitrix\\IBlock\\ElementRepository`;
-- `Project\\Bitrix\\IBlock\\SectionRepository`.
+- `Project\Bitrix\IBlock\ElementRepository`;
+- `Project\Bitrix\IBlock\SectionRepository`.
 
 ### Пример
 
 ```php
-$elements = new \\Project\\Bitrix\\IBlock\\ElementRepository();
+$elements = new \Project\Bitrix\IBlock\ElementRepository();
 $activeItems = $elements->getListD7($iblockId, [
     'select' => ['ID', 'NAME', 'CODE'],
 ]);
 
-$sections = new \\Project\\Bitrix\\IBlock\\SectionRepository();
+$sections = new \Project\Bitrix\IBlock\SectionRepository();
 $activeSections = $sections->getList($iblockId, [
     'order' => ['SORT' => 'ASC'],
     'arSelect' => ['ID', 'NAME', 'CODE'],
@@ -135,7 +135,8 @@ $activeSections = $sections->getList($iblockId, [
 
 | Метод | Назначение |
 |---|---|
-| `getById($elementId, $params = [])` | Получить элемент через D7 `getByPrimary()` |
+| `getById($elementId, $params = [])` | Получить строку элемента через D7 `getByPrimary()`; если элемент не найден, штатный `fetch()` возвращает `false` |
+| `getCount($iblockId, $params = [])` | Получить количество элементов через D7; возвращается целое число |
 | `getListD7($iblockId, $params = [])` | Получить активные элементы через D7 |
 | `getList($iblockId, $params = [])` | Получить элементы через `CIBlockElement::GetList()` |
 | `getCount($iblockId, $params = [])` | Получить количество через D7 |
@@ -202,7 +203,7 @@ composer test:iblock
 
 ### PropertyAccessor
 
-`Project\\Bitrix\\IBlock\\PropertyAccessor` содержит статические методы для стандартного массива свойств элемента или раздела:
+`Project\Bitrix\IBlock\PropertyAccessor` содержит статические методы для стандартного массива свойств элемента или раздела:
 
 - `isEmpty($code, $data, $propertiesKey = 'PROPERTIES')`;
 - `isFilled(...)`;
@@ -214,7 +215,7 @@ composer test:iblock
 
 ### ImageWatermarker
 
-`Project\\Bitrix\\IBlock\\ImageWatermarker` инкапсулирует вызов `CFile::ResizeImageGet()` и параметры водяного знака. Он проверяет наличие обязательных полей и класса `CFile`. Если тип масштабирования не передан, требуется штатная константа `BX_RESIZE_IMAGE_PROPORTIONAL`.
+`Project\Bitrix\IBlock\ImageWatermarker` инкапсулирует вызов `CFile::ResizeImageGet()` и параметры водяного знака. Он проверяет наличие обязательных полей и класса `CFile`. Если тип масштабирования не передан, требуется штатная константа `BX_RESIZE_IMAGE_PROPORTIONAL`.
 
 Метод `resize()` возвращает штатный результат Битрикс либо `false` при неполных данных. `getSource()` возвращает путь к обработанному изображению или `false`.
 
