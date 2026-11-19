@@ -7,7 +7,7 @@ namespace Project\Support;
 use InvalidArgumentException;
 
 /**
- * Generates passwords using a cryptographically secure random source.
+ * Создаёт пароли с использованием криптографически стойкого генератора случайных чисел.
  */
 final class PasswordGenerator
 {
