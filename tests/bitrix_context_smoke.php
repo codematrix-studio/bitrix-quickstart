@@ -82,7 +82,7 @@ $applicationMissing = false;
 try {
     Context::get();
 } catch (RuntimeException $exception) {
-    $applicationMissing = str_contains($exception->getMessage(), 'Application');
+    $applicationMissing = str_contains($exception->getMessage(), 'Bitrix');
 }
 contextExpect($applicationMissing, 'Без Bitrix Application контекст должен завершаться RuntimeException.');
 
