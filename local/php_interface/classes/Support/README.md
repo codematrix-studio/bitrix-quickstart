@@ -211,10 +211,10 @@ $json = $list->toJson();
 
 ## VideoUrlParser
 
-`Project\\Support\\VideoUrlParser` разбирает ссылки YouTube, Rutube и Vimeo без API и внешних зависимостей:
+`Project\Support\\VideoUrlParser` разбирает ссылки YouTube, Rutube и Vimeo без API и внешних зависимостей:
 
 ```php
-use Project\\Support\\VideoUrlParser;
+use Project\Support\\VideoUrlParser;
 
 $video = VideoUrlParser::parse('https://youtu.be/dQw4w9WgXcQ');
 
