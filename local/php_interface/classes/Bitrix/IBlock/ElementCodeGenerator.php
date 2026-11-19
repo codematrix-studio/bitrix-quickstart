@@ -8,15 +8,15 @@ use InvalidArgumentException;
 use LogicException;
 
 /**
- * Generates an information-block element code using Bitrix transliteration.
+ * Создаёт символьный код элемента инфоблока с помощью транслитерации Bitrix.
  */
 final class ElementCodeGenerator
 {
     /**
-     * Transliterates a title into a URL-friendly element code.
+     * Преобразует название в символьный код, пригодный для использования в URL.
      *
-     * Uses the same replacement rules as the legacy IBlock Text helper.
-     * This method does not check whether the generated code is unique.
+     * Использует те же правила замены, что и старый вспомогательный класс IBlock Text.
+     * Метод не проверяет уникальность созданного символьного кода.
      */
     public function generate(string $text): string
     {
