@@ -8,14 +8,14 @@ use InvalidArgumentException;
 use LogicException;
 
 /**
- * Checks whether an information-block element matching a Legacy API filter exists.
+ * Проверяет, существует ли элемент инфоблока, соответствующий фильтру старого API.
  *
- * The filter uses the CIBlockElement::GetList() filter syntax.
+ * Фильтр задаётся в формате метода CIBlockElement::GetList().
  */
 final class LegacyElementChecker
 {
     /**
-     * Returns true when at least one element matches the filter.
+     * Возвращает true, если фильтру соответствует хотя бы один элемент.
      *
      * @param array<string, mixed> $filter
      */
@@ -25,7 +25,7 @@ final class LegacyElementChecker
     }
 
     /**
-     * Returns the ID of the first matching element, or null when none exists.
+     * Возвращает ID первого найденного элемента или null, если совпадений нет.
      *
      * @param array<string, mixed> $filter
      */

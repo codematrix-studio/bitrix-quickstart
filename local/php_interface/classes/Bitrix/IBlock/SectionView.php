@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Project\Bitrix\IBlock;
 
 /**
- * Read-only view over a Bitrix section array.
+ * Представление массива раздела Bitrix только для чтения.
  *
- * Preserves the legacy Lema\\Template\\Section picture conventions.
+ * Сохраняет соглашения старого Lema\\Template\\Section для работы с изображениями.
  */
 class SectionView extends ElementView
 {

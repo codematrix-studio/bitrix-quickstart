@@ -7,7 +7,7 @@ namespace Project\Support;
 use InvalidArgumentException;
 
 /**
- * Calculates pagination state without reading the request or rendering HTML.
+ * Рассчитывает состояние постраничной навигации без чтения запроса и формирования HTML.
  */
 final class PagePagination
 {
@@ -84,9 +84,9 @@ final class PagePagination
     }
 
     /**
-     * Returns page numbers with "…" markers for omitted ranges.
+     * Возвращает номера страниц с маркерами «…» для пропущенных диапазонов.
      *
-     * The first and last pages are always included when pages exist.
+     * Если страницы существуют, первая и последняя всегда включаются в результат.
      *
      * @return list<int|string>
      */

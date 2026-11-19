@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Project\Support;
 
 /**
- * Validates email addresses using PHP's built-in validation filter.
+ * Проверяет адреса электронной почты с помощью встроенного фильтра PHP.
  *
- * This class does not verify DNS records or mailbox ownership.
+ * Класс не проверяет DNS-записи и принадлежность почтового ящика.
  */
 final class EmailValidator
 {
