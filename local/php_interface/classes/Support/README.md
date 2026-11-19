@@ -184,14 +184,14 @@ if (PagePathMatcher::inRootDirectory('/catalog/item/', ['catalog', 'news'])) {
 
 ## FileTypeIconResolver
 
-`Project\\Support\\FileTypeIconResolver` сопоставляет MIME-типы с CSS-классами иконок. Таблица расширяется через конструктор, неизвестный тип получает резервный класс. Bitrix-интеграция `Project\\Bitrix\\File\\FileIconResolver` пытается определить MIME по содержимому локального файла через Fileinfo и использует метаданные Bitrix как резервный источник. Подробности: [FileTypeIconResolver.md](FileTypeIconResolver.md).
+`Project\Support\FileTypeIconResolver` сопоставляет MIME-типы с CSS-классами иконок. Таблица расширяется через конструктор, неизвестный тип получает резервный класс. Bitrix-интеграция `Project\Bitrix\File\FileIconResolver` пытается определить MIME по содержимому локального файла через Fileinfo и использует метаданные Bitrix как резервный источник. Подробности: [FileTypeIconResolver.md](FileTypeIconResolver.md).
 
 ## ProductIdList
 
-`Project\\Support\\ProductIdList` — неизменяемый список положительных ID товаров. Класс не зависит от Битрикс и подходит для избранного, подписок на наличие и других пользовательских списков.
+`Project\Support\ProductIdList` — неизменяемый список положительных ID товаров. Класс не зависит от Битрикс и подходит для избранного, подписок на наличие и других пользовательских списков.
 
 ```php
-use Project\\Support\\ProductIdList;
+use Project\Support\ProductIdList;
 
 $list = ProductIdList::fromValues([12, '15', 12, 0]);
 $list = $list->add(21)->remove(15);
