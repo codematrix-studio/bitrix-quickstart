@@ -8,10 +8,10 @@ use InvalidArgumentException;
 use LogicException;
 
 /**
- * Paginates an in-memory array and retains the public API of Lema\\Base\\Paginator.
+ * Разбивает массив в памяти на страницы и сохраняет публичный API Lema\\Base\\Paginator.
  *
- * Request access and HTML output are kept in explicit methods so the class can
- * also be used without a Bitrix request lifecycle.
+ * Доступ к запросу и формирование HTML вынесены в отдельные методы, поэтому класс
+ * можно использовать и вне жизненного цикла запроса Bitrix.
  */
 class ArrayPaginator
 {
@@ -42,7 +42,7 @@ class ArrayPaginator
     }
 
     /**
-     * Compatibility with the old StaticInstance::get() call.
+     * Совместимость со старым вызовом StaticInstance::get().
      */
     public static function get()
     {
@@ -88,7 +88,7 @@ class ArrayPaginator
     }
 
     /**
-     * Reads the current page from one of the supported PHP superglobals.
+     * Получает номер текущей страницы из одной из поддерживаемых суперглобальных переменных PHP.
      */
     public function getPageNumber($globalArrType = 'GET')
     {
@@ -152,7 +152,7 @@ class ArrayPaginator
     }
 
     /**
-     * Renders the legacy Bootstrap pagination markup as a string.
+     * Формирует HTML-разметку старой постраничной навигации Bootstrap и возвращает её строкой.
      */
     public function renderLinks($iNumPage = 0, $nPageSize = 0, $totalCount = 0, $totalPages = 0, $pagerName = 'GET', $title = 'Товары')
     {
@@ -214,7 +214,7 @@ class ArrayPaginator
     }
 
     /**
-     * Keeps the original output-oriented method for existing templates.
+     * Сохраняет исходный метод с выводом результата для существующих шаблонов.
      */
     public function getLinks($iNumPage = 0, $nPageSize = 0, $totalCount = 0, $totalPages = 0, $pagerName = 'GET', $title = 'Товары')
     {
