@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Optional compatibility bridge for the legacy global generate_pass() function.
+ * Необязательный адаптер совместимости со старой глобальной функцией generate_pass().
  *
- * Include this file after Composer autoloading when migrating old code.
+ * При переносе старого кода подключайте этот файл после загрузки Composer autoloader.
  */
 
 if (!function_exists('generate_pass')) {
