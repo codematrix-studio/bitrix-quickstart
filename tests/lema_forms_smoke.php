@@ -181,3 +181,15 @@ $customForm = new FormsCustomLegacyForm([['field', 'custom']], ['field' => 'valu
 formsExpect($customForm->validate(), 'Custom legacy validators must remain supported.');
 formsExpect(FormsCountedLegacyValidator::$calls === 1, 'Legacy validator must not be executed twice by one validation pass.');
 
+
+// Современный валидатор использует общую проверку адреса электронной почты.
+$emailValidator = new Project\\Support\\EmailValidator();
+formsExpect($emailValidator->isValid(' dev@example.org '), 'Support email validator must trim surrounding whitespace.');
+formsExpect(!$emailValidator->isValid('not-an-email'), 'Support email validator must reject malformed addresses.');
+formsExpect(!$emailValidator->isValid('   '), 'Support email validator must reject an empty address after trimming.');
+
+$modernEmailValidator = new Project\\Validation\\EmailValidator('email', ' dev@example.org ');
+formsExpect($modernEmailValidator->validate(), 'Validation email validator must accept a valid trimmed address.');
+$invalidEmailValidator = new Project\\Validation\\EmailValidator('email', 'not-an-email');
+formsExpect(!$invalidEmailValidator->validate(), 'Validation email validator must reject malformed addresses.');
+formsExpect($invalidEmailValidator->getError() === 'Неверный формат E-mail', 'Validation email validator must preserve its public error message.');
