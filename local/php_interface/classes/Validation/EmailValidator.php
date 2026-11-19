@@ -15,7 +15,7 @@ class EmailValidator extends Validator
     {
         $value = $this->stringValue();
 
-        $validator = new \\Project\\Support\\EmailValidator();
+        $validator = new \Project\Support\EmailValidator();
 
         return $value !== null && $validator->isValid($value)
             ? true
