@@ -117,3 +117,60 @@ Composer autoload был подключён в `local/php_interface/init.php` д
 composer test:yes-no-property
 composer test:color-property
 ```
+
+## YouTube: `Project\Bitrix\IBlock\Property\YouTubeProperty`
+
+Класс добавляет строковое свойство инфоблока для хранения ссылки на видео YouTube.
+
+### Возможности
+
+- принимает ID видео или ссылку форматов `youtube.com/watch?v=...`, `youtu.be/...`, `youtube.com/embed/...`, `youtube.com/shorts/...` и `youtube.com/live/...`;
+- проверяет домен и формат ID (11 символов: латинские буквы, цифры, `_` и `-`);
+- сохраняет только ID видео, без исходной ссылки;
+- показывает предпросмотр в административной форме через `youtube-nocookie.com`;
+- выводит безопасную ссылку на просмотр видео;
+- не использует сторонние PHP-классы, библиотеки или отдельные JS/CSS-файлы.
+
+Идентификатор типа — `codematrix_youtube`.
+
+### Регистрация
+
+Типы автоматически регистрируются через событие `OnIBlockPropertyBuildList` из файла
+`local/php_interface/include/handlers.php`. Для регистрации требуется, чтобы
+Composer autoload был подключён в `local/php_interface/init.php` до подключения обработчиков.
+
+Если класс переносится отдельно, зарегистрируйте его вручную:
+
+```php
+\Bitrix\Main\EventManager::getInstance()->addEventHandler(
+    'iblock',
+    'OnIBlockPropertyBuildList',
+    [\Project\Bitrix\IBlock\Property\YouTubeProperty::class, 'getUserTypeDescription']
+);
+```
+
+После регистрации создайте строковое свойство инфоблока с типом
+«CodeMatrix: Видео YouTube».
+
+### Формат хранения
+
+В базе хранится только ID YouTube-видео, например `abcdefghijk`.
+Ссылки преобразуются в ID при сохранении. Неизвестные домены, некорректные ID
+и неподдерживаемые форматы сохраняются как пустое значение.
+
+### Ограничения
+
+- Тип предназначен для свойств инфоблоков, а не для пользовательских полей модуля `main`.
+- Множественные значения используют штатный механизм Битрикс; отдельный редактор списка и собственный JavaScript не добавляются.
+- Предпросмотр отображается только для корректного ID.
+- Smoke-тесты проверяют обработчики и формирование HTML без установленного ядра. Реальную регистрацию, сохранение и отображение необходимо дополнительно проверить на установленном ядре Битрикс.
+
+### Проверка
+
+Из каталога `local`:
+
+```bash
+composer test:yes-no-property
+composer test:color-property
+composer test:youtube-property
+```

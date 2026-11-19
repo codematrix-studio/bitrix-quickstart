@@ -9,6 +9,7 @@
 
 use Bitrix\Main\EventManager;
 use Project\Bitrix\IBlock\Property\ColorProperty;
+use Project\Bitrix\IBlock\Property\YouTubeProperty;
 use Project\Bitrix\IBlock\Property\YesNoProperty;
 
 // Пользовательский тип свойства инфоблока «Да/Нет».
@@ -23,6 +24,12 @@ if (class_exists(EventManager::class)) {
         'iblock',
         'OnIBlockPropertyBuildList',
         [ColorProperty::class, 'getUserTypeDescription']
+    );
+
+    EventManager::getInstance()->addEventHandler(
+        'iblock',
+        'OnIBlockPropertyBuildList',
+        [YouTubeProperty::class, 'getUserTypeDescription']
     );
 }
 

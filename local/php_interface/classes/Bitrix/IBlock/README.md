@@ -338,3 +338,6 @@ foreach ($view->items() as $item) {
 
 
 Для выбора и хранения HEX-цвета используйте `Project\Bitrix\IBlock\Property\ColorProperty`. Подробности: [Property/README.md](Property/README.md).
+
+
+Для хранения ссылок на YouTube используйте `Project\Bitrix\IBlock\Property\YouTubeProperty`. В базе сохраняется только проверенный ID видео. Подробности: [Property/README.md](Property/README.md).
