@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Compatibility adapter for the legacy Lema\Template\Section class.
- * Load after Composer autoloading.
+ * Адаптер совместимости со старым классом Lema\Template\Section.
+ * Подключайте файл после загрузки Composer autoloader.
  */
 
 namespace Lema\Template;
