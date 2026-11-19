@@ -7,9 +7,9 @@ namespace Project\Support;
 use InvalidArgumentException;
 
 /**
- * Stores one-request flash messages in a caller-provided session array.
+ * Хранит flash-сообщения на один запрос в переданном массиве сессии.
  *
- * The class does not start a session, render HTML, or escape message content.
+ * Класс не запускает сессию, не формирует HTML и не экранирует содержимое сообщений.
  */
 final class FlashMessageBag
 {
@@ -31,7 +31,7 @@ final class FlashMessageBag
     }
 
     /**
-     * Returns queued messages without removing them.
+     * Возвращает ожидающие сообщения, не удаляя их из хранилища.
      *
      * @return list<string>
      */
@@ -43,7 +43,7 @@ final class FlashMessageBag
     }
 
     /**
-     * Returns queued messages and removes them from storage.
+     * Возвращает ожидающие сообщения и удаляет их из хранилища.
      *
      * @return list<string>
      */
