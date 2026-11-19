@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Support/VideoUrlParser.php';
 
-use Project\\Support\\VideoUrlParser;
+use Project\Support\VideoUrlParser;
 
 function videoParserExpect(bool $condition, string $message): void
 {
@@ -61,4 +61,4 @@ foreach ([
     videoParserExpect(VideoUrlParser::parse($invalidUrl) === null, 'Некорректная или неподдерживаемая ссылка должна отклоняться: ' . $invalidUrl);
 }
 
-echo "Проверки VideoUrlParser пройдены.\\n";
+echo "Проверки VideoUrlParser пройдены.\n";
