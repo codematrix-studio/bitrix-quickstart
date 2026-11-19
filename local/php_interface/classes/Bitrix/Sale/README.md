@@ -44,9 +44,11 @@ $items = $basket->getItems();          // Объекты D7 BasketItem
 $positions = $basket->getItemsCount(); // Количество позиций
 $goods = $basket->getGoodsCount();     // Сумма количеств
 $price = $basket->getPrice();          // Итоговая сумма D7 Sale
+$basePrice = $basket->getBasePrice();  // Стоимость до скидок
+$currency = $basket->getCurrency();    // Базовая валюта текущего сайта
 ```
 
-Итоговая стоимость берётся из D7 Sale. Не рассчитывайте её самостоятельно по каталожным ценам: на неё могут влиять скидки и правила расчёта корзины.
+Итоговая стоимость берётся из D7 Sale. Не рассчитывайте её самостоятельно по каталожным ценам: на неё могут влиять скидки и правила расчёта корзины. `getBasePrice()` возвращает стоимость до скидок, если установленная версия ядра поддерживает `Basket::getBasePrice()`; иначе метод выбрасывает `RuntimeException`. `getCurrency()` возвращает базовую валюту текущего сайта.
 
 ## Автономное тестирование
 
@@ -182,7 +184,7 @@ $basket = new BasketHandler(
 );
 ```
 
-`getBasketItemsWithProps()` в новом фасаде читает только явно разрешённые поля позиции: `ID`, `PRODUCT_ID`, `NAME`, `QUANTITY`, `PRICE`, `BASE_PRICE`, `CURRENCY`.
+`getBasketItemsWithProps()` в новом фасаде читает только явно разрешённые поля позиции: `ID`, `PRODUCT_ID`, `NAME`, `QUANTITY`, `PRICE`, `BASE_PRICE`, `CURRENCY`. `getFormattedPrice()` и `getFormattedBasePrice()` возвращают отформатированные итоговую и базовую суммы. `deleteAction()` принимает ID строки корзины напрямую или в массиве под ключом `ID`/`id`.
 
 ### Изменения относительно старого Lema BasketHandler
 
