@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Bitrix\Main;
+namespace Bitrix\Main {
 
 final class Application
 {
@@ -26,6 +26,7 @@ final class Application
     {
         return $this->context;
     }
+}
 }
 
 namespace {
