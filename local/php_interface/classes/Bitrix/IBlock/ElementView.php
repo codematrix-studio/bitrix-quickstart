@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Project\Bitrix\IBlock;
 
 /**
- * Read-only view over an element or section array returned by Bitrix.
+ * Представление массива элемента или раздела Bitrix только для чтения.
  *
- * The public method names intentionally follow the old Lema\\Template\\Item API.
+ * Названия публичных методов намеренно соответствуют старому API Lema\\Template\\Item.
  */
 class ElementView
 {
