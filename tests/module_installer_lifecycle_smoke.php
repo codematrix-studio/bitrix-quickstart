@@ -259,7 +259,7 @@ namespace {
     );
 
     $assert(
-        \Bitrix\Main\Config\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'N',
+        \Bitrix\Main\Config\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE', 'N') !== 'Y',
         'После восстановления отметка незавершённой установки должна быть удалена.'
     );
 
