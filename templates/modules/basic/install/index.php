@@ -157,8 +157,19 @@ class vendor_module extends CModule
         } catch (\Throwable $exception) {
             $rollbackSuccessful = $this->rollbackInstallation($attemptedSteps);
 
+            $registrationRemoved = !$isRegistered;
+
             if ($isRegistered && $rollbackSuccessful) {
-                UnRegisterModule($this->MODULE_ID);
+                try {
+                    UnRegisterModule($this->MODULE_ID);
+                    $registrationRemoved = true;
+                } catch (\\Throwable $unregisterException) {
+                    error_log(sprintf(
+                        'Не удалось снять регистрацию модуля %s после отката (%s).',
+                        $this->MODULE_ID,
+                        get_class($unregisterException)
+                    ));
+                }
             }
 
             $message = sprintf(
@@ -167,7 +178,7 @@ class vendor_module extends CModule
                 $exception->getMessage()
             );
 
-            if (!$rollbackSuccessful) {
+            if (!$rollbackSuccessful || !$registrationRemoved) {
                 $message .= ' Откат выполнен не полностью; модуль оставлен зарегистрированным для последующего удаления.';
             }
 
