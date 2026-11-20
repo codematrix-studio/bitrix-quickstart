@@ -159,3 +159,14 @@ Actions в local/modules/indi.main/lib/mvc/controller/form.php в основно
 
 **Вывод:** нельзя считать одновременно доступными MVC actions обоих модулей. Состав активного router и шаблонов зависит от порядка установки/обновления. Нужно на VM сравнить фактические /ajax/index.php и /local/templates/main с обоими источниками.
 
+
+
+### Дополнение к getpopupAction(): stored XSS
+
+Проверен view local/modules/indi.main/views/add-basket/popup.php:
+- basket controller строит artNum из ARTNUMBER.VALUE и NAME товара через конкатенацию HTML;
+- view выводит artNum напрямую, без htmlspecialchars/HtmlFilter;
+- img выводится в атрибут src без контекстного escaping;
+- NAME из каталога попадает внутрь artNum без escaping.
+
+Если getpopupAction используется, сохранённый HTML в NAME/ARTNUMBER может выполниться в браузере при открытии popup. Прямой JS call site в Git tree не найден, поэтому использование action не подтверждено.
