@@ -260,3 +260,17 @@
 ### 7.4. Общий вывод по Simai/CProp
 
 Все три файла статически просмотрены полностью. Это не означает подтверждение их работы на установленной версии Битрикс/PHP: открыты runtime-регистрация, значения в БД, связи под-свойств, файловые сценарии и совместимость API. Для универсального каркаса прямых кандидатов на перенос нет.
+
+
+### 7.5. Подтверждённая регистрация обработчиков
+
+Проверен `local/php_interface/include/adm_tools.php`; этот файл подключается из `local/php_interface/init.php`, а `init.php` подключает его при наличии файла.
+
+В `adm_tools.php` зарегистрированы:
+
+- `CCustomTypeSimaiComplex::GetUserTypeDescription` через `iblock:OnIBlockPropertyBuildList`;
+- `CIBlockPropertyCProp::GetUserTypeDescription` через `iblock:OnIBlockPropertyBuildList`;
+- `CIBEditSimaiComplexProp::OnBeforePrologHandler` через `main:OnBeforeProlog`;
+- обработчики `OnStartIBlockElementAdd/Update`, `OnBeforeIBlockElementAdd/Update`, `OnAfterIBlockElementAdd/Update` через события модуля iblock.
+
+Таким образом, регистрация этих пользовательских типов и обработчиков в коде подтверждена. Это **не доказывает**, что в рабочей БД существуют активные свойства соответствующих типов или что пользовательские формы доступны извне; фактические ID/настройки/сохранённые значения требуют сверки БД на стенде.
