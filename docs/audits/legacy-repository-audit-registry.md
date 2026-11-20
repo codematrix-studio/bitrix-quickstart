@@ -470,3 +470,22 @@
 | `blank/modules/empty.module` | MODULE_ID-заглушка, старый CModule, несуществующий install/components source, небезопасное удаление каталога | Не переносить; новый installer |
 
 **Вывод:** единого готового к переносу стандарта компонентов/модулей в legacy-каталоге нет. Новый каркас следует сформировать после аудита на основе минимальной структуры и проверенного D7 lifecycle, с PHPDoc, русской документацией и тестами.
+
+
+## Legacy-сниппеты и административные утилиты
+
+Подробности: [Аудит сниппетов и admin tools](legacy-code-snippets-and-admin-tools-audit-2026-11-20.md).
+
+| Файл/область | Основная находка | Решение |
+|---|---|---|
+| `local/codes/bitrix_api.php` | Справочник API исполняет реальные Add/Update/Delete/Login/Subscribe примеры; повторный Add и фиксированные демонстрационные credentials | Не подключать; разделить на документацию и изолированные примеры |
+| `local/codes/bitrix_helper.php` | Смешение bootstrap, HTML и snippets; `date(d)` несовместим с PHP 8; корзина без явного CSRF | Не переносить как helper |
+| `local/codes/bitrix_menu/include/menu/links.php` | Отсутствует точка с запятой после массива; подключаемый пример не парсится | Исправить и заново сделать renderer |
+| `local/codes/utilities/usercheck.php` | Пароль из REQUEST; CUser::Login меняет auth state, не чистая проверка | Не использовать как password checker |
+| `local/codes/utilities/php_iterator.php` | Привилегированная eval-консоль; присутствуют operation/CSRF checks | Только admin-only, не переносить в публичный код |
+| `local/codes/utilities/search_iblocks.php` | Массовая переиндексация и удаление search index без явной operation permission в файле | Закрытая команда с ACL и логом |
+| `local/codes/utilities/transfer*.php` | eval прогресс-ответа, неполная обработка пустой выборки/ошибок, незавершённый перенос | Переписать как CLI/JSON workflow |
+| `local/codes/solutions/PasswordGenerator.php` | rand() для генерации пароля | random_int() и контракт длины |
+| `local/codes/solutions/CropText.php` | byte-based substr() для UTF-8 и непроверенный strrpos() | mb_* функции и обработка false |
+
+**Ограничение:** поиск внешних вызовов перечисленных snippets не дал результатов, но не исключает прямой web-доступ или ручные include на VM.
