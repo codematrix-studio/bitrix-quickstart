@@ -132,12 +132,8 @@ class vendor_module extends CModule
         }
 
         $attemptedSteps = [];
-        $isRegistered = false;
-
         try {
             RegisterModule($this->MODULE_ID);
-            $isRegistered = true;
-
             $attemptedSteps[] = 'database';
             if (!$this->InstallDB()) {
                 throw new \RuntimeException('Не удалось установить структуру данных модуля.');
@@ -157,12 +153,12 @@ class vendor_module extends CModule
         } catch (\Throwable $exception) {
             $rollbackSuccessful = $this->rollbackInstallation($attemptedSteps);
 
-            $registrationRemoved = !$isRegistered;
+            $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
 
-            if ($isRegistered && $rollbackSuccessful) {
+            if (!$registrationRemoved && $rollbackSuccessful) {
                 try {
                     UnRegisterModule($this->MODULE_ID);
-                    $registrationRemoved = true;
+                    $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
                 } catch (\Throwable $unregisterException) {
                     error_log(sprintf(
                         'Не удалось снять регистрацию модуля %s после отката (%s).',
