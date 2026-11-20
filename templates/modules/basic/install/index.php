@@ -140,21 +140,21 @@ class vendor_module extends CModule
 
             $attemptedSteps[] = 'database';
             if (!$this->InstallDB()) {
-                throw new \\RuntimeException('Не удалось установить структуру данных модуля.');
+                throw new \RuntimeException('Не удалось установить структуру данных модуля.');
             }
 
             $attemptedSteps[] = 'events';
             if (!$this->InstallEvents()) {
-                throw new \\RuntimeException('Не удалось зарегистрировать обработчики событий модуля.');
+                throw new \RuntimeException('Не удалось зарегистрировать обработчики событий модуля.');
             }
 
             $attemptedSteps[] = 'files';
             if (!$this->InstallFiles()) {
-                throw new \\RuntimeException('Не удалось установить файлы модуля.');
+                throw new \RuntimeException('Не удалось установить файлы модуля.');
             }
 
             return true;
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->rollbackInstallation($attemptedSteps);
 
             if ($isRegistered) {
@@ -192,21 +192,21 @@ class vendor_module extends CModule
 
         try {
             if (!$this->UnInstallFiles()) {
-                throw new \\RuntimeException('Не удалось удалить файлы модуля.');
+                throw new \RuntimeException('Не удалось удалить файлы модуля.');
             }
 
             if (!$this->UnInstallEvents()) {
-                throw new \\RuntimeException('Не удалось удалить обработчики событий модуля.');
+                throw new \RuntimeException('Не удалось удалить обработчики событий модуля.');
             }
 
             if (!$this->UnInstallDB()) {
-                throw new \\RuntimeException('Не удалось удалить структуру данных модуля.');
+                throw new \RuntimeException('Не удалось удалить структуру данных модуля.');
             }
 
             UnRegisterModule($this->MODULE_ID);
 
             return true;
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $message = sprintf(
                 'Удаление модуля %s прервано: %s',
                 $this->MODULE_ID,
@@ -256,7 +256,7 @@ class vendor_module extends CModule
                         $this->MODULE_ID
                     ));
                 }
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 error_log(sprintf(
                     'Ошибка этапа отката %s для модуля %s (%s).',
                     $method,
