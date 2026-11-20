@@ -339,3 +339,252 @@ D7-ориентированный учебный компонент с пров�
 - super.component/templates/.default/result_modifier.php содержит исторический закомментированный пример выборки через CIBlockElement::GetList(), без современного контракта ошибок/результата. В активной части напрямую записывает $this->__component->arResult и сохраняет __TEMPLATE_FOLDER; это внутреннее взаимодействие с кешированием и структурой шаблона, не следует превращать в универсальный рецепт без проверки API и сценариев кеша.
 
 Вывод по этому семейству: комплексную заготовку лучше спроектировать отдельно — с явной картой маршрутов, whitelist имён страниц, строгой нормализацией идентификаторов/параметров, документированным 404-поведением и независимыми шаблонами без обязательной зависимости от стороннего компонента.
+
+## 12.11. Дополнительная проверка прикладной формы объявлений
+
+Повторно разобраны ранее не выделенные отдельно файлы `Bitrix.autosave.form/array.php` и `Bitrix.autosave.form/bitrix/php_interface/include/advert/index.php`.
+
+### `array.php`
+- Файл содержит не универсальные настройки, а словари полей конкретной предметной области: объявления о собаках, щенках, родителях, родословных, заводчиках и фотографиях.
+- Контракт массивов нигде не описан; нет PHPDoc с shape-типами и назначением ключей.
+- Одни и те же поля родителей представлены большим количеством вручную продублированных ключей для матери и отца. Это повышает риск рассинхронизации при изменении схемы.
+- В массиве `$arrPedigreeRod` повторяется подпись «Прадед по отцу» для ключей 9 и 10, хотя соседняя последовательность предполагает разные родственные ветви. Значение требует проверки по предметной модели, автоматически исправлять его нельзя.
+- Имена инфоблоков и свойств зашиты в структуру и должны совпадать с конкретной конфигурацией сайта. Перенос в универсальную заготовку исключён.
+
+### `index.php`
+- Это полноценная страница конкретного пользовательского сценария, а не заготовка компонента: прямое подключение header/footer, Bootstrap и плагина fileinput, жёсткие пути к файлам темы, константы `ADVERT_IBLOCK`, `ADVERT_ROOT_SECTION`, `ADVERT_PARENTS_IBLOCK`.
+- Используются короткие PHP-теги, глобальные `$APPLICATION`/`$USER`, старый API инфоблоков и `CModule::IncludeModule()` без проверки результата.
+- Идентификатор объявления читается из `$_REQUEST`; далее доступ проверяется по автору для основного элемента, но связанная модель родителей имеет отдельную ветвящуюся логику доступа. Такой сценарий требует полноценной серверной авторизации на каждой операции, а не переноса UI-кода.
+- В PHP формируются фрагменты JavaScript/HTML через конкатенацию и прямые вставки значений. AJAX-ответ поиска вставляется через jQuery `.html()` после сборки строк с `val.src`, `val.breed`, `val.name`, `val.owner`, `val.id`; без контекстного кодирования это DOM-XSS-поверхность. Данные об ошибках и имени загруженного файла также передаются в HTML-контекст.
+- В конфигурацию fileinput передаются URL и ID файлов; серверные обработчики `save.php` должны независимо проверять сессию, право на объявление/родительскую запись, принадлежность файла и допустимые типы/размеры. Клиентские ограничения расширений и передача sessid не являются достаточной защитой.
+- Встроенный JavaScript содержит многочисленные inline-обработчики и динамические селекторы; значения, выводимые PHP внутрь JS/HTML, требуют отдельного экранирования по контексту.
+- Повторяются большие блоки для матери и отца, что затрудняет сопровождение и тестирование. Нужны отдельные сервисы/DTO для чтения анкеты, проверки прав, загрузки файлов и построения формы.
+- Вывод: весь каталог `Bitrix.autosave.form` исключён из переноса. Допустимо позднее спроектировать отдельный безопасный пример обработки пользовательской формы, но не на основе копирования этой реализации.
+
+## 12.12. Сверка полного реестра файлов
+
+Повторная сверка Git tree старого репозитория подтвердила: в `local/codes/blank/` ровно **195 файлов** и 120 каталогов (315 записей дерева). Предыдущие 195 — именно количество файлов, не каталогов. В составе 160 PHP-файлов, 5 JS-файлов, 10 документов/текстовых памяток, 14 статических ресурсов и 4 архива. Архивы не открывались и остаются исключёнными по прямому указанию пользователя.
+
+Ниже зафиксирован полный путь каждого файла из текущего дерева `master`. Обозначения:
+- **R** — исходный код, рассмотренный в аудите соответствующего семейства;
+- **M** — метаданные/локализация, проверенные вместе с компонентом;
+- **D** — документация/текстовая памятка;
+- **A** — статический ресурс, учтённый в инвентаризации, но не рассматриваемый как самостоятельный код;
+- **X** — архив, исключённый из проверки по указанию пользователя.
+
+
+### Bitrix.autosave.form/
+- `Bitrix.autosave.form/Readme.md` — D — документация/текстовая памятка; проверена в рамках аудита
+- `Bitrix.autosave.form/bitrix/php_interface/include/advert/array.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `Bitrix.autosave.form/bitrix/php_interface/include/advert/index.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `Bitrix.autosave.form/bitrix/php_interface/include/advert/reg.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `Bitrix.autosave.form/bitrix/php_interface/include/advert/save.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+
+### bxcert.resize/
+- `bxcert.resize/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `bxcert.resize/README.md` — D — документация/текстовая памятка; проверена в рамках аудита
+- `bxcert.resize/lang/ru/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `bxcert.resize/result_modifier.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+
+### compilation/
+- `compilation/.htaccess` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/Add2BasketByProductID.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/AddDeliveryGroup.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/AddNewCUserProperty.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/AddNewFieldInEmail.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/AddOrderProperty.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/CCatalogDiscount.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/DeleteUpdateBasketItem.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/EmailSender.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/GetDeliveries.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/GetPreLinkProducts.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/HL.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/OnAdminListDisplayHandler.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/Singleton.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/addNewUfProperty.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/addToBasket.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/bitrix_server_test.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/cache.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/complects.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/composer.json` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/createOrderD7.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/createSmartFilterSeoXML.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/createZipArchive.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/csv_to_array.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/debug_pr.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/detectBrowzer.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/example_options_module.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/filterDateTime.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/getAddressIncludeWithStreet.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/getAllDiscountByID.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/getAllRegions.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/getSearchedElement.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/git_commands.txt` — D — документация/текстовая памятка; проверена в рамках аудита
+- `compilation/js_examples.js` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/longbx.txt` — D — документация/текстовая памятка; проверена в рамках аудита
+- `compilation/options.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/percona.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/propesIblocks.rar` — X — архив исключён по указанию пользователя; содержимое не открывалось
+- `compilation/reindexExneded.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/script_check_comment.js` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/scu_sort_available.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/search.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/searchElements.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/sectionTree.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/sestrenskyiClass.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/sestrenskyiHLClass.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/setValueListProperty.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/sort_scu.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/viewed_product.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `compilation/xml_parse.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+
+### components/
+- `components/README.md` — D — документация/текстовая памятка; проверена в рамках аудита
+- `components/bx-components/examples/main.block.team/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/examples/main.block.team/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/examples/main.block.team/class.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/examples/main.block.team/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/examples/main.block.team/lang/ru/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/examples/main.block.team/lang/ru/class.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/examples/main.block.team/templates/.default/lang/ru/template.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/examples/main.block.team/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/menu/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/menu/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/menu/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/menu/images/menu.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/bx-components/mscoder/menu/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/menu/lang/ru/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/menu/stub.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/menu/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/menu/templates/left/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/standard.elements.list/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements.list/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements.list/class.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/standard.elements.list/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements.list/lang/ru/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements.list/lang/ru/class.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements.list/templates/.default/lang/ru/template.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements.list/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/standard.elements/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements/class.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/standard.elements/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements/lang/ru/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements/lang/ru/class.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/bx-components/mscoder/standard.elements/templates/.default/detail.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/mscoder/standard.elements/templates/.default/index.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/bx-components/readme.md` — D — документация/текстовая памятка; проверена в рамках аудита
+- `components/clear.component.d7/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/clear.component.d7/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/clear.component.d7/class.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/clear.component.d7/images/menu_ext.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/clear.component.d7/lang/ru/class.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/clear.component.d7/templates/.default/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/clear.component.d7/templates/.default/lang/ru/template.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/clear.component.d7/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/clear.component/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/clear.component/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/clear.component/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/clear.component/images/component.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/clear.component/templates/.default/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/clear.component/templates/.default/result_modifier.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/clear.component/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample.edit/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample.edit/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample.list/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample/lang/en/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/component_boilerplate/sample/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/component_boilerplate/sample/templates/.default/edit.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample/templates/.default/list.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample/templates/.default/site/sample.edit/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/component_boilerplate/sample/templates/.default/site/sample.list/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/empty.component.7z` — X — архив исключён по указанию пользователя; содержимое не открывалось
+- `components/empty.component/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/empty.component/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/empty.component/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/empty.component/images/icon.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/empty.component/templates/.default/component_epilog.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/empty.component/templates/.default/result_modifier.php.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/empty.component/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/empty_component/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/empty_component/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/empty_component/README.md` — D — документация/текстовая памятка; проверена в рамках аудита
+- `components/empty_component/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/empty_component/images/icon.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/empty_component/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/empty_component/lang/ru/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/empty_component/lang/ru/component.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/empty_component/templates/.default/lang/ru/template.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/empty_component/templates/.default/script.js` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/empty_component/templates/.default/style.css` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/empty_component/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/example/compsimple/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/example/compsimple/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/example/compsimple/README.md` — D — документация/текстовая памятка; проверена в рамках аудита
+- `components/example/compsimple/class.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/example/compsimple/images_md/articles_bx-component-creation_1.jpg` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/example/compsimple/images_md/articles_bx-component-creation_2.jpg` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/example/compsimple/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/example/compsimple/lang/ru/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/example/compsimple/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/hello.component.7z` — X — архив исключён по указанию пользователя; содержимое не открывалось
+- `components/sorting/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/sorting/README.markdown` — D — документация/текстовая памятка; проверена в рамках аудита
+- `components/sorting/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/sorting/images/sorting.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/sorting/lang/en/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/sorting/lang/en/component.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/sorting/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/sorting/lang/ru/component.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/sorting/templates/.default/style.css` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/sorting/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component.complex/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component.complex/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component.complex/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component.complex/images/catalog.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/super.component.complex/lang/ru/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component.complex/lang/ru/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component.complex/lang/ru/help/.tooltips.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component.complex/templates/.default/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component.complex/templates/.default/cetera/super.component/element/result_modifier.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component.complex/templates/.default/cetera/super.component/element/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component.complex/templates/.default/cetera/super.component/sections/result_modifier.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component.complex/templates/.default/cetera/super.component/sections/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component.complex/templates/.default/element.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component.complex/templates/.default/sections.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component/.description.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component/component.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component/images/edit.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/super.component/images/menu_ext.gif` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/super.component/templates/.default/.parameters.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component/templates/.default/lang/en/template.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component/templates/.default/lang/ru/template.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component/templates/.default/lang/ua/template.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+- `components/super.component/templates/.default/result_modifier.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component/templates/.default/result_modifier_nc.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `components/super.component/templates/.default/style.css` — A — бинарный/статический ресурс; инвентаризирован, не переносится отдельно
+- `components/super.component/templates/.default/template.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+
+### frontend/
+- `frontend/js/lib_code.js` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `frontend/js/myscripts.js` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+
+### modules/
+- `modules/empty.module/README.md` — D — документация/текстовая памятка; проверена в рамках аудита
+- `modules/empty.module/include.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `modules/empty.module/install/index.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `modules/empty.module/install/version.php` — R — исходник; проверен в рамках аудита семейства, выводы отражены в разделах выше
+- `modules/empty.module/lang/ru/install/install.php` — M — метаданные/локализация; проверены вместе с соответствующим компонентом
+
+### sale.order.ajax.zip/
+- `sale.order.ajax.zip` — X — архив исключён по указанию пользователя; содержимое не открывалось
+
+### Итог сверки
+
+- Реестр содержит все 195 blob-путей из Git tree на момент проверки; каталоги не включались в файловый счётчик.
+- В реестре отдельно сохранены статусы для четырёх архивов: `compilation/propesIblocks.rar`, `components/empty.component.7z`, `components/hello.component.7z`, `sale.order.ajax.zip`.
+- Наличие файла в реестре не означает одобрение к переносу. Ни один legacy-файл не переносился.
+- Технический долг и риски из разделов выше остаются основанием для переписывания, а не копирования.
