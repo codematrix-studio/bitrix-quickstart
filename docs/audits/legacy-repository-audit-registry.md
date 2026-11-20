@@ -343,3 +343,16 @@
 | XSS-NS-02 | Pagination URL попадает в href/data-url без экранирования | Контекстное экранирование и allowlist URL | Зафиксировано |
 | BOOT-NS-01 | Modules.php подключает Bitrix prolog при загрузке класса | Вынести bootstrap в точку входа | Зафиксировано |
 
+
+
+## Проверка фактических вызовов Helper
+
+| Класс | Результат поиска использования | Вывод |
+|---|---|---|
+| `IBlockData` | `local/php_interface/config/const.php` вызывает `IBlockData::getByCode('CATALOG')` | Активная зависимость bootstrap/config |
+| `IBlockMenu` | `local/components/menu/auto_menu/component.php` статически вызывает `sort()` и `display()` | Активный вызов; методы объявлены нестатическими — PHP 8 compatibility defect |
+| `CLWLinkHelper` | `UserProp/CYouTubeProperty.php` создаёт экземпляр класса | Активный вызов; имя класса отличается от имени файла |
+| `SendForms` | Вызовы в `local/ajax/index.php` закомментированы | Активное выполнение не подтверждено |
+| `LIBlock` | Файл включён в install include модуля `lema.lib`, вызовов `getId()` не найдено | Копирование подтверждено, использование не подтверждено |
+| `FollowService`, `CouponConditions`, `GetBasket`, `GetSection`, `SimpleHblockObject` | Внешние вызовы по поиску не найдены | Не считать активными без проверки динамики/autoload |
+
