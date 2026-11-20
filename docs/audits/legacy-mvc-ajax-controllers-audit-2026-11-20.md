@@ -138,3 +138,24 @@ Actions в local/modules/indi.main/lib/mvc/controller/form.php в основно
 ## Итог
 
 Самые опасные действия — site.main/user/updateUInfoAction (произвольное изменение пользователя/пароля), indi.main/images/* (удаление файлов и изменение фото произвольного пользователя) и indi.main/basket/remove/updateCount (операции по ID без владельца). Общий MVC router не даёт базовой защиты; каждый action должен проверять auth, CSRF, HTTP method и ownership. До исправления не размещать эти endpoints на доступном извне сайте.
+
+
+## 10. Конфликт установки двух MVC routers
+
+Оба установщика используют одинаковые назначения в installFiles():
+- install/doc_root → document root, rewrite=false;
+- install/templates → /local/templates, rewrite=false;
+- install/php_interface → /bitrix/php_interface, rewrite=false;
+- install/cron → /local/cron, rewrite=false;
+- install/admin → /bitrix/admin, rewrite=false;
+- install/js → /bitrix/js, rewrite=false;
+- install/components → /local/components, rewrite=true.
+
+При установке обоих модулей:
+- site.main/install/doc_root/ajax/index.php и indi.main/install/doc_root/ajax/index.php претендуют на один /ajax/index.php;
+- первый скопированный ajax/index.php остаётся, второй не перезаписывает его из-за rewrite=false;
+- шаблоны обоих модулей копируются в общий /local/templates/main; уже существующие файлы не перезаписываются;
+- для компонентов, напротив, rewrite=true, поэтому совпадающие имена могут перезаписываться модулем, установленным позже.
+
+**Вывод:** нельзя считать одновременно доступными MVC actions обоих модулей. Состав активного router и шаблонов зависит от порядка установки/обновления. Нужно на VM сравнить фактические /ajax/index.php и /local/templates/main с обоими источниками.
+
