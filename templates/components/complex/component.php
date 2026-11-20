@@ -8,7 +8,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var CBitrixComponent $this Текущий экземпляр компонента.
  * @var array<string, mixed> $arParams Параметры компонента.
  * @var array<string, mixed> $arResult Результат работы компонента.
+ * @global CMain $APPLICATION Объект текущего приложения Битрикс.
  */
+global $APPLICATION;
 
 $defaultUrlTemplates = [
     'list' => '',
