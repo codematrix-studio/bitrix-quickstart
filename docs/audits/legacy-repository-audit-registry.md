@@ -507,3 +507,15 @@
 | `Bitrix-phpQuery-ajax-step-parser` | Проверка main group/session есть, но write permission на iblock/catalog не подтверждён; URL без allowlist | Не переносить как есть |
 
 **Подтверждённые call sites:** `add_element.php` вызывается из `soap/js/js.js`; `subscribe.php` — из формы и `subscr.js`. Для остальных endpoints deployment/вызовы не подтверждены.
+
+
+## Компоненты tools:parser и tools:request
+
+Подробности: [Аудит tools components](legacy-tools-components-audit-2026-11-20.md).
+
+| Компонент | Основные находки | Статус |
+|---|---|---|
+| `local/components/tools/parser` | Проверяет main group + sessid, но не подтверждает права записи iblock/catalog; внешние URL/HTML без allowlist/timeout/санитизации; внешние данные попадают в JS/innerHTML; транзакции и идемпотентность отсутствуют | Не переносить |
+| `local/components/tools/request` | Есть POST + sessid и CAPTCHA для гостей; пользовательские поля в HTML-тексте тикета не экранируются, повторное объявление глобального класса, сомнительный контракт MESSAGE_AUTHOR_USER_ID | Исправить до использования |
+
+Поиск вызовов `tools:parser` и `tools:request` в доступном дереве не выявил. Фактическое размещение компонентов на страницах и права групп остаются открытыми.
