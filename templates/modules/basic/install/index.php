@@ -126,7 +126,18 @@ class vendor_module extends CModule
             return;
         }
 
-        if (!$this->InstallDB() || !$this->InstallEvents() || !$this->InstallFiles()) {
+        if (!$this->InstallDB()) {
+            return;
+        }
+
+        if (!$this->InstallEvents()) {
+            $this->UnInstallDB();
+
+            return;
+        }
+
+        if (!$this->InstallFiles()) {
+            $this->UnInstallFiles();
             $this->UnInstallEvents();
             $this->UnInstallDB();
 
