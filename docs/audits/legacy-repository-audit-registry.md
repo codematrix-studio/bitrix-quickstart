@@ -709,3 +709,6 @@
 
 
 **Дополнение к catalog.import.1c:** myCIBlockCMLImport сохраняет XML text в DETAIL_TEXT без sanitation, публикует новые элементы ACTIVE=Y, строит image path из XML_ID без path containment и работает с общими b_xml_tree без транзакции/import ID. См. legacy-1c-import-variants-and-cron-audit-2026-11-20.md.
+
+
+**Дополнение к indi.main basket:** getpopupAction формирует HTML из NAME и ARTNUMBER без escaping; view add-basket/popup.php выводит artNum напрямую. XSS path условный — прямой JS call site не найден.
