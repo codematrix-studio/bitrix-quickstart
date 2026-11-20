@@ -645,3 +645,22 @@
 - Вызовы Entity-классов и агентов не подтверждены; ID HL/инфоблоков и наличие CRM требуют проверки БД.
 
 Решение: не переносить реализации как есть; зарегистрированные обработчики и тип CRM проверять на стенде до отключения/замены.
+
+
+## MVC AJAX routers и контроллеры site.main / indi.main
+
+Подробности: [Аудит MVC AJAX controllers](legacy-mvc-ajax-controllers-audit-2026-11-20.md).
+
+| Область | Основная находка | Приоритет |
+|---|---|---|
+| site.main/install/doc_root/ajax/index.php, indi.main/install/doc_root/ajax/index.php | Общий router без auth/CSRF/HTTP method guard; dispatch по controller/action из URL | Критический архитектурный риск |
+| site.main/lib/mvc/controller/user.php::updateUInfoAction() | По произвольному USER_ID можно менять пароль, email, UF_USER_TYPE, UF_RATING, ACTIVE | Критический account takeover/privilege abuse |
+| user::changePasswordAction() | Сброс пароля любого пользователя по email/login на randString(6), без auth/CSRF и без фактической отправки пароля | Критический DoS |
+| indi.main/lib/mvc/controller/images.php | Подтверждённые JS вызовы без sessid; произвольный CFile::Delete, crop path из request, saveUserPhoto по произвольному userId | Критический IDOR/file operation |
+| indi.main/lib/mvc/controller/basket.php | Delete/Update basket по ID без FUSER/LID/ORDER filter; call site не найден | Высокий IDOR при доступности |
+| site.main/lib/mvc/controller/packets.php | Action-level owner/admin checks есть, но нет CSRF; выдача пакета имеет race window | Высокий CSRF/race |
+| site.main/lib/mvc/controller/grids.php | Изменение пакетов/S3/рейтинга без auth/owner/CSRF; $arConfig не определён в Amazon class | Критический риск, runtime под вопросом |
+| site.main/lib/mvc/controller/trials.php | Авторизация есть, CSRF и file lock отсутствуют; serials file в DOCUMENT_ROOT | Высокий CSRF/race/возможная утечка |
+| indi.main/lib/mvc/controller/form.php | Контроллеры в основном рендерят публичные Web Forms | Отдельная проверка Web Forms |
+
+**Подтверждённые client call sites:** четыре Images actions вызываются из indi.main/install/templates/main/js/template.js. Остальные маршруты доступны через общий router при установленном модуле, хотя JS call sites в Git tree не найдены.
