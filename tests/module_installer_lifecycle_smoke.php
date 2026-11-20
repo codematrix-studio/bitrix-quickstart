@@ -21,7 +21,7 @@ namespace {
     /** @var list<string> $lifecycleLog */
     $lifecycleLog = [];
 
-    final class CModule
+    class CModule
     {
     }
 
@@ -151,6 +151,19 @@ namespace {
     }
 
     /**
+     * Имитирует успешное завершение установки после неудачного отката.
+     */
+    final class RecoveringInstaller extends FailingRollbackInstaller
+    {
+        public function InstallEvents()
+        {
+            $GLOBALS['lifecycleLog'][] = 'install-events';
+
+            return true;
+        }
+    }
+
+    /**
      * Имитирует ошибку удаления файлов.
      */
     final class FailingUninstallInstaller extends SuccessfulModuleInstaller
@@ -198,6 +211,16 @@ namespace {
     $installer = new FailingRollbackInstaller();
     $assert(!$installer->DoInstall(), 'Неудачный откат не должен считаться успешной установкой.');
     $assert(IsModuleInstalled('vendor.module'), 'При неудачном откате модуль должен остаться зарегистрированным.');
+
+    // Повторная установка должна завершить ранее прерванные этапы.
+    $GLOBALS['lifecycleLog'] = [];
+    $installer = new RecoveringInstaller();
+    $assert($installer->DoInstall(), 'Повторный запуск должен позволить восстановить частичную установку.');
+    $assert(IsModuleInstalled('vendor.module'), 'После восстановления модуль должен оставаться зарегистрированным.');
+    $assert(
+        $GLOBALS['lifecycleLog'] === ['install-db', 'install-events', 'install-files'],
+        'Повторный запуск должен повторно выполнить все этапы установки по порядку.'
+    );
 
     // При ошибке удаления регистрация также должна сохраняться.
     $GLOBALS['installedModules'] = ['vendor.module' => true];

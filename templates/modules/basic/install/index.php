@@ -12,8 +12,8 @@ IncludeModuleLangFile(__FILE__);
  * Установщик базового модуля Битрикс.
  *
  * Замените идентификатор модуля и имя класса перед использованием.
- * Методы установки ресурсов должны быть идемпотентными: при повторном вызове
- * они не должны создавать дубли и должны уметь завершать откат после сбоя.
+ * Методы установки ресурсов должны быть идемпотентными: повторный вызов
+ * должен безопасно завершать ранее прерванную установку без создания дублей.
  */
 class vendor_module extends CModule
 {
@@ -127,13 +127,13 @@ class vendor_module extends CModule
     {
         global $APPLICATION;
 
-        if (IsModuleInstalled($this->MODULE_ID)) {
-            return true;
-        }
-
         $attemptedSteps = [];
         try {
-            RegisterModule($this->MODULE_ID);
+            // При повторном запуске не регистрируем модуль второй раз,
+            // но повторяем этапы, чтобы завершить ранее прерванную установку.
+            if (!IsModuleInstalled($this->MODULE_ID)) {
+                RegisterModule($this->MODULE_ID);
+            }
             $attemptedSteps[] = 'database';
             if (!$this->InstallDB()) {
                 throw new \RuntimeException('Не удалось установить структуру данных модуля.');
