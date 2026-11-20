@@ -18,7 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 global $APPLICATION;
 
 if (!is_object($APPLICATION) || !method_exists($APPLICATION, 'GetCurPage')) {
-    throw new \\RuntimeException('Не удалось получить текущую страницу Bitrix.');
+    throw new \RuntimeException('Не удалось получить текущую страницу Bitrix.');
 }
 
 $componentVariables = ['ELEMENT_ID'];
@@ -49,7 +49,7 @@ $notFound = static function (): void {
     }
 
     if (class_exists('CHTTP')) {
-        \\CHTTP::SetStatus('404 Not Found');
+        \CHTTP::SetStatus('404 Not Found');
     }
 
     ShowError('Страница не найдена.');
