@@ -4,12 +4,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-/** @var array<string, mixed> $arResult */
+/**
+ * @var array{ITEMS: list<array{NAME: string}>} $arResult Результат D7-компонента.
+ */
 ?>
 <div class="project-component">
-    <?php foreach (($arResult['ITEMS'] ?? []) as $item): ?>
+    <?php foreach ($arResult['ITEMS'] as $item): ?>
         <div class="project-component__item">
-            <?= htmlspecialcharsbx((string) ($item['NAME'] ?? '')) ?>
+            <?= htmlspecialcharsbx($item['NAME']) ?>
         </div>
     <?php endforeach; ?>
 </div>
