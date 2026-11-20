@@ -537,3 +537,18 @@
 | `lema.lib/lib/lib` | 80 файлов — точные дубли файлов в `lema.lib/lib` | Устранить после проверки include paths |
 
 **Решение:** не объединять fork-модули механически и не переносить import implementation как есть. Runtime/deployment и фактические права пользователей проверить на VM.
+
+
+## Альтернативные 1C import endpoints и cron
+
+Подробности: [Аудит 1C import variants и cron](legacy-1c-import-variants-and-cron-audit-2026-11-20.md).
+
+| Файл/область | Основная находка | Приоритет / статус |
+|---|---|---|
+| `local/components/catalog/catalog.import.1c/component.php` | Авторизация, checkauth и GROUP_PERMISSIONS отключены через `0 &&`; нет sessid; шаги ImportElements/DeactivateElement закомментированы, но код продолжает использовать result | Критический риск при размещении |
+| `local/components/catalog/card.import.1c/component.php` | Те же отключённые проверки; шаг 3 вызывает `tcCards::RemoveAll()` независимо от результата индексации | Критический риск при размещении |
+| `local/cron/cron.php` | DOCUMENT_ROOT указывает на local/cron; `end(explode())` несовместим с PHP 8; общие временные таблицы без lock; внешний devteam include отсутствует в Git | Скрипт вероятно нерабочий; проверить cron |
+| `local/php_interface/classes/CHelper1C.php` | `agent1c()` сразу возвращает строку; весь импортный код недостижим | Подтверждённый no-op |
+| `local/codes/utilities/1C/1c_import*` | Используют неопределённую переменную `$type`; зависят от отсутствующих в Git компонентов devteam | Устаревшие/неполные entrypoints |
+
+Поиск прямых вызовов `catalog:catalog.import.1c` и `catalog:card.import.1c` в текущем дереве не выявил; реальная web-доступность не подтверждена.
