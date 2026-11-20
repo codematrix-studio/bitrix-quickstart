@@ -1,6 +1,6 @@
 <?php
 
-use Bitrix\\Main\\Localization\\Loc;
+use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -130,21 +130,21 @@ class vendor_module extends CModule
         try {
             $attemptedSteps[] = 'database';
             if (!$this->InstallDB()) {
-                throw new \\RuntimeException('Не удалось установить структуру данных модуля.');
+                throw new \RuntimeException('Не удалось установить структуру данных модуля.');
             }
 
             $attemptedSteps[] = 'events';
             if (!$this->InstallEvents()) {
-                throw new \\RuntimeException('Не удалось зарегистрировать обработчики событий модуля.');
+                throw new \RuntimeException('Не удалось зарегистрировать обработчики событий модуля.');
             }
 
             $attemptedSteps[] = 'files';
             if (!$this->InstallFiles()) {
-                throw new \\RuntimeException('Не удалось установить файлы модуля.');
+                throw new \RuntimeException('Не удалось установить файлы модуля.');
             }
 
             RegisterModule($this->MODULE_ID);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->rollbackInstallation($attemptedSteps);
 
             error_log(sprintf(
@@ -179,7 +179,7 @@ class vendor_module extends CModule
             }
 
             UnRegisterModule($this->MODULE_ID);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             error_log(sprintf(
                 'Удаление модуля %s прервано (%s).',
                 $this->MODULE_ID,
@@ -221,7 +221,7 @@ class vendor_module extends CModule
                         $this->MODULE_ID
                     ));
                 }
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 error_log(sprintf(
                     'Ошибка этапа отката %s для модуля %s (%s).',
                     $method,
