@@ -79,8 +79,20 @@ if ($sefMode) {
 
     $componentPage = $parsedPage;
 
-    // В режиме ЧПУ псевдонимы сгруппированы по коду страницы компонента.
-    $variableAliases = CComponentEngine::MakeComponentVariableAliases([], $rawAliases);
+    // В режиме ЧПУ псевдонимы задаются отдельно для каждой страницы компонента.
+    $detailAliases = $rawAliases['detail'] ?? [];
+    if (!is_array($detailAliases)) {
+        $detailAliases = [];
+    }
+
+    $sefElementAlias = $detailAliases['ELEMENT_ID'] ?? $elementAlias;
+    if (!is_string($sefElementAlias) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $sefElementAlias)) {
+        $sefElementAlias = 'ELEMENT_ID';
+    }
+
+    $variableAliases = CComponentEngine::MakeComponentVariableAliases([], [
+        'detail' => ['ELEMENT_ID' => $sefElementAlias],
+    ]);
 
     CComponentEngine::InitComponentVariables(
         $componentPage,
