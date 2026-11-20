@@ -723,5 +723,5 @@
 | indi.main/admin/indi_data_import.php | Upload в DOCUMENT_ROOT/upload до sessid check; расширение/размер не ограничены; import manager вызывается до check_bitrix_sessid | Высокий CSRF/upload risk |
 | indi.main/lib/import.php | importProduct/importNew пустые заглушки; прогресс выводит XML NAME через JS innerHTML | Stored XSS в admin UI |
 | site.main/admin/indi_data_import.php | Использует Site\Main\Import, которого нет в Git tree | Вероятный fatal/incomplete endpoint |
-| admin install target | Оба модуля копируют indi_data_import.php в /bitrix/admin с rewrite=false | First-install-wins conflict |
+| admin install target | Оба модуля копируют разные wrappers в /bitrix/admin/indi_data_import.php с rewrite=false; site.main wrapper ссылается на отсутствующий site_data_import.php | First-install-wins conflict; site.main variant broken |
 
