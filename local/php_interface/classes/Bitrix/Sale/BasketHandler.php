@@ -249,10 +249,6 @@ class BasketHandler
      */
     public function getBasketItemsWithFields($iblockId): array
     {
-        if ($this->productFieldsLoader === null) {
-            throw new LogicException('Для загрузки полей товаров передайте productFieldsLoader в конструктор.');
-        }
-
         $iblockId = filter_var($iblockId, FILTER_VALIDATE_INT);
         if (!is_int($iblockId) || $iblockId < 1) {
             throw new InvalidArgumentException('ID инфоблока должен быть положительным целым числом.');
