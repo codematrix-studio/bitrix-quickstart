@@ -155,9 +155,9 @@ class vendor_module extends CModule
 
             return true;
         } catch (\Throwable $exception) {
-            $this->rollbackInstallation($attemptedSteps);
+            $rollbackSuccessful = $this->rollbackInstallation($attemptedSteps);
 
-            if ($isRegistered) {
+            if ($isRegistered && $rollbackSuccessful) {
                 UnRegisterModule($this->MODULE_ID);
             }
 
@@ -166,6 +166,10 @@ class vendor_module extends CModule
                 $this->MODULE_ID,
                 $exception->getMessage()
             );
+
+            if (!$rollbackSuccessful) {
+                $message .= ' Откат выполнен не полностью; модуль оставлен зарегистрированным для последующего удаления.';
+            }
 
             if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {
                 $APPLICATION->ThrowException($message);
@@ -231,10 +235,11 @@ class vendor_module extends CModule
      *
      * @param list<string> $attemptedSteps Начатые этапы в порядке выполнения.
      *
-     * @return void
+     * @return bool Успешность отката всех начатых этапов.
      */
-    private function rollbackInstallation(array $attemptedSteps): void
+    private function rollbackInstallation(array $attemptedSteps): bool
     {
+        $rollbackSuccessful = true;
         $rollbackMethods = [
             'database' => 'UnInstallDB',
             'events' => 'UnInstallEvents',
@@ -250,6 +255,8 @@ class vendor_module extends CModule
 
             try {
                 if (!$this->{$method}()) {
+                    $rollbackSuccessful = false;
+
                     error_log(sprintf(
                         'Не удалось выполнить этап отката %s для модуля %s.',
                         $method,
@@ -257,6 +264,8 @@ class vendor_module extends CModule
                     ));
                 }
             } catch (\Throwable $exception) {
+                $rollbackSuccessful = false;
+
                 error_log(sprintf(
                     'Ошибка этапа отката %s для модуля %s (%s).',
                     $method,
@@ -265,5 +274,7 @@ class vendor_module extends CModule
                 ));
             }
         }
+
+        return $rollbackSuccessful;
     }
 }
