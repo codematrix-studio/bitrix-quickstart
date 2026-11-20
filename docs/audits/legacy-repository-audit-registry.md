@@ -596,3 +596,18 @@
 | `tools/component.reload/ajax.php` | Динамический IncludeComponent с параметрами из request и NOT_CHECK_PERMISSIONS | Закрыть до выяснения назначения |
 
 **Подтверждённые client call sites:** personal.info, helper.ajaxform, social.emarket.comments. Для wishlist, form.reviews и component.reload поиск вызовов в Git tree не дал результатов.
+
+
+## Basket AJAX source mismatch
+
+Подробности: [Аудит basket AJAX copies](legacy-basket-ajax-source-audit-2026-11-20.md).
+
+| Файл/область | Основная находка | Статус |
+|---|---|---|
+| `local/modules/mht/sale/install/components/bitrix/sale.basket.basket/ajax.php` | Sessid/POST есть, но basket item выбирается только по ID без FUSER_ID/LID/ORDER_ID | IDOR в checked-in copy; deployment не подтверждён |
+| `local/modules/mht/sale_old/.../ajax.php`, `local/components/cart/.../ajax.php` | Аналогичный ID-only filter | Старые/локальные копии; callsite не подтверждён |
+| `local/components/mht/sale.basket.basket/ajax.php` | POST/sessid checks закомментированы | Прямой вызов не найден |
+| `local/components/cart/.../script.js` | Реально отправляет запрос на `/bitrix/components/bitrix/sale.basket.basket/ajax.php` | Core endpoint source отсутствует в Git |
+| `local/modules/mht/sale/install/index.php` | InstallFiles копирует `/bitrix/modules/sale/install/components`, а не `local/modules/mht/sale/install/components` | Проверить deployment на VM |
+
+**Ограничение:** вывод о работающем сайте не делается, пока не просмотрен фактический core endpoint на VM.
