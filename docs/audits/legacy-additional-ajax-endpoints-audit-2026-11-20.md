@@ -133,3 +133,20 @@
 ## Итог
 
 Подтверждённая цепочка с наибольшим приоритетом — `personal.info`: авторизованный пользователь меняет пароль через GET без CSRF. Дополнительно `helper.ajaxform` принимает адрес получателя из запроса, а `lema:form.ajax` доверяет клиентскому `arParams`. Остальные endpoints имеют IDOR/mass-assignment/CSRF риски; часть call sites в репозитории не найдена, поэтому их фактическая эксплуатация требует проверки на VM.
+
+
+## 8. Cart quick-add endpoints
+
+Файлы:
+- local/ajax/cart/addtocart.php
+- local/ajax/cart/cart.js
+- local/ajax/cart/basket_line.php
+- local/ajax/ajax.js
+
+- cart.js вызывает /local/ajax/cart/addtocart.php с POST, передавая id; endpoint читает $_REQUEST и вызывает Add2BasketByProductID(id, 1, array("DELAY" => "Y")).
+- Нет check_bitrix_sessid(), проверки HTTP-метода, авторизации или rate limit. Это CSRF для добавления произвольного товара в отложенную корзину текущей сессии.
+- ID товара не приводится к положительному int до вызова Add2BasketByProductID; проверку существования/доступности товара должен обеспечить API Bitrix.
+- cart.js также вызывает /local/ajax/delforbasket.php, но этого файла в Git tree нет.
+- ajax.js вызывает /cart/basket_line.php; в Git есть local/ajax/cart/basket_line.php, но корневого /cart/basket_line.php и URL rewrite для него в tree не найдено. Нельзя подтвердить, что этот URL ведёт на checked-in handler.
+
+**Решение:** использовать POST + sessid; проверять положительный ID и доступность товара; восстановить/удалить отсутствующие endpoint references; проверить URL mapping на VM.
