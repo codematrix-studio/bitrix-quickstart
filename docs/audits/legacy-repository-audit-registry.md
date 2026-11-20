@@ -688,3 +688,6 @@
 
 
 **Дополнение по корзине:** local/ajax/cart/addtocart.php вызывается из cart.js без sessid и добавляет товар в отложенную корзину; delforbasket.php отсутствует в Git, а URL /cart/basket_line.php не сопоставлен с checked-in handler. См. legacy-additional-ajax-endpoints-audit-2026-11-20.md.
+
+
+**Дополнение:** local/ajax/subscribe/subscribe.php вызывается из script.js через GET, требует авторизацию, но не sessid; пишет email из request в активный IBLOCK_ID=3 без нормализации/дедупликации. local/components/catalog/bonus_card принимает card из REQUEST без sessid, но personal/bonus/index.php вызывает отсутствующий в Git devteam:bonus_card, поэтому используемость local-копии не подтверждена.
