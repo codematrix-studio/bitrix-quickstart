@@ -1,6 +1,6 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
+use Bitrix\\Main\\Localization\\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -12,26 +12,28 @@ IncludeModuleLangFile(__FILE__);
  * Установщик базового модуля Битрикс.
  *
  * Замените идентификатор модуля и имя класса перед использованием.
+ * Методы установки ресурсов должны быть идемпотентными: при повторном вызове
+ * они не должны создавать дубли и должны уметь завершать откат после сбоя.
  */
 class vendor_module extends CModule
 {
-    /** @var string Уникальный идентификатор модуля. */
+    /** @var string Уникальный идентификатор модуля в формате vendor.module. */
     public $MODULE_ID = 'vendor.module';
 
-    /** @var string Версия модуля. */
+    /** @var string Версия модуля в формате, принятом проектом. */
     public $MODULE_VERSION;
 
     /** @var string Дата версии модуля. */
     public $MODULE_VERSION_DATE;
 
-    /** @var string Название модуля. */
+    /** @var string Название модуля для административного интерфейса. */
     public $MODULE_NAME;
 
-    /** @var string Описание модуля. */
+    /** @var string Краткое описание модуля для административного интерфейса. */
     public $MODULE_DESCRIPTION;
 
     /**
-     * Заполняет метаданные установщика.
+     * Заполняет метаданные установщика из файла версии и языкового файла.
      *
      * @return void
      */
@@ -48,11 +50,12 @@ class vendor_module extends CModule
     }
 
     /**
-     * Выполняет действия, необходимые перед регистрацией модуля.
+     * Создаёт структуру данных модуля.
      *
-     * Добавляйте создание таблиц только при наличии схемы и миграций.
+     * Реализация должна быть повторяемой и самостоятельно откатывать
+     * частично выполненные операции либо корректно обрабатываться UnInstallDB().
      *
-     * @return bool Результат установки структуры данных.
+     * @return bool Успешность установки структуры данных.
      */
     public function InstallDB()
     {
@@ -60,11 +63,9 @@ class vendor_module extends CModule
     }
 
     /**
-     * Удаляет структуру данных модуля.
+     * Удаляет только структуру данных, принадлежащую этому модулю.
      *
-     * Не удаляйте данные без явного решения проекта о политике хранения.
-     *
-     * @return bool Результат удаления структуры данных.
+     * @return bool Успешность удаления структуры данных.
      */
     public function UnInstallDB()
     {
@@ -74,7 +75,7 @@ class vendor_module extends CModule
     /**
      * Регистрирует обработчики событий модуля.
      *
-     * @return bool Результат регистрации обработчиков.
+     * @return bool Успешность регистрации обработчиков.
      */
     public function InstallEvents()
     {
@@ -82,9 +83,9 @@ class vendor_module extends CModule
     }
 
     /**
-     * Удаляет обработчики событий модуля.
+     * Снимает регистрацию обработчиков событий модуля.
      *
-     * @return bool Результат удаления обработчиков.
+     * @return bool Успешность удаления обработчиков.
      */
     public function UnInstallEvents()
     {
@@ -92,11 +93,11 @@ class vendor_module extends CModule
     }
 
     /**
-     * Устанавливает файлы модуля.
+     * Устанавливает файлы, принадлежащие модулю.
      *
      * По умолчанию файлы сайта не копируются.
      *
-     * @return bool Результат установки файлов.
+     * @return bool Успешность установки файлов.
      */
     public function InstallFiles()
     {
@@ -104,11 +105,9 @@ class vendor_module extends CModule
     }
 
     /**
-     * Удаляет файлы, установленные модулем.
+     * Удаляет только файлы, установленные этим модулем.
      *
-     * Добавляйте удаление только конкретных файлов и каталогов модуля.
-     *
-     * @return bool Результат удаления файлов.
+     * @return bool Успешность удаления файлов.
      */
     public function UnInstallFiles()
     {
@@ -116,48 +115,120 @@ class vendor_module extends CModule
     }
 
     /**
-     * Запускает установку модуля.
+     * Устанавливает модуль с откатом уже начатых этапов при ошибке.
      *
      * @return void
      */
-    public function DoInstall()
+    public function DoInstall(): void
     {
         if (IsModuleInstalled($this->MODULE_ID)) {
             return;
         }
 
-        if (!$this->InstallDB()) {
-            return;
+        $attemptedSteps = [];
+
+        try {
+            $attemptedSteps[] = 'database';
+            if (!$this->InstallDB()) {
+                throw new \\RuntimeException('Не удалось установить структуру данных модуля.');
+            }
+
+            $attemptedSteps[] = 'events';
+            if (!$this->InstallEvents()) {
+                throw new \\RuntimeException('Не удалось зарегистрировать обработчики событий модуля.');
+            }
+
+            $attemptedSteps[] = 'files';
+            if (!$this->InstallFiles()) {
+                throw new \\RuntimeException('Не удалось установить файлы модуля.');
+            }
+
+            RegisterModule($this->MODULE_ID);
+        } catch (\\Throwable $exception) {
+            $this->rollbackInstallation($attemptedSteps);
+
+            error_log(sprintf(
+                'Установка модуля %s прервана (%s).',
+                $this->MODULE_ID,
+                get_class($exception)
+            ));
         }
-
-        if (!$this->InstallEvents()) {
-            $this->UnInstallDB();
-
-            return;
-        }
-
-        if (!$this->InstallFiles()) {
-            $this->UnInstallFiles();
-            $this->UnInstallEvents();
-            $this->UnInstallDB();
-
-            return;
-        }
-
-        RegisterModule($this->MODULE_ID);
     }
 
     /**
-     * Запускает удаление модуля.
+     * Удаляет ресурсы модуля и снимает регистрацию только после успешных этапов.
+     *
+     * При ошибке модуль остаётся зарегистрированным, чтобы администратор мог
+     * устранить причину и повторить удаление. Методы удаления должны быть идемпотентными.
      *
      * @return void
      */
-    public function DoUninstall()
+    public function DoUninstall(): void
     {
-        $this->UnInstallEvents();
-        $this->UnInstallFiles();
-        $this->UnInstallDB();
+        try {
+            if (!$this->UnInstallFiles()) {
+                return;
+            }
 
-        UnRegisterModule($this->MODULE_ID);
+            if (!$this->UnInstallEvents()) {
+                return;
+            }
+
+            if (!$this->UnInstallDB()) {
+                return;
+            }
+
+            UnRegisterModule($this->MODULE_ID);
+        } catch (\\Throwable $exception) {
+            error_log(sprintf(
+                'Удаление модуля %s прервано (%s).',
+                $this->MODULE_ID,
+                get_class($exception)
+            ));
+        }
+    }
+
+    /**
+     * Откатывает все этапы установки, которые уже были начаты.
+     *
+     * Этап включается в список до вызова установщика, чтобы откатить и частично
+     * выполненную операцию, вернувшую false или выбросившую исключение.
+     *
+     * @param list<string> $attemptedSteps Начатые этапы в порядке выполнения.
+     *
+     * @return void
+     */
+    private function rollbackInstallation(array $attemptedSteps): void
+    {
+        $rollbackMethods = [
+            'database' => 'UnInstallDB',
+            'events' => 'UnInstallEvents',
+            'files' => 'UnInstallFiles',
+        ];
+
+        foreach (array_reverse($attemptedSteps) as $step) {
+            $method = $rollbackMethods[$step] ?? null;
+
+            if ($method === null) {
+                continue;
+            }
+
+            try {
+                if (!$this->{$method}()) {
+                    error_log(sprintf(
+                        'Не удалось выполнить этап отката %s для модуля %s.',
+                        $method,
+                        $this->MODULE_ID
+                    ));
+                }
+            } catch (\\Throwable $exception) {
+                error_log(sprintf(
+                    'Ошибка этапа отката %s для модуля %s (%s).',
+                    $method,
+                    $this->MODULE_ID,
+                    get_class($exception)
+                ));
+            }
+        }
     }
 }
