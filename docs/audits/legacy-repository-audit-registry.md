@@ -664,3 +664,18 @@
 | indi.main/lib/mvc/controller/form.php | Контроллеры в основном рендерят публичные Web Forms | Отдельная проверка Web Forms |
 
 **Подтверждённые client call sites:** четыре Images actions вызываются из indi.main/install/templates/main/js/template.js. Остальные маршруты доступны через общий router при установленном модуле, хотя JS call sites в Git tree не найдены.
+
+
+## Бизнес-агенты, купоны и файловые импортеры
+
+Подробности: [Аудит агентов, купонов и upload files](legacy-business-agents-coupons-and-uploads-audit-2026-11-20.md).
+
+| Область | Основная находка | Статус |
+|---|---|---|
+| mht/sale Product2ProductTable::deleteOldProducts | UPDATE b_sale_order_processing SET PRODUCTS_REMOVED='Y' без WHERE; агент зарегистрирован на 10 дней | Подтверждённый дефект данных |
+| order.coupon | OnSaleStatusOrder при статусе P создаёт купоны без проверки уже выданных по заказу | Риск дублирования при повторном входе в статус |
+| gift.certificate | Аналогичная выдача сертификатов по заказу/товару без idempotency key | Риск дублирования |
+| discount.updater | XML сохраняется в DOCUMENT_ROOT/discount_cards.xml и отдаётся прямой ссылкой; processor в Git не найден | Возможное раскрытие файла |
+| site.main Trials | serials4999.csv в DOCUMENT_ROOT, нет lock/atomic update и CSRF | Гонка и возможная утечка serials |
+
+**Ограничение:** статический аудит не подтверждает, что discount_cards.xml и serials4999.csv доступны извне; это требует проверки web server/VM.
