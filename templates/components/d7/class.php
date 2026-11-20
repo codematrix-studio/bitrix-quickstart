@@ -1,7 +1,5 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -10,20 +8,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * Базовый каркас D7-компонента.
  *
  * Переименуйте класс и дополните получение данных под задачу компонента.
+ * Зависимости от модулей подключайте явно в getResult() через Loader::includeModule().
  *
- * @package Project\Components
+ * @package Project\\Components
  */
 class ProjectD7Component extends CBitrixComponent
 {
     /**
-     * Подключает языковые сообщения компонента.
+     * Подключает языковые сообщения компонента штатным механизмом Bitrix.
      *
      * @return void
      */
-    public function onIncludeComponentLang()
+    public function onIncludeComponentLang(): void
     {
         $this->includeComponentLang(basename(__FILE__));
-        Loc::loadMessages(__FILE__);
     }
 
     /**
@@ -33,7 +31,7 @@ class ProjectD7Component extends CBitrixComponent
      *
      * @return array<string, mixed> Нормализованные параметры компонента.
      */
-    public function onPrepareComponentParams($arParams)
+    public function onPrepareComponentParams($arParams): array
     {
         $arParams['CACHE_TIME'] = max(0, (int) ($arParams['CACHE_TIME'] ?? 3600));
 
@@ -43,12 +41,13 @@ class ProjectD7Component extends CBitrixComponent
     /**
      * Формирует данные, передаваемые в шаблон компонента.
      *
-     * Здесь размещайте получение и подготовку данных. Сложную бизнес-логику
-     * выносите в отдельные сервисы, а не накапливайте в компоненте.
+     * В этом примере каждый элемент содержит строковое поле NAME.
+     * Если компонент использует модуль Битрикс, сначала проверьте его подключение:
+     * Bitrix\\Main\\Loader::includeModule('iblock').
      *
-     * @return array<string, mixed> Данные для шаблона компонента.
+     * @return array{ITEMS: list<array{NAME: string}>} Данные для шаблона.
      */
-    protected function getResult()
+    protected function getResult(): array
     {
         return [
             'ITEMS' => [],
@@ -56,21 +55,28 @@ class ProjectD7Component extends CBitrixComponent
     }
 
     /**
-     * Выполняет компонент с учётом кеширования.
+     * Выполняет компонент и управляет кешированием результата.
+     *
+     * При ошибке кеш текущего запуска отменяется, после чего исключение
+     * передаётся обработчику Bitrix. Не скрывайте ошибки разработки пустым результатом.
      *
      * @return void
+     *
+     * @throws \\Throwable Если получение данных или подключение шаблона завершилось ошибкой.
      */
-    public function executeComponent()
+    public function executeComponent(): void
     {
+        if (!$this->startResultCache()) {
+            return;
+        }
+
         try {
-            if ($this->startResultCache()) {
-                $this->arResult = $this->getResult();
-                $this->includeComponentTemplate();
-            }
-        } catch (\Throwable $exception) {
+            $this->arResult = $this->getResult();
+            $this->includeComponentTemplate();
+        } catch (\\Throwable $exception) {
             $this->abortResultCache();
-            error_log((string) $exception);
-            ShowError('Не удалось выполнить компонент.');
+
+            throw $exception;
         }
     }
 }
