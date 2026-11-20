@@ -177,3 +177,24 @@
 Файл local/components/catalog/bonus_card/component.php обновляет UF_CARD текущего пользователя по $_REQUEST['card'] и отправляет CARD_ADD без POST/sessid; компонент допускает GET и не валидирует номер карты. Если он размещён на доступной авторизованной странице, возможна CSRF-подмена номера карты и повторная отправка уведомлений.
 
 Однако personal/bonus/index.php вызывает devteam:bonus_card, а не catalog:bonus_card. Компонента devteam:bonus_card в текущем Git tree нет. Поэтому local/components/catalog/bonus_card не подтверждён как используемый на этой странице; требуется проверить реальный компонент на сервере.
+
+
+## 11. Altasib feedback.form: upload policy and reCAPTCHA configuration
+
+Файл: local/components/form/feedback.form/component.php.
+
+Положительные проверки:
+- Обработка формы требует POST и check_bitrix_sessid().
+- Есть проверка обязательных полей и системной CAPTCHA либо reCAPTCHA.
+
+Находки:
+- FILE_TYPE проверяется только по расширению из имени файла; если настройка FILE_TYPE у свойства инфоблока пустая, принимается файл с любым расширением.
+- MIME/content и максимальный размер файла в этом компоненте не проверяются.
+- Файл передаётся в CFile как свойство инфоблока; риск выполнения PHP зависит от защиты /upload, но HTML/SVG файл может стать stored-content/XSS vector, если выдаётся браузеру inline.
+- В reCAPTCHA ветке присваивание $site_key/$server_key закомментировано, а далее используется $server_key; режим reCAPTCHA выглядит неработоспособным.
+- CURLOPT_TIMEOUT установлен в 1 секунду; нет полноценной проверки HTTP status и структуры ответа до чтения success/error-codes.
+- Rate limit не найден.
+
+Поиск вызовов компонента feedback.form в текущем Git tree не выявил; реальное использование/настройки FILE_TYPE и ACTIVE_ELEMENT нужно проверить на VM.
+
+**Действие:** обязательный allowlist расширений, MIME/content validation, размер, случайное имя и хранение вне web root; проверять reCAPTCHA secret из защищённой конфигурации; добавить rate limit.
