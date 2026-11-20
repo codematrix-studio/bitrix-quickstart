@@ -11,7 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  *     FOLDER: string,
  *     URL_TEMPLATES: array{list: string, detail: string},
  *     VARIABLES: array<string, int|string>,
- *     ALIASES: array<string, string>
+ *     ALIASES: array<string, string|array<string, string>>
  * } $arResult Данные маршрутизации для дочерних шаблонов.
  * @global CMain $APPLICATION Объект текущего приложения Битрикс.
  */
@@ -28,13 +28,13 @@ $defaultUrlTemplates = [
 ];
 
 $rawAliases = (array) ($arParams['VARIABLE_ALIASES'] ?? []);
-$elementAlias = (string) ($rawAliases['ELEMENT_ID'] ?? 'ELEMENT_ID');
+$elementAlias = $rawAliases['ELEMENT_ID'] ?? 'ELEMENT_ID';
 
-if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $elementAlias)) {
+if (!is_string($elementAlias) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $elementAlias)) {
     $elementAlias = 'ELEMENT_ID';
 }
 
-$variableAliases = CComponentEngine::MakeComponentVariableAliases(
+$nonSefVariableAliases = CComponentEngine::MakeComponentVariableAliases(
     [],
     ['ELEMENT_ID' => $elementAlias]
 );
@@ -79,6 +79,9 @@ if ($sefMode) {
 
     $componentPage = $parsedPage;
 
+    // В режиме ЧПУ псевдонимы сгруппированы по коду страницы компонента.
+    $variableAliases = CComponentEngine::MakeComponentVariableAliases([], $rawAliases);
+
     CComponentEngine::InitComponentVariables(
         $componentPage,
         $componentVariables,
@@ -86,6 +89,8 @@ if ($sefMode) {
         $variables
     );
 } else {
+    $variableAliases = $nonSefVariableAliases;
+
     CComponentEngine::InitComponentVariables(
         false,
         $componentVariables,
