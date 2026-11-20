@@ -725,3 +725,6 @@
 | site.main/admin/indi_data_import.php | Использует Site\Main\Import, которого нет в Git tree | Вероятный fatal/incomplete endpoint |
 | admin install target | Оба модуля копируют разные wrappers в /bitrix/admin/indi_data_import.php с rewrite=false; site.main wrapper ссылается на отсутствующий site_data_import.php | First-install-wins conflict; site.main variant broken |
 
+
+
+**Дополнение по Altasib feedback.form:** POST/sessid и CAPTCHA checks есть, но file upload проверяет только extension из FILE_TYPE; пустой FILE_TYPE разрешает любое расширение, MIME/size validation нет. reCAPTCHA branch использует $server_key с закомментированным присваиванием. Call site в Git tree не найден.
