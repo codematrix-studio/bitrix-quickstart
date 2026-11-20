@@ -117,41 +117,63 @@ class vendor_module extends CModule
     /**
      * Устанавливает модуль с откатом уже начатых этапов при ошибке.
      *
-     * @return void
+     * Модуль регистрируется до установки ресурсов: код InstallDB() и других
+     * этапов может использовать Loader::includeModule() для этого модуля.
+     *
+     * @return bool Успешность установки. При ошибке возвращает false
+     *              и передаёт сообщение в административный интерфейс.
      */
-    public function DoInstall(): void
+    public function DoInstall(): bool
     {
+        global $APPLICATION;
+
         if (IsModuleInstalled($this->MODULE_ID)) {
-            return;
+            return true;
         }
 
         $attemptedSteps = [];
+        $isRegistered = false;
 
         try {
+            RegisterModule($this->MODULE_ID);
+            $isRegistered = true;
+
             $attemptedSteps[] = 'database';
             if (!$this->InstallDB()) {
-                throw new \RuntimeException('Не удалось установить структуру данных модуля.');
+                throw new \\RuntimeException('Не удалось установить структуру данных модуля.');
             }
 
             $attemptedSteps[] = 'events';
             if (!$this->InstallEvents()) {
-                throw new \RuntimeException('Не удалось зарегистрировать обработчики событий модуля.');
+                throw new \\RuntimeException('Не удалось зарегистрировать обработчики событий модуля.');
             }
 
             $attemptedSteps[] = 'files';
             if (!$this->InstallFiles()) {
-                throw new \RuntimeException('Не удалось установить файлы модуля.');
+                throw new \\RuntimeException('Не удалось установить файлы модуля.');
             }
 
-            RegisterModule($this->MODULE_ID);
-        } catch (\Throwable $exception) {
+            return true;
+        } catch (\\Throwable $exception) {
             $this->rollbackInstallation($attemptedSteps);
 
-            error_log(sprintf(
-                'Установка модуля %s прервана (%s).',
+            if ($isRegistered) {
+                UnRegisterModule($this->MODULE_ID);
+            }
+
+            $message = sprintf(
+                'Установка модуля %s прервана: %s',
                 $this->MODULE_ID,
-                get_class($exception)
-            ));
+                $exception->getMessage()
+            );
+
+            if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {
+                $APPLICATION->ThrowException($message);
+            }
+
+            error_log($message);
+
+            return false;
         }
     }
 
@@ -161,30 +183,43 @@ class vendor_module extends CModule
      * При ошибке модуль остаётся зарегистрированным, чтобы администратор мог
      * устранить причину и повторить удаление. Методы удаления должны быть идемпотентными.
      *
-     * @return void
+     * @return bool Успешность удаления. При ошибке возвращает false
+     *              и передаёт сообщение в административный интерфейс.
      */
-    public function DoUninstall(): void
+    public function DoUninstall(): bool
     {
+        global $APPLICATION;
+
         try {
             if (!$this->UnInstallFiles()) {
-                return;
+                throw new \\RuntimeException('Не удалось удалить файлы модуля.');
             }
 
             if (!$this->UnInstallEvents()) {
-                return;
+                throw new \\RuntimeException('Не удалось удалить обработчики событий модуля.');
             }
 
             if (!$this->UnInstallDB()) {
-                return;
+                throw new \\RuntimeException('Не удалось удалить структуру данных модуля.');
             }
 
             UnRegisterModule($this->MODULE_ID);
-        } catch (\Throwable $exception) {
-            error_log(sprintf(
-                'Удаление модуля %s прервано (%s).',
+
+            return true;
+        } catch (\\Throwable $exception) {
+            $message = sprintf(
+                'Удаление модуля %s прервано: %s',
                 $this->MODULE_ID,
-                get_class($exception)
-            ));
+                $exception->getMessage()
+            );
+
+            if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {
+                $APPLICATION->ThrowException($message);
+            }
+
+            error_log($message);
+
+            return false;
         }
     }
 
@@ -221,7 +256,7 @@ class vendor_module extends CModule
                         $this->MODULE_ID
                     ));
                 }
-            } catch (\Throwable $exception) {
+            } catch (\\Throwable $exception) {
                 error_log(sprintf(
                     'Ошибка этапа отката %s для модуля %s (%s).',
                     $method,
