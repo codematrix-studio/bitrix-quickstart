@@ -579,3 +579,20 @@
 | `CALLBACK_MODAL`, `FEEDBACK_MODAL` | Подтверждённые формы и JS-вызовы; POST/XHR без CSRF | Подтверждено |
 
 **Подтверждённые вызовы:** `CALLBACK_MODAL`, `FEEDBACK_MODAL`, `ORDER_SCHEME` присутствуют в формах `local/ajax/modal/*` и `local/ajax/ajax.js`.
+
+
+## Дополнительные AJAX endpoints
+
+Подробности: [Аудит дополнительных AJAX endpoints](legacy-additional-ajax-endpoints-audit-2026-11-20.md).
+
+| Файл/область | Основная находка | Приоритет / статус |
+|---|---|---|
+| `personal/personal.info/templates/.default/ajax.php` | Профиль и пароль обновляются через GET без CSRF; пароль попадает в URL; подтверждённый вызов из script.js | Критический риск |
+| `local/ajax/wishlist/ajax_sestrenskyi_wish*.php` | idUser берётся из POST без сверки с текущим пользователем | IDOR, call site не найден |
+| `helper/ajaxform/templates/.default/ajax.php` | EMAIL_TO из POST напрямую в mail(); endpoint вызывается из template JS | Open mail relay/spam risk |
+| `lema.lib/.../form.ajax/ajax.php` | arParams/IBLOCK_ID/EVENT_TYPE берутся из клиентского JSON; нет sessid/подписи | Высокий риск |
+| `form/form.reviews/ajax.php` | POST переопределяет служебные поля IBLOCK_ID/ACTIVE; нет sessid | Mass assignment; call site не подтверждён |
+| `social/emarket.comments/templates/.default/ajax.php` | update без CAPTCHA/CSRF и привязки HL ID к товару; JS использует endpoint | Высокий риск |
+| `tools/component.reload/ajax.php` | Динамический IncludeComponent с параметрами из request и NOT_CHECK_PERMISSIONS | Закрыть до выяснения назначения |
+
+**Подтверждённые client call sites:** personal.info, helper.ajaxform, social.emarket.comments. Для wishlist, form.reviews и component.reload поиск вызовов в Git tree не дал результатов.
