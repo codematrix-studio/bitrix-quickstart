@@ -7,22 +7,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var array<string, mixed> $arComponentParameters */
 $arComponentParameters = [
     'PARAMETERS' => [
+        'VARIABLE_ALIASES' => [
+            'ELEMENT_ID' => [
+                'NAME' => 'Идентификатор элемента',
+            ],
+        ],
         'SEF_MODE' => [
-            'NAME' => 'Использовать ЧПУ',
-            'TYPE' => 'CHECKBOX',
-            'DEFAULT' => 'Y',
-            'REFRESH' => 'Y',
-        ],
-        'SEF_FOLDER' => [
-            'PARENT' => 'BASE',
-            'NAME' => 'Каталог ЧПУ',
-            'TYPE' => 'STRING',
-            'DEFAULT' => '/',
-        ],
-        'SEF_URL_TEMPLATES' => [
-            'LIST' => [
-                'list' => '',
-                'detail' => '#ELEMENT_ID#/',
+            'list' => [
+                'NAME' => 'Страница списка',
+                'DEFAULT' => '',
+                'VARIABLES' => [],
+            ],
+            'detail' => [
+                'NAME' => 'Детальная страница',
+                'DEFAULT' => '#ELEMENT_ID#/',
+                'VARIABLES' => [
+                    'ELEMENT_ID' => 'ELEMENT_ID',
+                ],
             ],
         ],
         'CACHE_TIME' => [
