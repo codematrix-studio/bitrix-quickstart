@@ -552,3 +552,16 @@
 | `local/codes/utilities/1C/1c_import*` | Используют неопределённую переменную `$type`; зависят от отсутствующих в Git компонентов devteam | Устаревшие/неполные entrypoints |
 
 Поиск прямых вызовов `catalog:catalog.import.1c` и `catalog:card.import.1c` в текущем дереве не выявил; реальная web-доступность не подтверждена.
+
+
+## Custom auth components
+
+Подробности: [Аудит custom auth components](legacy-auth-components-audit-2026-11-20.md).
+
+| Компонент | Основная находка | Статус |
+|---|---|---|
+| `auth.register.plus` | Нет check_bitrix_sessid в POST handler и bitrix_sessid_post в форме; auto-login после регистрации; пароль возвращается в HTML после ошибки; backurl требует allowlist | Высокий риск при публичном использовании |
+| `auth.emarket.ajax` | Login/password recovery без явного CSRF/rate limit; разные ответы позволяют email enumeration; контракт параметров не описан | Высокий риск при публичном использовании |
+| `personal/main.profile` | Проверяет текущего пользователя, operation permission (если не отключён параметром), POST и sessid | Базовые проверки присутствуют |
+
+Поиск вызовов `auth.register.plus` и `auth.emarket.ajax` в Git tree не выявил; deployment не подтверждён.
