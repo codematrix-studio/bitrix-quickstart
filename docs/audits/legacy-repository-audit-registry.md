@@ -712,3 +712,16 @@
 
 
 **Дополнение к indi.main basket:** getpopupAction формирует HTML из NAME и ARTNUMBER без escaping; view add-basket/popup.php выводит artNum напрямую. XSS path условный — прямой JS call site не найден.
+
+
+## indi_data_import admin endpoints
+
+Подробности: [Аудит indi_data_import](legacy-indi-data-import-admin-audit-2026-11-20.md).
+
+| Файл/область | Основная находка | Приоритет |
+|---|---|---|
+| indi.main/admin/indi_data_import.php | Upload в DOCUMENT_ROOT/upload до sessid check; расширение/размер не ограничены; import manager вызывается до check_bitrix_sessid | Высокий CSRF/upload risk |
+| indi.main/lib/import.php | importProduct/importNew пустые заглушки; прогресс выводит XML NAME через JS innerHTML | Stored XSS в admin UI |
+| site.main/admin/indi_data_import.php | Использует Site\Main\Import, которого нет в Git tree | Вероятный fatal/incomplete endpoint |
+| admin install target | Оба модуля копируют indi_data_import.php в /bitrix/admin с rewrite=false | First-install-wins conflict |
+
