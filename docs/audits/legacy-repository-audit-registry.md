@@ -519,3 +519,21 @@
 | `local/components/tools/request` | Есть POST + sessid и CAPTCHA для гостей; пользовательские поля в HTML-тексте тикета не экранируются, повторное объявление глобального класса, сомнительный контракт MESSAGE_AUTHOR_USER_ID | Исправить до использования |
 
 Поиск вызовов `tools:parser` и `tools:request` в доступном дереве не выявил. Фактическое размещение компонентов на страницах и права групп остаются открытыми.
+
+
+## Fork-модули site.main / indi.main и импорт
+
+Подробности: [Аудит fork-модулей и admin import](legacy-module-forks-and-import-admin-audit-2026-11-20.md).
+
+| Область | Основная находка | Статус |
+|---|---|---|
+| `site.main` vs `indi.main` | 371 одинаковый файл, 132 различаются при совпадающем пути; 593 только site.main и 120 только indi.main | Модули не являются drop-in копиями |
+| `site.main/install/admin/indi_data_import.php` | Wrapper подключает отсутствующий `site.main/admin/site_data_import.php` | Установочный маршрут не подтверждён/вероятно сломан |
+| `site.main/admin/indi_data_import.php` | Не устанавливается через install/admin; ссылается на отсутствующий `Site\\Main\\Import` | Старая/незавершённая реализация |
+| `indi.main/admin/indi_data_import.php` | Загрузка и Import вызываются до `check_bitrix_sessid()`; расширение/размер файла не валидируются | Высокий риск |
+| `indi.main/lib/import.php` | Импорт методов `importNew/importProduct` пустой; демо-данные; неограниченные limit/lastIndex, деление на ноль, тихий catch | Не готовый production importer |
+| Установщики обоих модулей | Игнорируют результат RunSQLBatch/CopyDirFiles; uninstallFiles ничего не удаляет; rewrite=true для компонентов | Требует переработки |
+| `mht/sale` vs `sale_old` | 949 одинаковых файлов, 208 различаются, 254 только в sale и 5 только в sale_old | Не объединять без deployment audit |
+| `lema.lib/lib/lib` | 80 файлов — точные дубли файлов в `lema.lib/lib` | Устранить после проверки include paths |
+
+**Решение:** не объединять fork-модули механически и не переносить import implementation как есть. Runtime/deployment и фактические права пользователей проверить на VM.
