@@ -9,7 +9,7 @@ $arComponentParameters = [
     'PARAMETERS' => [
         'VARIABLE_ALIASES' => [
             'ELEMENT_ID' => [
-                'NAME' => 'Идентификатор элемента',
+                'NAME' => 'Имя GET-параметра идентификатора элемента',
             ],
         ],
         'SEF_MODE' => [
@@ -25,12 +25,6 @@ $arComponentParameters = [
                     'ELEMENT_ID' => 'ELEMENT_ID',
                 ],
             ],
-        ],
-        'CACHE_TIME' => [
-            'PARENT' => 'BASE',
-            'NAME' => 'Время кеширования, секунд',
-            'TYPE' => 'STRING',
-            'DEFAULT' => '3600',
         ],
     ],
 ];
