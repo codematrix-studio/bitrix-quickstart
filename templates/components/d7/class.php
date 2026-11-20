@@ -69,7 +69,8 @@ class ProjectD7Component extends CBitrixComponent
             }
         } catch (\Throwable $exception) {
             $this->abortResultCache();
-            ShowError($exception->getMessage());
+            error_log((string) $exception);
+            ShowError('Не удалось выполнить компонент.');
         }
     }
 }
