@@ -682,3 +682,6 @@
 
 
 **Дополнительная находка по MVC deployment:** site.main и indi.main копируют разные ajax/index.php в один /ajax/index.php и шаблоны в общий /local/templates/main; rewrite=false означает, что первый установленный модуль определяет итоговый router/template state. Компоненты при этом копируются с rewrite=true и могут перезаписывать совпадающие файлы. См. legacy-mvc-ajax-controllers-audit-2026-11-20.md и legacy-module-forks-and-import-admin-audit-2026-11-20.md.
+
+
+**Дополнительный риск uninstall:** order.coupon и gift.certificate удаляют свои HL-блоки вместе с данными; gift.certificate пытается удалить весь IBLOCK_TYPE ADMIN_MODULE_NAME. Не запускать uninstall до backup/проверки зависимостей. См. legacy-business-agents-coupons-and-uploads-audit-2026-11-20.md.
