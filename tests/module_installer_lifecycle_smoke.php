@@ -79,7 +79,7 @@ namespace {
     /**
      * Проверяет успешную установку и обратный порядок отката.
      */
-    final class SuccessfulModuleInstaller extends vendor_module
+    class SuccessfulModuleInstaller extends vendor_module
     {
         public function InstallDB()
         {
@@ -127,7 +127,7 @@ namespace {
     /**
      * Имитирует ошибку этапа регистрации событий.
      */
-    final class FailingEventsInstaller extends SuccessfulModuleInstaller
+    class FailingEventsInstaller extends SuccessfulModuleInstaller
     {
         public function InstallEvents()
         {
