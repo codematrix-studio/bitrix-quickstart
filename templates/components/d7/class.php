@@ -10,7 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * Переименуйте класс и дополните получение данных под задачу компонента.
  * Зависимости от модулей подключайте явно в getResult() через Loader::includeModule().
  *
- * @package Project\\Components
+ * @package Project\Components
  */
 class ProjectD7Component extends CBitrixComponent
 {
@@ -43,7 +43,7 @@ class ProjectD7Component extends CBitrixComponent
      *
      * В этом примере каждый элемент содержит строковое поле NAME.
      * Если компонент использует модуль Битрикс, сначала проверьте его подключение:
-     * Bitrix\\Main\\Loader::includeModule('iblock').
+     * Bitrix\Main\Loader::includeModule('iblock').
      *
      * @return array{ITEMS: list<array{NAME: string}>} Данные для шаблона.
      */
@@ -62,7 +62,7 @@ class ProjectD7Component extends CBitrixComponent
      *
      * @return void
      *
-     * @throws \\Throwable Если получение данных или подключение шаблона завершилось ошибкой.
+     * @throws \Throwable Если получение данных или подключение шаблона завершилось ошибкой.
      */
     public function executeComponent(): void
     {
@@ -73,7 +73,7 @@ class ProjectD7Component extends CBitrixComponent
         try {
             $this->arResult = $this->getResult();
             $this->includeComponentTemplate();
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->abortResultCache();
 
             throw $exception;
