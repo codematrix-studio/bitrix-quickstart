@@ -706,3 +706,6 @@
 | local/modules/tc/install/index.php | InstallDB/UnInstallDB no-op; фактическая таблица cards не создаётся из install.sql | Модуль требует DB audit |
 | local/components/catalog/bonus_card | REQUEST без sessid/валидации; page вызывает отсутствующий devteam:bonus_card | Используемость local copy не подтверждена |
 
+
+
+**Дополнение к catalog.import.1c:** myCIBlockCMLImport сохраняет XML text в DETAIL_TEXT без sanitation, публикует новые элементы ACTIVE=Y, строит image path из XML_ID без path containment и работает с общими b_xml_tree без транзакции/import ID. См. legacy-1c-import-variants-and-cron-audit-2026-11-20.md.
