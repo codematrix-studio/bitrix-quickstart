@@ -228,4 +228,27 @@
 | 2026-11-20 | Дополнен аудит вложенного `Helper/User/`: подтверждено дублирование регистрации контрагента, повторное хранение токена DaData и проблемы обработки внешнего API/HL. |
 | 2026-11-20 | Завершён статический проход по Simai/CProp, media, избранному, подпискам, облачному адаптеру и image sitemap. |
 | 2026-11-20 | Добавлен аудит EPG/CTW импорта/экспорта и Itsfera/утилит; HelperFunctions расширенно проверен, runtime остаётся открытым. |
-| 2026-11-20 | Добавлен аудит активного кастомного 1С endpoint и CustomCML2: source/CSRF check закомментирован, deactivate массово меняет активность товаров, параллельные импорты используют общие временные таблицы. Также проверены UserHelper и CropImage. |
+| 2026-11-20 | Добавлен аудит активного кастомного 1С endpoint и CustomCML2: source/session check закомментирован, deactivate массово меняет активность товаров, параллельные импорты используют общие временные таблицы. Также проверены UserHelper и CropImage. |
+| 2026-11-20 | Сверены регистрации событий: Helper CUserRegistration не подключён в проверенных точках; путь регистрации предусмотрен через site.main / Site\\Main\\User. Подтверждён маршрут admin 1С → mht:catalog.import.1c. |
+
+
+## Регистрация событий и фактические точки входа
+
+| Область | Подтверждённый результат | Отчёт |
+|---|---|---|
+| `Helper\CUserRegistration` и `Helper\User\CUserRegistration` | Точки регистрации обработчиков не найдены в init.php, config/events.php и include/handlers.php; фактическое использование не подтверждено | [Аудит регистрации событий и endpoint 1С](legacy-event-registration-and-1c-endpoints-audit-2026-11-20.md) |
+| `site.main` / `Site\Main\User` | Установщик модуля регистрирует OnPageStart; обработчик на OnPageStart добавляет события регистрации пользователя | [Аудит регистрации событий и endpoint 1С](legacy-event-registration-and-1c-endpoints-audit-2026-11-20.md) |
+| `local/modules/mht/sale/admin/1c_exchange.php` | Проектный admin endpoint вызывает `mht:catalog.import.1c`; параметры берутся из COption, KodUzla передаётся как IB_ID | [Аудит регистрации событий и endpoint 1С](legacy-event-registration-and-1c-endpoints-audit-2026-11-20.md) |
+
+### Дополнительные риски
+
+| ID | Область | Риск | Действие | Статус |
+|---|---|---|---|---|
+| EVENT-USER-01 | Helper CUserRegistration | INN/контрагентские обработчики не зарегистрированы в проверенных точках | Проверить таблицу событий и внешние вызовы | Открыто |
+| AUTH-USER-02 | Site\Main\User | Генерация пароля длиной 6 символов | Перейти на безопасный сценарий установки пароля | Зафиксировано |
+| AUTH-USER-03 | Site\Main\User | Пароль отправляется в email | Одноразовая ссылка установки пароля | Зафиксировано |
+| NET-USER-01 | Site\Main\User | CAPTCHA HTTP-вызов без явной обработки транспорта/таймаутов | Ограничить время, проверять HTTP/JSON | Зафиксировано |
+| INPUT-USER-01 | Site\Main\User | Denylist не проверяется; строки файла вставляются в regex | Валидация файла и нормализованное сравнение | Зафиксировано |
+| CONFIG-1C-01 | 1c_exchange.php | KodUzla из GET передаётся как IB_ID | Allowlist разрешённых инфоблоков | Открыто |
+| AUTH-1C-03 | catalog.import.1c/component.php | Дополнительная проверка source/session token закомментирована | Восстановить согласованный с 1С механизм | Зафиксировано |
+
