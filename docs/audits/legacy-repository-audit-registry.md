@@ -565,3 +565,17 @@
 | `personal/main.profile` | Проверяет текущего пользователя, operation permission (если не отключён параметром), POST и sessid | Базовые проверки присутствуют |
 
 Поиск вызовов `auth.register.plus` и `auth.emarket.ajax` в Git tree не выявил; deployment не подтверждён.
+
+
+## Общий AJAX endpoint форм
+
+Подробности: [Аудит local/ajax/index.php](legacy-ajax-forms-endpoint-audit-2026-11-20.md).
+
+| Файл/область | Основная находка | Приоритет / статус |
+|---|---|---|
+| `local/ajax/index.php` | Нет check_bitrix_sessid/CAPTCHA/rate limit; X-Requested-With используется как единственный входной признак; SITE_ID/IBLOCK_ID и поля берутся из POST | Критический риск при web-доступности |
+| `VACANCIES` branch | Неограниченный upload в web-каталог, исходное имя файла в пути, copy() без проверки MIME/размера/расширения | Критический риск; проверить PHP handler и upload path |
+| `COMMENTS`, `ORDER`, `ORDER_SCHEME` | Запись элементов в переданный IBLOCK_ID без allowlist/схемы полей | Высокий риск целостности данных |
+| `CALLBACK_MODAL`, `FEEDBACK_MODAL` | Подтверждённые формы и JS-вызовы; POST/XHR без CSRF | Подтверждено |
+
+**Подтверждённые вызовы:** `CALLBACK_MODAL`, `FEEDBACK_MODAL`, `ORDER_SCHEME` присутствуют в формах `local/ajax/modal/*` и `local/ajax/ajax.js`.
