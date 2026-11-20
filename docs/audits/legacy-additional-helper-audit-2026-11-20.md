@@ -311,3 +311,22 @@
 - Поиск не обнаружил вызовов `FollowService`, `CouponConditions`, `GetBasket`, `GetSection`, `SimpleHblockObject`, `IBlockMenu` кроме указанного menu component, а также Subscribe/User CRUD-фабрик. Для них активность не подтверждена; поиск не исключает динамические вызовы.
 
 **Решение:** в реестре разделять «класс найден» и «вызов подтверждён». Для `IBlockData` и `IBlockMenu` учитывать фактические зависимости при планировании миграции; `SendForms` и `LIBlock` не считать активными только по наличию файла/копированию установщиком.
+
+
+## 12. Проверка Composer autoload для Ns\\Bitrix и Ns\\Parser
+
+Проверены `local/composer.json`, сгенерированный `local/vendor/composer/autoload_psr4.php`, `local/php_interface/init.php` и точки использования.
+
+В `local/composer.json` определены PSR-4 соответствия:
+
+- пустой namespace prefix `""` → `local/php_interface/classes/`;
+- `Helper\\` → `local/php_interface/classes/Helper`;
+- `Wizard\\` → `local/php_interface/classes/Wizard`.
+
+Отдельного соответствия для `Ns\\Bitrix\\` и `Ns\\Parser\\` нет. Composer с текущей конфигурацией будет искать `Ns\\Bitrix\\Helper` в `local/php_interface/classes/Ns/Bitrix/Helper.php`, тогда как файл лежит в `local/codes/Ns/Bitrix/Helper.php`. Аналогично `Ns\\Parser\\ParserCore` будет искаться в `php_interface/classes/Ns/Parser`, а не в `local/codes/Ns/Parser`.
+
+`init.php` подключает `local/vendor/autoload.php`, но не регистрирует отдельный loader для `local/codes/Ns`. Поиск по дереву не обнаружил ручного `require/include` фабрики `Ns/Bitrix/Helper.php` или регистрации PSR-4 префикса `Ns\\`. При этом классы `Ns\\Parser\\ABlog/Alfa/SbsTerminals` вызывают `Ns\\Bitrix\\Modules` и `Ns\\Bitrix\\Helper`.
+
+**Вывод:** автозагрузка этих классов по текущей зафиксированной Composer-конфигурации не подтверждена и выглядит сломанной. Если парсеры/фабрики запускаются, вероятно, требуется внешний ручной include или настройка, отсутствующая в репозитории. Проверить реальный cron/entrypoint и runtime. Не считать парсерный пакет рабочим только по наличию исходников.
+
+**Решение:** для переноса определить единственный PSR-4 namespace root (например, `Ns\\ => codes/Ns/`) либо переместить классы в согласованный каталог; затем проверить генерацию Composer autoload и прямую загрузку всех классов в тесте.
