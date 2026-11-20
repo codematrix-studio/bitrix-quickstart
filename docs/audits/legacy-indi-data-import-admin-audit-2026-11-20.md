@@ -44,20 +44,23 @@
 
 Если импортируемый XML содержит HTML/JS в названии товара, он может выполниться в браузере администратора на странице импорта.
 
-## 3. site.main/admin/indi_data_import.php — отсутствующий класс
+## 3. site.main install/admin entrypoint — отсутствующий файл
 
-Файл: local/modules/site.main/admin/indi_data_import.php.
+Файл: local/modules/site.main/install/admin/indi_data_import.php.
 
-- Endpoint вызывает Site\Main\Import::importRequsetManage().
-- В Git tree не найден класс Site\Main\Import и файл local/modules/site.main/lib/import.php.
-- Следовательно, admin endpoint с этой реализацией выглядит незавершённым и может завершаться fatal error при вызове import action.
-- Он также вызывает Import::importRequsetManage() до check_bitrix_sessid().
+- Установочный wrapper подключает /local/modules/site.main/admin/site_data_import.php.
+- Файла local/modules/site.main/admin/site_data_import.php в Git tree нет.
+- Следовательно, если site.main первым установит этот admin entrypoint, /bitrix/admin/indi_data_import.php будет подключать отсутствующий файл и завершаться fatal error.
+
+Дополнительно существует local/modules/site.main/admin/indi_data_import.php, но он не является target-файлом из install/admin. Этот неустанавливаемый вариант вызывает Site\\Main\\Import::importRequsetManage(); класса Site\\Main\\Import и файла local/modules/site.main/lib/import.php в Git tree также нет. Он тоже выглядит незавершённым.
 
 ## 4. Коллизия двух admin файлов
 
-Оба модуля копируют install/admin/indi_data_import.php в /bitrix/admin/indi_data_import.php с rewrite=false. Первый установленный модуль сохраняет файл; второй не заменяет его. В результате фактическая admin-страница зависит от порядка установки:
-- indi.main version использует существующий Indi\Main\Import;
-- site.main version ссылается на отсутствующий Site\Main\Import.
+Оба модуля копируют install/admin/indi_data_import.php в /bitrix/admin/indi_data_import.php с rewrite=false. Первый установленный модуль сохраняет файл; второй не заменяет его:
+- indi.main wrapper подключает существующий local/modules/indi.main/admin/indi_data_import.php;
+- site.main wrapper подключает отсутствующий local/modules/site.main/admin/site_data_import.php.
+
+В результате фактическая admin-страница зависит от порядка установки: при site.main первым файл будет нерабочим; при indi.main первым будет установлен indi.main import page (с описанными выше upload/CSRF/XSS проблемами).
 
 Это дополняет конфликт /ajax/index.php и /local/templates/main, описанный в MVC audit.
 
