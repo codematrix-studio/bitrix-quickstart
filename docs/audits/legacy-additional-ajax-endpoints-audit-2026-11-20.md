@@ -150,3 +150,30 @@
 - ajax.js вызывает /cart/basket_line.php; в Git есть local/ajax/cart/basket_line.php, но корневого /cart/basket_line.php и URL rewrite для него в tree не найдено. Нельзя подтвердить, что этот URL ведёт на checked-in handler.
 
 **Решение:** использовать POST + sessid; проверять положительный ID и доступность товара; восстановить/удалить отсутствующие endpoint references; проверить URL mapping на VM.
+
+
+## 9. AJAX-подписка в local/ajax/subscribe
+
+Файлы:
+- local/ajax/subscribe/subscribe.php
+- local/ajax/subscribe/script.js
+
+Подтверждённая цепочка: script.js вызывает endpoint через $.ajax без указания type; jQuery использует GET. В запрос передаётся mail.
+
+Находки:
+- NEED_AUTH=true требует авторизованную сессию, но check_bitrix_sessid() отсутствует.
+- NOT_CHECK_PERMISSIONS=true отключает обычную проверку прав; endpoint сам не проверяет, что email относится к текущему пользователю.
+- GET-параметр mail записывается в активный элемент IBLOCK_ID=3; нет check_email(), нормализации и проверки дубля.
+- CSale/subscribe module не используется: это отдельная запись в инфоблок, не стандартная подтверждаемая подписка.
+- В почтовые поля передаётся $name, но переменная не определена; фактический MAIL в событии будет пустым.
+- Нет rate limit и идемпотентности.
+
+**Оценка:** CSRF/data integrity для авторизованных пользователей и спам активного инфоблока.
+
+**Действие:** POST-only + sessid; нормализовать/валидировать email; уникальный ключ; подтверждение адреса; брать email текущего пользователя, если это личная подписка.
+
+## 10. Бонусная карта: расхождение component namespace
+
+Файл local/components/catalog/bonus_card/component.php обновляет UF_CARD текущего пользователя по $_REQUEST['card'] и отправляет CARD_ADD без POST/sessid; компонент допускает GET и не валидирует номер карты. Если он размещён на доступной авторизованной странице, возможна CSRF-подмена номера карты и повторная отправка уведомлений.
+
+Однако personal/bonus/index.php вызывает devteam:bonus_card, а не catalog:bonus_card. Компонента devteam:bonus_card в текущем Git tree нет. Поэтому local/components/catalog/bonus_card не подтверждён как используемый на этой странице; требуется проверить реальный компонент на сервере.
