@@ -679,3 +679,6 @@
 | site.main Trials | serials4999.csv в DOCUMENT_ROOT, нет lock/atomic update и CSRF | Гонка и возможная утечка serials |
 
 **Ограничение:** статический аудит не подтверждает, что discount_cards.xml и serials4999.csv доступны извне; это требует проверки web server/VM.
+
+
+**Дополнительная находка по MVC deployment:** site.main и indi.main копируют разные ajax/index.php в один /ajax/index.php и шаблоны в общий /local/templates/main; rewrite=false означает, что первый установленный модуль определяет итоговый router/template state. Компоненты при этом копируются с rewrite=true и могут перезаписывать совпадающие файлы. См. legacy-mvc-ajax-controllers-audit-2026-11-20.md и legacy-module-forks-and-import-admin-audit-2026-11-20.md.
