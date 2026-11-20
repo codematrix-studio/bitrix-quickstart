@@ -15,16 +15,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 class ProjectD7Component extends CBitrixComponent
 {
     /**
-     * Подключает языковые сообщения компонента штатным механизмом Bitrix.
-     *
-     * @return void
-     */
-    public function onIncludeComponentLang(): void
-    {
-        $this->includeComponentLang(basename(__FILE__));
-    }
-
-    /**
      * Нормализует входные параметры компонента.
      *
      * @param array<string, mixed> $arParams Исходные параметры компонента.
