@@ -184,14 +184,14 @@ if (PagePathMatcher::inRootDirectory('/catalog/item/', ['catalog', 'news'])) {
 
 ## FileTypeIconResolver
 
-`Project\\Support\\FileTypeIconResolver` сопоставляет MIME-типы с CSS-классами иконок. Таблица расширяется через конструктор, неизвестный тип получает резервный класс. Bitrix-интеграция `Project\\Bitrix\\File\\FileIconResolver` пытается определить MIME по содержимому локального файла через Fileinfo и использует метаданные Bitrix как резервный источник. Подробности: [FileTypeIconResolver.md](FileTypeIconResolver.md).
+`Project\Support\FileTypeIconResolver` сопоставляет MIME-типы с CSS-классами иконок. Таблица расширяется через конструктор, неизвестный тип получает резервный класс. Bitrix-интеграция `Project\Bitrix\File\FileIconResolver` пытается определить MIME по содержимому локального файла через Fileinfo и использует метаданные Bitrix как резервный источник. Подробности: [FileTypeIconResolver.md](FileTypeIconResolver.md).
 
 ## ProductIdList
 
-`Project\\Support\\ProductIdList` — неизменяемый список положительных ID товаров. Класс не зависит от Битрикс и подходит для избранного, подписок на наличие и других пользовательских списков.
+`Project\Support\ProductIdList` — неизменяемый список положительных ID товаров. Класс не зависит от Битрикс и подходит для избранного, подписок на наличие и других пользовательских списков.
 
 ```php
-use Project\\Support\\ProductIdList;
+use Project\Support\ProductIdList;
 
 $list = ProductIdList::fromValues([12, '15', 12, 0]);
 $list = $list->add(21)->remove(15);
@@ -208,3 +208,24 @@ $json = $list->toJson();
 - повреждённое или неподдерживаемое значение превращается в пустой список.
 
 Новые данные следует сохранять в JSON. Поддержка старого `serialize()` нужна только для постепенной миграции cookie и пользовательских полей; новые интеграции не должны создавать сериализованные значения.
+
+## VideoUrlParser
+
+`Project\Support\VideoUrlParser` разбирает ссылки YouTube, Rutube и Vimeo без API и внешних зависимостей:
+
+```php
+use Project\Support\VideoUrlParser;
+
+$video = VideoUrlParser::parse('https://youtu.be/dQw4w9WgXcQ');
+
+if ($video !== null) {
+    echo $video['provider']; // youtube
+    echo $video['id']; // dQw4w9WgXcQ
+    echo $video['url']; // каноническая ссылка
+    echo $video['embed_url']; // ссылка для iframe
+}
+```
+
+Поддерживаются обычные и короткие ссылки, YouTube Shorts и embed-адреса, ссылки Rutube и Vimeo, включая адреса их плееров. Для неподдерживаемых или некорректных адресов возвращается `null`. Превью не загружаются: для этого потребовалась бы отдельная интеграция с видеохостингом.
+
+Проверки: `cd local && composer test:video-url-parser`.
