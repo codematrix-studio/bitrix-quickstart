@@ -212,6 +212,10 @@ namespace {
     $assert($installer->DoInstall(), 'Успешная установка должна вернуть true.');
     $assert(IsModuleInstalled('vendor.module'), 'После установки модуль должен быть зарегистрирован.');
     $assert(
+        \\Bitrix\\Main\\Config\\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE', 'N') !== 'Y',
+        'После успешной установки не должна оставаться отметка незавершённой установки.'
+    );
+    $assert(
         $GLOBALS['lifecycleLog'] === ['install-db', 'install-events', 'install-files'],
         'Этапы установки выполнены в неверном порядке.'
     );
@@ -227,6 +231,10 @@ namespace {
     $installer = new FailingEventsInstaller();
     $assert(!$installer->DoInstall(), 'Ошибка этапа установки должна вернуть false.');
     $assert(!IsModuleInstalled('vendor.module'), 'После успешного отката регистрация должна быть снята.');
+    $assert(
+        \\Bitrix\\Main\\Config\\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE', 'N') !== 'Y',
+        'После успешного отката не должна оставаться отметка незавершённой установки.'
+    );
     $assert(
         $GLOBALS['lifecycleLog'] === [
             'install-db',
