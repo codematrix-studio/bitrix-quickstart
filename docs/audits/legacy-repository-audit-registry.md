@@ -489,3 +489,21 @@
 | `local/codes/solutions/CropText.php` | byte-based substr() для UTF-8 и непроверенный strrpos() | mb_* функции и обработка false |
 
 **Ограничение:** поиск внешних вызовов перечисленных snippets не дал результатов, но не исключает прямой web-доступ или ручные include на VM.
+
+
+## AJAX endpoints, wishlist и parser snippets
+
+Подробности: [Аудит wishlist и parser endpoints](legacy-soap-wishlist-and-parser-endpoints-audit-2026-11-20.md).
+
+| Файл/область | Основная находка | Статус |
+|---|---|---|
+| `soap/includes/ajax/wishlist/add_element.php` | Вызов подтверждён из js.js; нет CSRF; не проверяется владелец переданного раздела; гостевая регистрация через rand() | Высокий риск |
+| `wishlist/add_category.php`, `rename_category.php` | Нет CSRF; автоматическое создание пользователя; raw name в ответе; повторный Update | Зафиксировано |
+| `wishlist/delete_category.php`, `delete_element.php` | REQUEST без CSRF; один обработчик использует USER_ID через GetParam | Зафиксировано |
+| `soap/includes/subscribe.php` | Подтверждённая форма/AJAX; автоподтверждение email, нет CSRF/rate limit, перезапись глобального USER, JS injection context | Высокий риск |
+| `soap/includes/vote.php` | Нет auth/CSRF, произвольное увеличение счётчиков в iblock 9 | Высокий риск, call site не найден |
+| `parser/parser-html-and-save-to-bitrix-iblock` | Импорт из внешнего сайта в iblock 13 без явного ACL/CSRF, deduplication и timeout | Высокий риск при web-доступности |
+| `parser/bitrix_scv_parser` | Debug output, unchecked file handles, ошибочная карта замен | Offline script; переписать |
+| `Bitrix-phpQuery-ajax-step-parser` | Проверка main group/session есть, но write permission на iblock/catalog не подтверждён; URL без allowlist | Не переносить как есть |
+
+**Подтверждённые call sites:** `add_element.php` вызывается из `soap/js/js.js`; `subscribe.php` — из формы и `subscr.js`. Для остальных endpoints deployment/вызовы не подтверждены.
