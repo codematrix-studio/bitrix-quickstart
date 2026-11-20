@@ -175,7 +175,7 @@ class vendor_module extends CModule
             );
 
             if (!$rollbackSuccessful || !$registrationRemoved) {
-                $message .= ' Откат выполнен не полностью; модуль оставлен зарегистрированным для последующего удаления.';
+                $message .= ' Откат выполнен не полностью; модуль оставлен зарегистрированным для повторного восстановления или удаления.';
             }
 
             if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {

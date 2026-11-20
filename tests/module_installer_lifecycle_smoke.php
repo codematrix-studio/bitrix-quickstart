@@ -140,7 +140,7 @@ namespace {
     /**
      * Имитирует ситуацию, когда откат событий завершился ошибкой.
      */
-    final class FailingRollbackInstaller extends FailingEventsInstaller
+    class FailingRollbackInstaller extends FailingEventsInstaller
     {
         public function UnInstallEvents()
         {
