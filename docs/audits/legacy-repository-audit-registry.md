@@ -685,3 +685,6 @@
 
 
 **Дополнительный риск uninstall:** order.coupon и gift.certificate удаляют свои HL-блоки вместе с данными; gift.certificate пытается удалить весь IBLOCK_TYPE ADMIN_MODULE_NAME. Не запускать uninstall до backup/проверки зависимостей. См. legacy-business-agents-coupons-and-uploads-audit-2026-11-20.md.
+
+
+**Дополнение по корзине:** local/ajax/cart/addtocart.php вызывается из cart.js без sessid и добавляет товар в отложенную корзину; delforbasket.php отсутствует в Git, а URL /cart/basket_line.php не сопоставлен с checked-in handler. См. legacy-additional-ajax-endpoints-audit-2026-11-20.md.
