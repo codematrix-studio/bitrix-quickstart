@@ -386,3 +386,15 @@
 
 `local/php_interface/include/adm_tools.php` подключается из `local/php_interface/init.php` и регистрирует оба пользовательских типа через `OnIBlockPropertyBuildList`, а также `CIBEditSimaiComplexProp` на `OnBeforeProlog` и события add/update элементов инфоблока. Следовательно, это не просто неиспользуемые классы: обработчики зарегистрированы в текущем коде. Фактическое наличие сохранённых свойств этих типов в БД не подтверждено и остаётся открытой проверкой.
 
+
+
+## Composer autoload: Ns namespace
+
+Проверены `local/composer.json`, `local/vendor/composer/autoload_psr4.php` и `local/php_interface/init.php`.
+
+В Composer настроены только `"" => php_interface/classes/`, `Helper\\ => php_interface/classes/Helper` и `Wizard\\ => php_interface/classes/Wizard`. Пространства имён `Ns\\Bitrix\\` и `Ns\\Parser\\`, расположенные в `local/codes/Ns/`, не имеют PSR-4 mapping; отдельный loader/ручной include фабрики в проверенном дереве не найден. При этом parser-классы вызывают `Ns\\Bitrix\\Modules` и `Ns\\Bitrix\\Helper`.
+
+| ID | Риск | Действие | Статус |
+|---|---|---|---|
+| AUTOLOAD-NS-01 | Composer не отображает `Ns\\Bitrix`/`Ns\\Parser` на `local/codes/Ns` | Добавить корректный PSR-4 mapping или переместить классы; проверить cron/entrypoint | Дефект конфигурации по статическому дереву; runtime-вызовы не подтверждены |
+
