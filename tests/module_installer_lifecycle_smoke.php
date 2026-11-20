@@ -12,6 +12,33 @@ namespace Bitrix\Main\Localization {
     }
 }
 
+namespace Bitrix\Main\Config {
+    final class Option
+    {
+        /** @var array<string, array<string, string>> */
+        private static array $options = [];
+
+        public static function get(string $moduleId, string $name, string $default = ''): string
+        {
+            return self::$options[$moduleId][$name] ?? $default;
+        }
+
+        public static function set(string $moduleId, string $name, string $value): void
+        {
+            self::$options[$moduleId][$name] = $value;
+        }
+
+        /** @param array{name: string} $filter */
+        public static function delete(string $moduleId, array $filter = []): void
+        {
+            $name = $filter['name'] ?? null;
+            if ($name !== null) {
+                unset(self::$options[$moduleId][$name]);
+            }
+        }
+    }
+}
+
 namespace {
     define('B_PROLOG_INCLUDED', true);
 
@@ -189,6 +216,11 @@ namespace {
         'Этапы установки выполнены в неверном порядке.'
     );
 
+    // Повторный вызов исправной установки не должен повторно запускать этапы.
+    $GLOBALS['lifecycleLog'] = [];
+    $assert($installer->DoInstall(), 'Повторный вызов исправной установки должен быть безопасным.');
+    $assert($GLOBALS['lifecycleLog'] === [], 'Для исправно установленного модуля этапы не должны запускаться повторно.');
+
     // При ошибке события и база должны откатиться в обратном порядке.
     $GLOBALS['installedModules'] = [];
     $GLOBALS['lifecycleLog'] = [];
@@ -211,6 +243,10 @@ namespace {
     $installer = new FailingRollbackInstaller();
     $assert(!$installer->DoInstall(), 'Неудачный откат не должен считаться успешной установкой.');
     $assert(IsModuleInstalled('vendor.module'), 'При неудачном откате модуль должен остаться зарегистрированным.');
+    $assert(
+        \Bitrix\Main\Config\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
+        'При неудачном откате должна сохраниться отметка незавершённой установки.'
+    );
 
     // Повторная установка должна завершить ранее прерванные этапы.
     $GLOBALS['lifecycleLog'] = [];
@@ -220,6 +256,11 @@ namespace {
     $assert(
         $GLOBALS['lifecycleLog'] === ['install-db', 'install-events', 'install-files'],
         'Повторный запуск должен повторно выполнить все этапы установки по порядку.'
+    );
+
+    $assert(
+        \Bitrix\Main\Config\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'N',
+        'После восстановления отметка незавершённой установки должна быть удалена.'
     );
 
     // При ошибке удаления регистрация также должна сохраняться.

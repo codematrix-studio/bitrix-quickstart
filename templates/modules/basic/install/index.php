@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -17,6 +18,8 @@ IncludeModuleLangFile(__FILE__);
  */
 class vendor_module extends CModule
 {
+    /** @var string Имя настройки, отмечающей незавершённую установку. */
+    private const INSTALLATION_INCOMPLETE_OPTION = 'INSTALLATION_INCOMPLETE';
     /** @var string Уникальный идентификатор модуля в формате vendor.module. */
     public $MODULE_ID = 'vendor.module';
 
@@ -129,11 +132,25 @@ class vendor_module extends CModule
 
         $attemptedSteps = [];
         try {
-            // При повторном запуске не регистрируем модуль второй раз,
-            // но повторяем этапы, чтобы завершить ранее прерванную установку.
-            if (!IsModuleInstalled($this->MODULE_ID)) {
+            $moduleIsInstalled = IsModuleInstalled($this->MODULE_ID);
+            $installationIsIncomplete = Option::get(
+                $this->MODULE_ID,
+                self::INSTALLATION_INCOMPLETE_OPTION,
+                'N'
+            ) === 'Y';
+
+            // Исправную установку не трогаем. Повторный запуск этапов нужен
+            // только для восстановления, явно отмеченного предыдущим запуском.
+            if ($moduleIsInstalled && !$installationIsIncomplete) {
+                return true;
+            }
+
+            if (!$moduleIsInstalled) {
                 RegisterModule($this->MODULE_ID);
             }
+
+            Option::set($this->MODULE_ID, self::INSTALLATION_INCOMPLETE_OPTION, 'Y');
+
             $attemptedSteps[] = 'database';
             if (!$this->InstallDB()) {
                 throw new \RuntimeException('Не удалось установить структуру данных модуля.');
@@ -147,6 +164,20 @@ class vendor_module extends CModule
             $attemptedSteps[] = 'files';
             if (!$this->InstallFiles()) {
                 throw new \RuntimeException('Не удалось установить файлы модуля.');
+            }
+
+            // Ошибка удаления служебной отметки не должна запускать откат
+            // уже успешно установленных ресурсов.
+            try {
+                Option::delete($this->MODULE_ID, [
+                    'name' => self::INSTALLATION_INCOMPLETE_OPTION,
+                ]);
+            } catch (\Throwable $optionException) {
+                error_log(sprintf(
+                    'Не удалось удалить отметку незавершённой установки модуля %s (%s).',
+                    $this->MODULE_ID,
+                    get_class($optionException)
+                ));
             }
 
             return true;
@@ -164,6 +195,20 @@ class vendor_module extends CModule
                         'Не удалось снять регистрацию модуля %s после отката (%s).',
                         $this->MODULE_ID,
                         get_class($unregisterException)
+                    ));
+                }
+            }
+
+            if ($registrationRemoved) {
+                try {
+                    Option::delete($this->MODULE_ID, [
+                        'name' => self::INSTALLATION_INCOMPLETE_OPTION,
+                    ]);
+                } catch (\Throwable $optionException) {
+                    error_log(sprintf(
+                        'Не удалось удалить служебную отметку модуля %s после отката (%s).',
+                        $this->MODULE_ID,
+                        get_class($optionException)
                     ));
                 }
             }
@@ -214,6 +259,9 @@ class vendor_module extends CModule
                 throw new \RuntimeException('Не удалось удалить структуру данных модуля.');
             }
 
+            Option::delete($this->MODULE_ID, [
+                'name' => self::INSTALLATION_INCOMPLETE_OPTION,
+            ]);
             UnRegisterModule($this->MODULE_ID);
 
             return true;
