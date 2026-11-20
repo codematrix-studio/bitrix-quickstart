@@ -37,6 +37,7 @@
             "@test:d7-quick-order",
             "@test:d7-quick-order-input",
             "@test:d7-ajax",
+            "@test:module-installer",
             "@test:product-list",
             "@test:seo-analytics",
             "@test:d7-basket-handler",
@@ -69,6 +70,7 @@
         "test:d7-basket-handler": "php ../tests/d7_basket_handler_smoke.php",
         "test:yes-no-property": "php ../tests/iblock_yes_no_property_smoke.php",
         "test:color-property": "php ../tests/iblock_color_property_smoke.php",
-        "test:youtube-property": "php ../tests/iblock_youtube_property_smoke.php"
+        "test:youtube-property": "php ../tests/iblock_youtube_property_smoke.php",
+        "test:module-installer": "php ../tests/module_installer_lifecycle_smoke.php"
     }
 }
