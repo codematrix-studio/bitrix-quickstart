@@ -691,3 +691,18 @@
 
 
 **Дополнение:** local/ajax/subscribe/subscribe.php вызывается из script.js через GET, требует авторизацию, но не sessid; пишет email из request в активный IBLOCK_ID=3 без нормализации/дедупликации. local/components/catalog/bonus_card принимает card из REQUEST без sessid, но personal/bonus/index.php вызывает отсутствующий в Git devteam:bonus_card, поэтому используемость local-копии не подтверждена.
+
+
+## tc discount cards
+
+Подробности: [Аудит tc discount cards](legacy-tc-discount-cards-audit-2026-11-20.md).
+
+| Файл/область | Основная находка | Приоритет / статус |
+|---|---|---|
+| local/modules/tc/classes/general/cards.php::Add() | NOMER вставляется в SQL без escaping; XML importer передаёт значение напрямую | SQL injection при доступном импорте |
+| tcCards::GetByNum() | ID/номер вставляется в WHERE без escaping | SQL injection в dormant call sites |
+| tcCards::GetList() | Значения фильтров не экранируются; текущий admin caller использует пустой filter | Уязвимый API, exploit path не подтверждён |
+| local/components/catalog/card.import.1c | Auth/group checks выключены; RemoveAll() очищает таблицу cards до восстановления; импорт XML вызывает Add() | Критический риск при web-доступности |
+| local/modules/tc/install/index.php | InstallDB/UnInstallDB no-op; фактическая таблица cards не создаётся из install.sql | Модуль требует DB audit |
+| local/components/catalog/bonus_card | REQUEST без sessid/валидации; page вызывает отсутствующий devteam:bonus_card | Используемость local copy не подтверждена |
+
