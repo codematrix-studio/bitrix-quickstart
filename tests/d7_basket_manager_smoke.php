@@ -162,7 +162,7 @@ $secondId = $manager->add(200, 1);
 $firstItem = $basket->getItemById($firstId);
 basketManagerExpect(
     $firstItem instanceof FakeSaleBasketItem
-        && $firstItem->getFields()['PRODUCT_PROVIDER_CLASS'] === \\Bitrix\\Catalog\\Product\\CatalogProvider::class,
+        && $firstItem->getFields()['PRODUCT_PROVIDER_CLASS'] === \Bitrix\Catalog\Product\CatalogProvider::class,
     'Для новых позиций должен использоваться актуальный D7-провайдер каталога.'
 );
 
