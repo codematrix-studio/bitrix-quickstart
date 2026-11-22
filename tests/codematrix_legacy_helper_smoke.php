@@ -62,7 +62,7 @@ foreach (['https://shop.example.org?campaign=test', 'https://shop.example.org#se
     $rejectedBaseUrl = false;
 
     try {
-        new \\Project\\Support\\UrlGenerator($invalidBaseUrl);
+        new \Project\Support\UrlGenerator($invalidBaseUrl);
     } catch (InvalidArgumentException $exception) {
         $rejectedBaseUrl = true;
     }
