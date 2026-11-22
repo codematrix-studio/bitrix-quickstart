@@ -58,6 +58,18 @@ try {
 }
 helperExpect($rejectedHost, 'Full URL helper must reject protocol-relative external URLs.');
 
+foreach (['https://shop.example.org?campaign=test', 'https://shop.example.org#section'] as $invalidBaseUrl) {
+    $rejectedBaseUrl = false;
+
+    try {
+        new \Project\Support\UrlGenerator($invalidBaseUrl);
+    } catch (InvalidArgumentException $exception) {
+        $rejectedBaseUrl = true;
+    }
+
+    helperExpect($rejectedBaseUrl, 'Base URL must reject query strings and fragments.');
+}
+
 helperExpect(\CodeMatrix\Legacy\Common\Helper::getImageWatermark([], []) === false, 'Watermark helper must reject incomplete image data.');
 
 echo "Проверки Common Helper пройдены.\n";

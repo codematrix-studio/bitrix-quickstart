@@ -24,6 +24,8 @@ final class UrlGenerator
             || !in_array(strtolower($parts['scheme']), ['http', 'https'], true)
             || isset($parts['user'])
             || isset($parts['pass'])
+            || isset($parts['query'])
+            || isset($parts['fragment'])
             || preg_match('/[\r\n]/', $baseUrl)
         ) {
             throw new InvalidArgumentException('Нужен доверенный базовый URL сайта с протоколом http или https.');

@@ -48,7 +48,7 @@ $url = $urls->absolute('/catalog/item/');
 // https://example.org/catalog/item/
 ```
 
-В отличие от старого `Helper::getFullUrl()`, класс не доверяет `HTTP_HOST` и `SERVER_NAME` входящего запроса. Принимается только базовый URL с протоколом HTTP/HTTPS без логина и пароля. Путь не может быть внешним URL или начинаться с `//`.
+В отличие от старого `Helper::getFullUrl()`, класс не доверяет `HTTP_HOST` и `SERVER_NAME` входящего запроса. Принимается только базовый URL с протоколом HTTP/HTTPS без логина, пароля, query-параметров и фрагмента. Путь не может быть внешним URL или начинаться с `//`.
 
 ## HtmlEscaper
 
