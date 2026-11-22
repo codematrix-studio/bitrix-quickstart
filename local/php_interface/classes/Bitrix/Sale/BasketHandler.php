@@ -74,7 +74,7 @@ class BasketHandler
             $productId = filter_var($item['PRODUCT_ID'] ?? $item['product_id'] ?? null, FILTER_VALIDATE_INT);
             $quantity = $item['QUANTITY'] ?? $item['quantity'] ?? 1;
 
-            if (!is_int($productId) || !is_numeric($quantity)) {
+            if (!is_int($productId) || $productId < 1 || !is_numeric($quantity)) {
                 throw new InvalidArgumentException('PRODUCT_ID должен быть целым числом, QUANTITY — числом.');
             }
 
