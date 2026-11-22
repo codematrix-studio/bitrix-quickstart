@@ -178,6 +178,45 @@ namespace {
     }
 
     /**
+     * Имитирует исключение во время регистрации обработчиков.
+     */
+    final class ThrowingEventsInstaller extends SuccessfulModuleInstaller
+    {
+        public function InstallEvents()
+        {
+            $GLOBALS['lifecycleLog'][] = 'install-events';
+
+            throw new RuntimeException('Ошибка регистрации событий.');
+        }
+    }
+
+    /**
+     * Имитирует исключение во время отката обработчиков.
+     */
+    final class ThrowingRollbackInstaller extends FailingEventsInstaller
+    {
+        public function UnInstallEvents()
+        {
+            $GLOBALS['lifecycleLog'][] = 'uninstall-events';
+
+            throw new RuntimeException('Ошибка отката событий.');
+        }
+    }
+
+    /**
+     * Имитирует исключение при удалении файлов.
+     */
+    final class ThrowingUninstallInstaller extends SuccessfulModuleInstaller
+    {
+        public function UnInstallFiles()
+        {
+            $GLOBALS['lifecycleLog'][] = 'uninstall-files';
+
+            throw new RuntimeException('Ошибка удаления файлов.');
+        }
+    }
+
+    /**
      * Имитирует успешное завершение установки после неудачного отката.
      */
     final class RecoveringInstaller extends FailingRollbackInstaller
@@ -245,6 +284,27 @@ namespace {
         'Откат должен включать неуспешный этап и выполняться в обратном порядке.'
     );
 
+    // Исключение этапа установки также должно запускать обратный откат.
+    $GLOBALS['installedModules'] = [];
+    $GLOBALS['lifecycleLog'] = [];
+    $GLOBALS['APPLICATION']->exceptionMessage = null;
+    $installer = new ThrowingEventsInstaller();
+    $assert(!$installer->DoInstall(), 'Исключение этапа установки должно вернуть false.');
+    $assert(!IsModuleInstalled('vendor.module'), 'После успешного отката исключения регистрация должна быть снята.');
+    $assert(
+        $GLOBALS['lifecycleLog'] === [
+            'install-db',
+            'install-events',
+            'uninstall-events',
+            'uninstall-db',
+        ],
+        'Исключение этапа установки должно откатывать начатые этапы в обратном порядке.'
+    );
+    $assert(
+        str_contains((string) $GLOBALS['APPLICATION']->exceptionMessage, 'Ошибка регистрации событий.'),
+        'Исходное исключение должно передаваться в административный интерфейс.'
+    );
+
     // При неудачном откате регистрация сохраняется для последующего восстановления.
     $GLOBALS['installedModules'] = [];
     $GLOBALS['lifecycleLog'] = [];
@@ -254,6 +314,17 @@ namespace {
     $assert(
         \Bitrix\Main\Config\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
         'При неудачном откате должна сохраниться отметка незавершённой установки.'
+    );
+
+    // Исключение во время отката должно сохранять регистрацию и отметку восстановления.
+    $GLOBALS['installedModules'] = [];
+    $GLOBALS['lifecycleLog'] = [];
+    $installer = new ThrowingRollbackInstaller();
+    $assert(!$installer->DoInstall(), 'Исключение отката не должно считаться успешной установкой.');
+    $assert(IsModuleInstalled('vendor.module'), 'После исключения отката модуль должен остаться зарегистрированным.');
+    $assert(
+        \Bitrix\Main\Config\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
+        'После исключения отката должна сохраниться отметка незавершённой установки.'
     );
 
     // Повторная установка должна завершить ранее прерванные этапы.
@@ -280,6 +351,17 @@ namespace {
     $assert(
         $GLOBALS['lifecycleLog'] === ['uninstall-files'],
         'После ошибки удаления последующие этапы не должны запускаться.'
+    );
+
+    // Исключение при удалении также должно сохранять регистрацию для повтора.
+    $GLOBALS['installedModules'] = ['vendor.module' => true];
+    $GLOBALS['lifecycleLog'] = [];
+    $installer = new ThrowingUninstallInstaller();
+    $assert(!$installer->DoUninstall(), 'Исключение удаления должно вернуть false.');
+    $assert(IsModuleInstalled('vendor.module'), 'После исключения удаления модуль должен остаться зарегистрированным.');
+    $assert(
+        $GLOBALS['lifecycleLog'] === ['uninstall-files'],
+        'После исключения удаления последующие этапы не должны запускаться.'
     );
 
     // Полное удаление должно выполнить все этапы и снять регистрацию.
