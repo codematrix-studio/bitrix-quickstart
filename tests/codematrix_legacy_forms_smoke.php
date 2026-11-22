@@ -158,6 +158,16 @@ formsExpect(!$repeatForm->validate(), 'Invalid email must fail.');
 $repeatForm->setFields(['email' => 'ok@example.org']);
 formsExpect($repeatForm->validate() && $repeatForm->getErrors() === [], 'Corrected values must clear previous errors.');
 
+// Regex validation must reject arrays instead of treating them as empty strings.
+$regexArrayValidator = new Project\Validation\RegexValidator('value', ['unexpected'], ['pattern' => '/^$/']);
+formsExpect(!$regexArrayValidator->validate(), 'RegexValidator must reject non-scalar values even when the pattern matches an empty string.');
+
+$regexArrayForm = new Project\Validation\FormValidator(
+    [['value', 'regex', ['pattern' => '/^$/']]],
+    ['value' => ['unexpected']]
+);
+formsExpect(!$regexArrayForm->validate(), 'FormValidator must not accept an array through an empty-string regex match.');
+
 // Legacy API and validator class names.
 $legacy = new \CodeMatrix\Legacy\Forms\Form(
     [
