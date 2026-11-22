@@ -70,9 +70,13 @@ final class YmlCatalogRenderer
                 continue;
             }
 
+            $parentId = $section['parentId'] ?? null;
+            $hasExportedParent = (is_int($parentId) || (is_string($parentId) && ctype_digit($parentId)))
+                && array_key_exists((int) $parentId, $sections);
+
             $xml[] = '<category id="' . XmlEscaper::attribute($sectionId) . '"'
-                . (isset($section['parentId'])
-                    ? ' parentId="' . XmlEscaper::attribute($section['parentId']) . '"'
+                . ($hasExportedParent
+                    ? ' parentId="' . XmlEscaper::attribute((int) $parentId) . '"'
                     : '')
                 . '>' . XmlEscaper::text($section['name']) . '</category>';
         }
