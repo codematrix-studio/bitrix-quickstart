@@ -34,7 +34,7 @@ class YmlExport extends \CodeMatrix\Legacy\Base\XmlExport
 
         $stream = fopen('php://output', 'wb');
         if (!is_resource($stream)) {
-            throw new \\RuntimeException('Не удалось открыть поток вывода YML.');
+            throw new \RuntimeException('Не удалось открыть поток вывода YML.');
         }
 
         try {
