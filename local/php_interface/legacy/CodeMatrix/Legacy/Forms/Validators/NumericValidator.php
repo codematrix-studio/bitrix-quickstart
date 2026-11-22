@@ -1,6 +1,6 @@
 <?php
 
-namespace Lema\Forms\Validators;
+namespace CodeMatrix\Legacy\Forms\Validators;
 
 class NumericValidator extends Validator
 {
