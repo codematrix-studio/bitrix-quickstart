@@ -40,7 +40,16 @@ trait AjaxFormActions
 
     public function addRecord($iblockId, array $data): bool
     {
-        if (!is_scalar($iblockId) || (int) $iblockId < 1) {
+        if (is_int($iblockId)) {
+            $normalizedIblockId = $iblockId;
+        } elseif (is_string($iblockId) && preg_match('/\\A[0-9]+\\z/', $iblockId) === 1) {
+            $digits = ltrim($iblockId, '0');
+            $normalizedIblockId = $digits === '' ? 0 : filter_var($digits, FILTER_VALIDATE_INT);
+        } else {
+            $normalizedIblockId = false;
+        }
+
+        if (!is_int($normalizedIblockId) || $normalizedIblockId < 1) {
             $this->setError('empty_iblock', 'Не указан инфоблок');
             return false;
         }
@@ -57,7 +66,7 @@ trait AjaxFormActions
 
         $element = new \CIBlockElement();
         // Идентификатор инфоблока задаётся аргументом метода, а не данными формы.
-        $fields = array_replace($data, ['IBLOCK_ID' => (int) $iblockId]);
+        $fields = array_replace($data, ['IBLOCK_ID' => $normalizedIblockId]);
 
         try {
             $result = $element->Add($fields);

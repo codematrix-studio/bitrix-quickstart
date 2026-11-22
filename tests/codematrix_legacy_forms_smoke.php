@@ -194,6 +194,16 @@ formsExpect($legacyAjax instanceof \CodeMatrix\Legacy\Forms\Form, 'Legacy AjaxFo
 formsExpect(!$legacyAjax->addRecord(0, []), 'AjaxForm must reject an empty iblock ID without requiring Bitrix.');
 formsExpect(isset($legacyAjax->getErrors()['empty_iblock']), 'AjaxForm must retain the legacy error key.');
 
+// addRecord must reject coercible but non-integer information-block identifiers.
+foreach ([true, 1.5, '12abc', '0', '999999999999999999999999999999', []] as $invalidIblockId) {
+    $invalidIblockForm = new Project\Validation\AjaxForm();
+    formsExpect(!$invalidIblockForm->addRecord($invalidIblockId, []), 'addRecord must reject invalid information-block identifiers.');
+    formsExpect(
+        isset($invalidIblockForm->getErrors()['empty_iblock']),
+        'Invalid information-block identifiers must fail before attempting Bitrix access.'
+    );
+}
+
 echo "Проверки Forms/Validators пройдены.\n";
 
 
