@@ -9,7 +9,7 @@ require_once __DIR__ . '/../local/php_interface/classes/Support/CharsetConverter
 require_once __DIR__ . '/../local/php_interface/classes/Support/UrlGenerator.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/PropertyAccessor.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/ImageWatermarker.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Common/Helper.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Common/Helper.php';
 
 function helperExpect(bool $condition, string $message): void
 {

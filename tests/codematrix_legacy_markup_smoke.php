@@ -5,8 +5,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../local/php_interface/classes/Support/PerClassInstance.php';
 require_once __DIR__ . '/../local/php_interface/classes/Support/HtmlEscaper.php';
 require_once __DIR__ . '/../local/php_interface/classes/Seo/MetaMarkup.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/Markup.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Seo/OpenGraph.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Base/Markup.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Seo/OpenGraph.php';
 
 function markupExpect(bool $condition, string $message): void
 {

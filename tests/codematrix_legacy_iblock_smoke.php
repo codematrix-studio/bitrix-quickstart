@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/ElementRepository.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/SectionRepository.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/IBlock/Element.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/IBlock/Section.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/IBlock/Element.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/IBlock/Section.php';
 
 function iblockExpect(bool $condition, string $message): void
 {
