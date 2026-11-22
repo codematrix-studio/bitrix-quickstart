@@ -38,7 +38,7 @@ Logger::error('Ошибка оплаты', ['payment_id' => (int)$paymentId, 'er
 
 ## Инициализация
 
-В `local/php_interface/init.php` последовательно подключаются Composer autoload и `config/const.php`, затем вызывается `Logger::configure()` с настройкой `PROJECT_LOG_ENABLED` и путём `local/logs`. Если Composer autoload отсутствует, логгер недоступен. Установите зависимости: `composer install --working-dir=local`.
+В `local/php_interface/init.php` сначала подключается Composer autoload, если он установлен, затем регистрируется резервный PSR-4 автозагрузчик для пространства имён `Project\\`. После подключения `config/const.php` вызывается `Logger::configure()` с настройкой `PROJECT_LOG_ENABLED` и путём `local/logs`. Поэтому класс логгера доступен и без Composer — при условии, что файл класса присутствует в `local/php_interface/classes/`. Composer рекомендуется для штатной автозагрузки зависимостей проекта, но для самого `Logger` не является обязательным.
 
 ## Безопасность и обслуживание
 
