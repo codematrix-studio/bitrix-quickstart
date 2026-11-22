@@ -93,7 +93,7 @@ final class YmlCatalogRenderer
             while ($offset < $length) {
                 $written = @fwrite($stream, substr($chunk, $offset));
                 if ($written === false || $written === 0) {
-                    throw new \\RuntimeException('Не удалось полностью записать XML в поток.');
+                    throw new \RuntimeException('Не удалось полностью записать XML в поток.');
                 }
 
                 $offset += $written;
@@ -107,14 +107,14 @@ final class YmlCatalogRenderer
     /**
      * Генерирует отдельные строки XML, не накапливая весь документ.
      *
-     * @return \\Generator<int, string>
+     * @return \Generator<int, string>
      */
     private function yieldXmlLines(
         array $sections,
         array $products,
         array $params = [],
         $generatedAt = null
-    ): \\Generator {
+    ): \Generator {
         $timestamp = $this->normalizeTimestamp($generatedAt);
         $date = date('Y-m-d H:i', $timestamp);
         yield from [
