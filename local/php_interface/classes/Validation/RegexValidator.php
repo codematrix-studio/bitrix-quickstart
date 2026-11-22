@@ -16,11 +16,15 @@ class RegexValidator extends Validator
         $pattern = $this->options['pattern'] ?? null;
         $value = $this->stringValue();
 
+        if ($value === null) {
+            return $this->fail();
+        }
+
         if (!is_string($pattern) || $pattern === '') {
             throw new \InvalidArgumentException('Для правила regex необходимо передать непустой параметр pattern.');
         }
 
-        $result = @preg_match($pattern, $value ?? '');
+        $result = @preg_match($pattern, $value);
 
         if ($result === false) {
             throw new \InvalidArgumentException('Передан некорректный шаблон регулярного выражения.');
