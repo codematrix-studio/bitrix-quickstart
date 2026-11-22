@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Адаптер совместимости со старым классом Lema\Template\Item.
+ * Адаптер совместимости со старым классом CodeMatrix\Legacy\Template\Item.
  * Подключайте файл после загрузки Composer autoloader.
  */
 
-namespace Lema\Template;
+namespace CodeMatrix\Legacy\Template;
 
 class Item extends \Project\Bitrix\IBlock\ElementView
 {

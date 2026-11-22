@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Адаптер совместимости со старым классом Lema\Template\Section.
+ * Адаптер совместимости со старым классом CodeMatrix\Legacy\Template\Section.
  * Подключайте файл после загрузки Composer autoloader.
  */
 
-namespace Lema\Template;
+namespace CodeMatrix\Legacy\Template;
 
 class Section extends \Project\Bitrix\IBlock\SectionView
 {

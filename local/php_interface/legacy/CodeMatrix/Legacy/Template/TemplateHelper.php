@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Совместимый адаптер старого Lema\Template\TemplateHelper.
+ * Совместимый адаптер старого CodeMatrix\Legacy\Template\TemplateHelper.
  * Подключать после Composer autoload и адаптеров Item/Section.
  */
 
-namespace Lema\Template;
+namespace CodeMatrix\Legacy\Template;
 
 require_once __DIR__ . '/Item.php';
 require_once __DIR__ . '/Section.php';
