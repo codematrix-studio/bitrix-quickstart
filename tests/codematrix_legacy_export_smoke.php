@@ -95,6 +95,24 @@ exportExpect(str_contains($xml, 'https://shop.example.org/catalog/item/?from=yml
 exportExpect(str_contains($xml, 'https://shop.example.org/upload/item.jpg'), 'Relative image URLs must use the trusted site URL.');
 exportExpect(str_contains($xml, 'available="true"'), 'Available products must retain the legacy availability rule.');
 
+$orphanCategoryXml = $renderer->render(
+    [5 => ['name' => 'Товары']],
+    [
+        12 => [
+            'ID' => 12,
+            'ACTIVE' => 'Y',
+            'CATALOG_AVAILABLE' => 'Y',
+            'NAME' => 'Товар вне выгружаемого дерева',
+            'IBLOCK_SECTION_ID' => 99,
+        ],
+    ]
+);
+exportExpect(
+    !str_contains($orphanCategoryXml, '<categoryId>99</categoryId>'),
+    'YML must not reference a category that is absent from the exported category tree.'
+);
+
+
 $externalUrlRejected = false;
 try {
     $renderer->render([], [
