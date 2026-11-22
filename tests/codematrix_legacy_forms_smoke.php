@@ -120,9 +120,13 @@ $legacy = new \CodeMatrix\Legacy\Forms\Form(
         ['enabled', 'boolean'],
         ['amount', 'numerical'],
     ],
-    ['email' => 'person@example.org', 'enabled' => false, 'amount' => '12.75']
+    ['email' => 'person@example.org', 'enabled' => false, 'amount' => '12']
 );
-formsExpect($legacy->validate(), 'Legacy Form must preserve old rule names and accept boolean false and decimal numeric values.');
+formsExpect($legacy->validate(), 'Legacy Form must preserve old rule names and accept integer numeric values.');
+$legacyDecimal = new \\CodeMatrix\\Legacy\\Forms\\Form([['amount', 'numerical']], ['amount' => '12.75']);
+formsExpect(!$legacyDecimal->validate(), 'Legacy numerical validator must reject decimal values as the original Lema validator did.');
+$legacyZero = new \\CodeMatrix\\Legacy\\Forms\\Form([['amount', 'numerical']], ['amount' => '0']);
+formsExpect($legacyZero->validate(), 'Legacy numerical validator must accept integer zero without the old truthiness bug.');
 formsExpect($legacy->validators()['email'] === \CodeMatrix\Legacy\Forms\Validators\EmailValidator::class, 'Legacy validator registry must return old class names.');
 
 $directValidator = new \CodeMatrix\Legacy\Forms\Validators\LengthValidator('title', 'Привет', ['min' => 3, 'max' => 8]);
