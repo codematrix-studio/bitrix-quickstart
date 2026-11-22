@@ -62,8 +62,8 @@ namespace {
     require_once __DIR__ . '/../local/php_interface/classes/Seo/Analytics/ScriptRenderer.php';
     require_once __DIR__ . '/../local/php_interface/classes/Seo/Analytics/GtmFormEvent.php';
     require_once __DIR__ . '/../local/php_interface/classes/Seo/Analytics/BitrixECommerce.php';
-    require_once __DIR__ . '/../local/php_interface/legacy/Lema/Seo/GTMFormSubmit.php';
-    require_once __DIR__ . '/../local/php_interface/legacy/Lema/Seo/ECommerce.php';
+    require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Seo/GTMFormSubmit.php';
+    require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Seo/ECommerce.php';
 
     function seoAnalyticsExpect(bool $condition, string $message): void
     {
@@ -237,10 +237,10 @@ namespace {
     seoAnalyticsExpect($second['transactionProducts'][0]['category'] === 'Категория B', 'Кеш категорий предыдущего заказа должен сбрасываться.');
     seoAnalyticsExpect($second['transactionTotal'] === 2400.0, 'Сумма должна соответствовать новому заказу.');
 
-    $legacy = \Lema\Seo\GTMFormSubmit::get();
+    $legacy = \CodeMatrix\Legacy\Seo\GTMFormSubmit::get();
     $legacy->setElementId('legacy-form')->setElements(['name' => 'Имя', 'comment' => 'Текст']);
     seoAnalyticsExpect(!str_contains($legacy->jsonResult(true), 'Имя'), 'Legacy API не должен отправлять значения полей.');
-    seoAnalyticsExpect(is_subclass_of(\Lema\Seo\ECommerce::class, \Project\Seo\Analytics\BitrixECommerce::class), 'Legacy ECommerce должен быть адаптером.');
+    seoAnalyticsExpect(is_subclass_of(\CodeMatrix\Legacy\Seo\ECommerce::class, \Project\Seo\Analytics\BitrixECommerce::class), 'Legacy ECommerce должен быть адаптером.');
 
     echo "Проверки SEO-аналитики пройдены.\n";
 }
