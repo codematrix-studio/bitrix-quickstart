@@ -7,10 +7,10 @@ require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/ElementVie
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/SectionView.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Component/ComponentInvoker.php';
 
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Base/Paginator.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Base/Component.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Template/Item.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Template/Section.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/Paginator.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/Component.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Template/Item.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Template/Section.php';
 
 function expectTrue(bool $condition, string $message): void
 {
@@ -25,7 +25,7 @@ class SmokeComponent extends Project\Bitrix\Component\ComponentInvoker
     protected static $params = ['CACHE_TYPE' => 'A', 'COUNT' => 10];
 }
 
-class LegacySmokeComponent extends \Lema\Base\Component
+class LegacySmokeComponent extends \CodeMatrix\Legacy\Base\Component
 {
     protected static $componentName = 'legacy:test-component';
     protected static $params = ['CACHE_TYPE' => 'A', 'COUNT' => 10];
@@ -68,7 +68,7 @@ $paginator->setPagerName('custom_page')->start(25);
 expectTrue($paginator->getElements() === range(11, 20), 'ArrayPaginator must preserve custom pager parameter names.');
 
 // Legacy paginator class name.
-$legacyPaginator = \Lema\Base\Paginator::get();
+$legacyPaginator = \CodeMatrix\Legacy\Base\Paginator::get();
 expectTrue($legacyPaginator instanceof Project\Support\ArrayPaginator, 'Legacy paginator adapter must extend the new implementation.');
 
 // Element view compatibility.
@@ -87,7 +87,7 @@ expectTrue($item->propText('DESCRIPTION') === 'Description', 'ElementView must e
 expectTrue($item->editId() === ' id="area&quot;42"', 'ElementView must escape edit-area IDs.');
 
 // Legacy item adapter.
-$legacyItem = new \Lema\Template\Item(['ID' => 7, 'NAME' => 'Legacy item']);
+$legacyItem = new \CodeMatrix\Legacy\Template\Item(['ID' => 7, 'NAME' => 'Legacy item']);
 expectTrue($legacyItem->getName() === 'Legacy item', 'Legacy item adapter must preserve the old API.');
 
 // Component parameter defaults must not leak between calls.

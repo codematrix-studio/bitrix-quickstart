@@ -244,15 +244,15 @@ $documentRoot = $tempDirectory . '/document-root';
 mkdir($documentRoot, 0750, true);
 $_SERVER['DOCUMENT_ROOT'] = $documentRoot;
 
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Base/XmlExport.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Seo/YmlExport.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/XmlExport.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Seo/YmlExport.php';
 
-$legacyYml = new \Lema\Seo\YmlExport(12, [
+$legacyYml = new \CodeMatrix\Legacy\Seo\YmlExport(12, [
     'serverUrl' => 'https://shop.example.org',
     'storageDir' => '/bitrix/catalog_export/export',
     'sectionIds' => [5],
 ]);
-exportExpect($legacyYml instanceof \Lema\Base\XmlExport, 'Legacy YmlExport must extend the legacy XmlExport adapter.');
+exportExpect($legacyYml instanceof \CodeMatrix\Legacy\Base\XmlExport, 'Legacy YmlExport must extend the legacy XmlExport adapter.');
 exportExpect($legacyYml->setNeedUpdate(true) === true, 'Legacy setNeedUpdate() must retain its boolean return contract.');
 
 $productsProperty = new ReflectionProperty(Project\Export\BitrixCatalogExporter::class, 'products');
@@ -278,7 +278,7 @@ exportExpect(
     'Legacy YmlExport::showData() must preserve its echo output contract.'
 );
 
-$legacyBase = new \Lema\Base\XmlExport(12, [
+$legacyBase = new \CodeMatrix\Legacy\Base\XmlExport(12, [
     'serverUrl' => 'https://shop.example.org',
     'storageDir' => '/bitrix/catalog_export/base',
 ]);
@@ -290,7 +290,7 @@ try {
 }
 exportExpect($baseShowDataRejected, 'Base XmlExport must explicitly reject an undefined XML format.');
 
-class ExportLegacyCustomYml extends \Lema\Seo\YmlExport
+class ExportLegacyCustomYml extends \CodeMatrix\Legacy\Seo\YmlExport
 {
     public function loadAdditionalData(array $additionalData = []): void
     {
@@ -321,7 +321,7 @@ exportExpect(
 
 $unsafeStorageRejected = false;
 try {
-    new \Lema\Base\XmlExport(12, [
+    new \CodeMatrix\Legacy\Base\XmlExport(12, [
         'serverUrl' => 'https://shop.example.org',
         'storageDir' => '/../../outside',
     ]);

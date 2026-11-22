@@ -6,9 +6,9 @@ require_once __DIR__ . '/../local/php_interface/classes/Support/PerClassInstance
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Context/PerClassBitrixInstance.php';
 require_once __DIR__ . '/../local/php_interface/classes/Support/PerClassGlobalProxy.php';
 
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Base/StaticInstance.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Base/BitrixInstances.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Base/GlobalVars.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/StaticInstance.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/BitrixInstances.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/GlobalVars.php';
 
 function baseExpect(bool $condition, string $message): void
 {
@@ -17,17 +17,17 @@ function baseExpect(bool $condition, string $message): void
     }
 }
 
-class FirstSingleton extends \Lema\Base\StaticInstance
+class FirstSingleton extends \CodeMatrix\Legacy\Base\StaticInstance
 {
     public string $value = 'first';
 }
 
-class SecondSingleton extends \Lema\Base\StaticInstance
+class SecondSingleton extends \CodeMatrix\Legacy\Base\StaticInstance
 {
     public string $value = 'second';
 }
 
-class FirstBitrixFacade extends \Lema\Base\BitrixInstances
+class FirstBitrixFacade extends \CodeMatrix\Legacy\Base\BitrixInstances
 {
     public static function setInstance()
     {
@@ -40,7 +40,7 @@ class FirstBitrixFacade extends \Lema\Base\BitrixInstances
     }
 }
 
-class SecondBitrixFacade extends \Lema\Base\BitrixInstances
+class SecondBitrixFacade extends \CodeMatrix\Legacy\Base\BitrixInstances
 {
     public static function setInstance()
     {
@@ -64,7 +64,7 @@ class FakeGlobalObject
 $GLOBALS['LEMA_GLOBAL_FIRST'] = new FakeGlobalObject();
 $GLOBALS['LEMA_GLOBAL_SECOND'] = (object) ['value' => 'second-global'];
 
-class FirstGlobalProxy extends \Lema\Base\GlobalVars
+class FirstGlobalProxy extends \CodeMatrix\Legacy\Base\GlobalVars
 {
     public static function setVarName()
     {
@@ -72,7 +72,7 @@ class FirstGlobalProxy extends \Lema\Base\GlobalVars
     }
 }
 
-class SecondGlobalProxy extends \Lema\Base\GlobalVars
+class SecondGlobalProxy extends \CodeMatrix\Legacy\Base\GlobalVars
 {
     public static function setVarName()
     {
