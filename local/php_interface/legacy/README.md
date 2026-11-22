@@ -65,7 +65,7 @@ require_once $legacyForms . 'AjaxForm.php';
 
 ### Высокий приоритет
 
-- `lib/Forms/Form.php` и `lib/Forms/Validators/*`: сохранить правила и формат ошибок, исправить обработку массивов, boolean false, числовых значений, отсутствующих параметров regex и повторный вызов validate.
+- `lib/Forms/Form.php` и `lib/Forms/Validators/*`: **адаптированы и покрыты smoke-тестом**. Сохранены имена правил и контракт валидаторов; массивы обрабатываются безопасно, повторный `validate()` пересчитывает ошибки, отсутствие или некорректность regex-шаблона даёт явное исключение. Legacy `boolean` сохраняет поведение исходника (принимает только значения, которые `FILTER_VALIDATE_BOOLEAN` распознаёт как `true`); legacy `numerical` принимает целые числа и отклоняет дробные. Значение `0` принимается как исправление старой ошибки проверки через truthiness. Современные валидаторы `Project\\Validation` сохраняют отдельную, более широкую семантику. reCAPTCHA без явно внедрённого серверного проверяющего отклоняется.
 - `lib/IBlock/Element.php` и `lib/IBlock/Section.php`: **переработаны** в `Project\Bitrix\IBlock\ElementRepository` и `SectionRepository`; старые статические фасады сохранены адаптерами `CodeMatrix\Legacy\IBlock\Element` и `CodeMatrix\Legacy\IBlock\Section`.
 - `lib/Common/Helper.php`: **основные универсальные методы переработаны** в `RussianPluralizer`, `JsonEncoder`, `CharsetConverter`, `UrlGenerator`, `PropertyAccessor` и `ImageWatermarker`; старый фасад `CodeMatrix\Legacy\Common\Helper` сохранён. Методы работы с URL требуют явного доверенного базового адреса.
 - `lib/Base/Markup.php` и `lib/Seo/OpenGraph.php`: **переработаны** в `Project\Seo\MetaMarkup`; старые классы и fluent API сохранены адаптерами, экранирование атрибутов перенесено на этап вывода.
