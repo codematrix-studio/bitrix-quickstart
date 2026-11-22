@@ -690,11 +690,11 @@ SEO-классы также подключаются явно. У классов
 ```php
 $legacyRoot = __DIR__ . '/legacy/CodeMatrix/Legacy/';
 
-// OpenGraph наследуется от CodeMatrix\\Legacy\\Base\\Markup.
+// OpenGraph наследуется от CodeMatrix\Legacy\Base\Markup.
 require_once $legacyRoot . 'Base/Markup.php';
 require_once $legacyRoot . 'Seo/OpenGraph.php';
 
-// YmlExport наследуется от CodeMatrix\\Legacy\\Base\\XmlExport.
+// YmlExport наследуется от CodeMatrix\Legacy\Base\XmlExport.
 require_once $legacyRoot . 'Base/XmlExport.php';
 require_once $legacyRoot . 'Seo/YmlExport.php';
 
@@ -703,4 +703,4 @@ require_once $legacyRoot . 'Seo/ECommerce.php';
 require_once $legacyRoot . 'Seo/GTMFormSubmit.php';
 ```
 
-Для остальных групп ориентируйтесь на зависимости в объявлениях классов и подключайте родительский legacy-файл до файла-наследника. Composer autoload загружает классы основного пространства `Project\\`, но не загружает файлы из `legacy/CodeMatrix/Legacy/`.
+Для остальных групп ориентируйтесь на зависимости в объявлениях классов и подключайте родительский legacy-файл до файла-наследника. Composer autoload загружает классы основного пространства `Project\`, но не загружает файлы из `legacy/CodeMatrix/Legacy/`.
