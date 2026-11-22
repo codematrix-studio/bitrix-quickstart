@@ -25,6 +25,13 @@ class LengthValidator extends Validator
 
     public function validate(): bool
     {
+        $min = $this->integerBound('min');
+        $max = $this->integerBound('max');
+
+        if ($min !== null && $max !== null && $min > $max) {
+            throw new \InvalidArgumentException('Параметр min не может быть больше max.');
+        }
+
         $value = $this->stringValue();
 
         if ($value === null) {
@@ -32,32 +39,40 @@ class LengthValidator extends Validator
         }
 
         $value = trim($value);
-        $length = preg_match_all('/\X/u', $value, $matches);
+        $length = preg_match_all('/\\X/u', $value, $matches);
 
         if ($length === false) {
             return $this->fail();
         }
 
-        $min = $this->options['min'] ?? null;
-        $max = $this->options['max'] ?? null;
-
-        if ($min !== null && (!is_numeric($min) || (int) $min < 0)) {
-            throw new \InvalidArgumentException('Параметр min должен быть неотрицательным числом.');
-        }
-        if ($max !== null && (!is_numeric($max) || (int) $max < 0)) {
-            throw new \InvalidArgumentException('Параметр max должен быть неотрицательным числом.');
-        }
-        if ($min !== null && $max !== null && (int) $min > (int) $max) {
-            throw new \InvalidArgumentException('Параметр min не может быть больше max.');
-        }
-
-        if ($min !== null && $length < (int) $min) {
+        if ($min !== null && $length < $min) {
             return $this->fail();
         }
-        if ($max !== null && $length > (int) $max) {
+        if ($max !== null && $length > $max) {
             return $this->fail();
         }
 
         return true;
+    }
+
+    private function integerBound(string $name): ?int
+    {
+        if (!isset($this->options[$name])) {
+            return null;
+        }
+
+        $value = $this->options[$name];
+
+        if (!is_numeric($value)) {
+            throw new \InvalidArgumentException(sprintf('Параметр %s должен быть неотрицательным целым числом.', $name));
+        }
+
+        $number = (float) $value;
+
+        if (!is_finite($number) || $number < 0 || floor($number) !== $number || $number > PHP_INT_MAX) {
+            throw new \InvalidArgumentException(sprintf('Параметр %s должен быть неотрицательным целым числом.', $name));
+        }
+
+        return (int) $number;
     }
 }
