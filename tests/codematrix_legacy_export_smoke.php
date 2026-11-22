@@ -239,7 +239,7 @@ exportExpect(
 // Multiple selected section trees should use one D7 descendants query.
 $d7SectionParams = [];
 $d7LegacyCalls = 0;
-$d7SectionRepository = new Project\Bitrix\\IBlock\\SectionRepository(
+$d7SectionRepository = new Project\Bitrix\IBlock\SectionRepository(
     static fn (): bool => true,
     static function (array $params) use (&$d7SectionParams): array {
         $d7SectionParams[] = $params;
@@ -257,12 +257,12 @@ $d7SectionRepository = new Project\Bitrix\\IBlock\\SectionRepository(
         ];
     }
 );
-$d7Exporter = new Project\Export\\BitrixCatalogExporter(
+$d7Exporter = new Project\Export\BitrixCatalogExporter(
     12,
     $urls,
     $exportDirectory,
     ['sectionIds' => [5, 7], 'cacheKey' => 'catalog-export-d7-sections'],
-    new Project\Bitrix\\IBlock\\ElementRepository(static fn (): bool => true, null, static fn (): array => []),
+    new Project\Bitrix\IBlock\ElementRepository(static fn (): bool => true, null, static fn (): array => []),
     $d7SectionRepository
 );
 $d7Loaded = $d7Exporter->loadData([], true);
