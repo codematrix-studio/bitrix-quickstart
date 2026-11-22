@@ -4,9 +4,9 @@
  * Совместимый класс OpenGraph из lema.lib.
  */
 
-namespace Lema\Seo;
+namespace CodeMatrix\Legacy\Seo;
 
-class OpenGraph extends \Lema\Base\Markup
+class OpenGraph extends \CodeMatrix\Legacy\Base\Markup
 {
     public function setPrefix(): void
     {

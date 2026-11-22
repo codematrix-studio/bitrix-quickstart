@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Совместимый фасад старого Lema\Seo\YmlExport.
- * Подключать после Composer autoload и адаптера Lema\Base\XmlExport.
+ * Совместимый фасад старого CodeMatrix\Legacy\Seo\YmlExport.
+ * Подключать после Composer autoload и адаптера CodeMatrix\Legacy\Base\XmlExport.
  */
 
-namespace Lema\Seo;
+namespace CodeMatrix\Legacy\Seo;
 
 use Project\Export\YmlCatalogRenderer;
 use Project\Support\UrlGenerator;
 
-class YmlExport extends \Lema\Base\XmlExport
+class YmlExport extends \CodeMatrix\Legacy\Base\XmlExport
 {
     public function showData(array $params = [])
     {

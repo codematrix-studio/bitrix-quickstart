@@ -1,20 +1,20 @@
 <?php
 
 /**
- * Совместимый фасад старого Lema\\IBlock\\Section.
+ * Совместимый фасад старого CodeMatrix\Legacy\\IBlock\\Element.
  * Подключать после Composer autoload.
  */
 
-namespace Lema\IBlock;
+namespace CodeMatrix\Legacy\IBlock;
 
-class Section
+class Element
 {
-    const CLASS_NAME = '\\Bitrix\\Iblock\\SectionTable';
-    const OLD_CLASS_NAME = '\\CIBlockSection';
+    const CLASS_NAME = '\\Bitrix\\Iblock\\ElementTable';
+    const OLD_CLASS_NAME = '\\CIBlockElement';
 
-    private static function repository(): \Project\Bitrix\IBlock\SectionRepository
+    private static function repository(): \Project\Bitrix\IBlock\ElementRepository
     {
-        return new \Project\Bitrix\IBlock\SectionRepository();
+        return new \Project\Bitrix\IBlock\ElementRepository();
     }
 
     public static function __callStatic($name, $arguments)
@@ -39,6 +39,11 @@ class Section
         return false;
     }
 
+    public static function getById($elementId, array $params = [])
+    {
+        return static::repository()->getById($elementId, $params);
+    }
+
     public static function getListD7($iblockId, array $params = [])
     {
         return static::repository()->getListD7($iblockId, $params);
@@ -49,13 +54,23 @@ class Section
         return static::repository()->getList($iblockId, $params);
     }
 
+    public static function getCount($iblockId, array $params = [])
+    {
+        return static::repository()->getCount($iblockId, $params);
+    }
+
+    public static function getListPagination($iblockId, array $params = [])
+    {
+        return static::repository()->getListPagination($iblockId, $params);
+    }
+
     public static function getAllD7($iblockId, array $params = [])
     {
         return static::repository()->getAllD7($iblockId, $params);
     }
 
-    public static function getAll($iblockId, array $params = [])
+    public static function getAll($iblockId, array $params = [], $pagination = false)
     {
-        return static::repository()->getAll($iblockId, $params);
+        return static::repository()->getAll($iblockId, $params, $pagination);
     }
 }
