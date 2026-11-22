@@ -17,9 +17,11 @@
     "scripts": {
         "test:compatibility": "php ../tests/lema_compatibility_smoke.php",
         "test:forms": "php ../tests/lema_forms_smoke.php",
+        "test:secure-ajax": "php ../tests/secure_ajax_handler_smoke.php",
         "test": [
             "@test:compatibility",
             "@test:forms",
+            "@test:secure-ajax",
             "@test:iblock",
             "@test:iblock-validator",
             "@test:helper",
@@ -61,7 +63,7 @@
         "test:d7-order": "php ../tests/d7_order_manager_smoke.php",
         "test:d7-quick-order": "php ../tests/d7_quick_order_smoke.php",
         "test:d7-quick-order-input": "php ../tests/d7_quick_order_input_smoke.php",
-        "test:product-list": "php ../tests/product_id_list_smoke.php",
+        "test:product-list": "php ../tests/d7_basket_handler_smoke.php",
         "test:context": "php ../tests/bitrix_context_smoke.php",
         "test:seo-analytics": "php ../tests/seo_analytics_smoke.php",
         "test:d7-basket-handler": "php ../tests/d7_basket_handler_smoke.php",
