@@ -245,10 +245,15 @@ class BitrixCatalogExporter
 
         // A plain export can enforce its limit in the SQL query instead of
         // loading the complete catalog and slicing it afterwards. Keep the
-        // existing in-memory path when productIds or explicit navigation
-        // parameters affect which records are selected.
+        // existing in-memory path when custom filters, sorting, selected
+        // fields, productIds, or explicit navigation affect the selection.
+        $hasCustomQuery = !empty($params['filter'])
+            || !empty($params['order'])
+            || !empty($params['arSelect']);
+
         if ($limit > 0
             && $this->productIds === []
+            && !$hasCustomQuery
             && (!is_array($navigation) || $navigation === [])
         ) {
             $params['arNavStartParams'] = ['nTopCount' => $limit];
