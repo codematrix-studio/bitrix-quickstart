@@ -71,7 +71,7 @@ formsExpect($form->getField('name') === 'Иван', 'String fields must be trimm
 formsExpect($form->getField('active') === false, 'Boolean false must not be converted to an empty string.');
 
 // Numeric range options must be valid finite numbers and form a consistent interval.
-$boundedNumeric = new Project\\Validation\\NumericValidator('amount', '10.5', ['min' => '10', 'max' => '11']);
+$boundedNumeric = new Project\Validation\NumericValidator('amount', '10.5', ['min' => '10', 'max' => '11']);
 formsExpect($boundedNumeric->validate(), 'NumericValidator must accept values inside a valid decimal range.');
 
 foreach ([
@@ -82,7 +82,7 @@ foreach ([
     $invalidBoundsRejected = false;
 
     try {
-        (new Project\\Validation\\NumericValidator('amount', '10', $invalidBounds))->validate();
+        (new Project\Validation\NumericValidator('amount', '10', $invalidBounds))->validate();
     } catch (InvalidArgumentException $exception) {
         $invalidBoundsRejected = true;
     }
