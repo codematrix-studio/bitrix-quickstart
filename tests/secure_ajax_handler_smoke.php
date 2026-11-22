@@ -20,8 +20,8 @@ $permissionCalls = 0;
 $handlerCalls = 0;
 
 $handler = new SecureAjaxHandler(
-    static fn (?string $token): bool => $sessionValid && $token === 'valid-token',
-    static fn (): bool => $authenticated,
+    static function (?string $token) use (&$sessionValid): bool { return $sessionValid && $token === 'valid-token'; },
+    static function () use (&$authenticated): bool { return $authenticated; },
     static function (string $action, array $payload) use (&$permissionCalls, &$permissionGranted): bool {
         $permissionCalls++;
 
@@ -92,7 +92,7 @@ secureAjaxExpect($invalidRegistrationFailed, 'Недопустимое имя д
 
 $duplicateRegistrationFailed = false;
 try {
-    $handler->register('update_profile', static fn (): null => null);
+    $handler->register('update_profile', static fn (): mixed => null);
 } catch (LogicException) {
     $duplicateRegistrationFailed = true;
 }
