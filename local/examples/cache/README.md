@@ -4,12 +4,12 @@
 
 ## Состав
 
-- [simple-data.php](simple-data.php) — кеширование результата произвольной функции через `Bitrix\\Main\\Data\\Cache`.
+- [simple-data.php](simple-data.php) — кеширование результата произвольной функции через `Bitrix\Main\Data\Cache`.
 - [tagged-data.php](tagged-data.php) — тот же сценарий с тегами для сброса кеша при изменении связанных данных.
 
 ## Подключение
 
-Примеры содержат функции, поэтому их можно подключить явно:
+Примеры содержат функции в пространстве имён `Project\Examples\Cache`, поэтому их можно подключить явно:
 
 ```php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/local/examples/cache/simple-data.php';
@@ -21,7 +21,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/local/examples/cache/tagged-data.php'
 Передайте функцию, которая получает данные, уникальный ключ, каталог и время жизни:
 
 ```php
-$items = getCachedData(
+$items = \Project\Examples\Cache\getCachedData(
     static fn (): array => loadItemsFromDatabase(),
     'catalog-items-site-'.SITE_ID,
     '/my-project/catalog/items',
@@ -36,7 +36,7 @@ $items = getCachedData(
 Тегированный пример дополнительно принимает список тегов:
 
 ```php
-$items = getTaggedCachedData(
+$items = \Project\Examples\Cache\getTaggedCachedData(
     static fn (): array => loadItemsFromDatabase(),
     'catalog-items-site-'.SITE_ID,
     '/my-project/catalog/items',
