@@ -7,6 +7,7 @@
 ```text
 local/
 ├── components/                 # собственные компоненты проекта
+├── logs/                       # закрытые от HTTP-доступа файлы логов
 ├── modules/                    # собственные модули проекта
 ├── php_interface/
 │   ├── classes/                # классы проекта
@@ -33,7 +34,7 @@ local/
 
 ## Логирование
 
-Файловый логгер `Project\\Support\\Logger` выключен по умолчанию. Управление — через `PROJECT_LOG_ENABLED` в `local/php_interface/config/const.php`: `true` включает запись, `false` выключает. Файлы создаются в `local/logs/`, по одному на день. Подробности: [документация по логированию](docs/logging.md).
+Файловый логгер `Project\Support\Logger` выключен по умолчанию. Управление — через `PROJECT_LOG_ENABLED` в `local/php_interface/config/const.php`: `true` включает запись, `false` выключает. Файлы создаются в `local/logs/`, по одному на день. Подробности: [документация по логированию](docs/logging.md).
 
 ## Принципы
 

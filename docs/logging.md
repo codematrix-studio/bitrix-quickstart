@@ -1,6 +1,6 @@
 # Логирование проекта
 
-Для диагностических сообщений используется общий файловый логгер `Project\\Support\\Logger`. Логи хранятся в `/local/logs/`, отдельно от ядра `/bitrix/`.
+Для диагностических сообщений используется общий файловый логгер `Project\Support\Logger`. Логи хранятся в `/local/logs/`, отдельно от ядра `/bitrix/`.
 
 ## Включение и отключение
 
@@ -25,7 +25,7 @@ defined('PROJECT_LOG_ENABLED') || define('PROJECT_LOG_ENABLED', true);
 После подключения Composer autoload и выполнения `local/php_interface/init.php` логгер уже настроен:
 
 ```php
-use Project\\Support\\Logger;
+use Project\Support\Logger;
 
 Logger::info('Заказ создан', ['order_id' => (int)$orderId]);
 Logger::warning('Не удалось обновить остаток', ['product_id' => (int)$productId]);
