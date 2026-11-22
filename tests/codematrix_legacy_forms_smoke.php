@@ -5,13 +5,13 @@ declare(strict_types=1);
  
 // Минимальный PSR-4 автозагрузчик для автономного запуска без vendor/autoload.php.
 spl_autoload_register(static function (string $class): void {
-    $prefix = 'Project\\';
+    $prefix = 'Project\';
     if (!str_starts_with($class, $prefix)) {
         return;
     }
 
     $relative = substr($class, strlen($prefix));
-    $file = __DIR__ . '/../local/php_interface/classes/' . str_replace('\\', '/', $relative) . '.php';
+    $file = __DIR__ . '/../local/php_interface/classes/' . str_replace('\', '/', $relative) . '.php';
 
     if (is_file($file)) {
         require_once $file;
@@ -123,9 +123,9 @@ $legacy = new \CodeMatrix\Legacy\Forms\Form(
     ['email' => 'person@example.org', 'enabled' => true, 'amount' => '12']
 );
 formsExpect($legacy->validate(), 'Legacy Form must preserve old rule names and accept true boolean and integer numeric values.');
-$legacyDecimal = new \CodeMatrix\\Legacy\\Forms\\Form([['amount', 'numerical']], ['amount' => '12.75']);
+$legacyDecimal = new \CodeMatrix\Legacy\Forms\Form([['amount', 'numerical']], ['amount' => '12.75']);
 formsExpect(!$legacyDecimal->validate(), 'Legacy numerical validator must reject decimal values as the original Lema validator did.');
-$legacyZero = new \CodeMatrix\\Legacy\\Forms\\Form([['amount', 'numerical']], ['amount' => '0']);
+$legacyZero = new \CodeMatrix\Legacy\Forms\Form([['amount', 'numerical']], ['amount' => '0']);
 formsExpect($legacyZero->validate(), 'Legacy numerical validator must accept integer zero without the old truthiness bug.');
 formsExpect($legacy->validators()['email'] === \CodeMatrix\Legacy\Forms\Validators\EmailValidator::class, 'Legacy validator registry must return old class names.');
 $legacyFalseBoolean = new \CodeMatrix\Legacy\Forms\Form([['enabled', 'boolean']], ['enabled' => false]);
