@@ -10,6 +10,7 @@
 
 - Project\Bitrix\Sale\BasketManager — local/php_interface/classes/Bitrix/Sale/BasketManager.php.
 - Project\Bitrix\Sale\BasketHandler — фасад чтения и совместимых операций в local/php_interface/classes/Bitrix/Sale/BasketHandler.php.
+- CodeMatrix\Legacy\Basket\BasketHandler — необязательный адаптер старого имени; подключается явно после Composer autoload.
 
 ## Пример
 

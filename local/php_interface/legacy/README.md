@@ -76,7 +76,7 @@ require_once $legacyForms . 'AjaxForm.php';
 - `lib/Common/AssetManager.php`, `App.php`, `Request.php`, `Context.php`, `Server.php`, `User.php`: обёртки над Bitrix API, после проверки контракта и версий ядра.
 - `lib/Base/XmlExport.php` и `lib/Seo/YmlExport.php`: переписать кеш и XML-генерацию целиком, сохранив публичные методы и формат результата.
 - `lib/Template/TemplateHelper.php`: **переработан** в `Project\Bitrix\IBlock\TemplateHelper`; методы работы со списками и edit/delete actions сохранены, добавлен необязательный адаптер старого API.
-- `lib/Basket/BasketHandler.php`: отдельно оценить как обёртку над штатной Sale Basket; это перспективнее старой HL-корзины.
+- \`lib/Basket/BasketHandler.php\`: **переработан** как \`Project\Bitrix\Sale\BasketHandler\`; старое имя сохранено адаптером \`CodeMatrix\Legacy\Basket\BasketHandler\`. Корзина привязана к текущим FUSER и сайту, наружу возвращаются снимки позиций, произвольная цена/валюта/сайт/свойства и прямой доступ к изменяемому объекту D7 запрещены. \`fastOrderAction()\` не является drop-in API: старый метод одновременно валидировал форму, отправлял сообщение и создавал запись в инфоблоке; новый \`QuickOrder\` отвечает только за создание заказа. Старую сигнатуру намеренно не имитируем.
 
 ### Не переносить без существенной переработки
 
