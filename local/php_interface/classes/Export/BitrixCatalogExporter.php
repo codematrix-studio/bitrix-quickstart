@@ -199,6 +199,8 @@ class BitrixCatalogExporter
         ]);
 
         $sections = [];
+        $intervals = [];
+        $hasInvalidInterval = false;
 
         foreach ($roots as $root) {
             if (!is_array($root) || !isset($root['ID'])) {
@@ -208,10 +210,53 @@ class BitrixCatalogExporter
             $rootId = (int) $root['ID'];
             $sections[$rootId] = ['name' => (string) ($root['NAME'] ?? '')];
 
-            if (!isset($root['LEFT_MARGIN'], $root['RIGHT_MARGIN'])) {
+            if (!isset($root['LEFT_MARGIN'], $root['RIGHT_MARGIN'])
+                || !is_numeric($root['LEFT_MARGIN'])
+                || !is_numeric($root['RIGHT_MARGIN'])
+                || (int) $root['LEFT_MARGIN'] < 1
+                || (int) $root['RIGHT_MARGIN'] <= (int) $root['LEFT_MARGIN']
+            ) {
+                $hasInvalidInterval = true;
                 continue;
             }
 
+            $intervals[] = [
+                'left' => (int) $root['LEFT_MARGIN'],
+                'right' => (int) $root['RIGHT_MARGIN'],
+            ];
+        }
+
+        if ($intervals === [] && !$hasInvalidInterval) {
+            return $sections;
+        }
+
+        $childrenById = $hasInvalidInterval
+            ? null
+            : $this->sectionRepository->getDescendantsByIntervalsD7($this->iblockId, $intervals);
+
+        if ($childrenById !== null) {
+            foreach ($childrenById as $child) {
+                if (!is_array($child) || !isset($child['ID'])) {
+                    continue;
+                }
+
+                $childId = (int) $child['ID'];
+                $sections[$childId] = [
+                    'name' => (string) ($child['NAME'] ?? ''),
+                    'parentId' => (int) ($child['IBLOCK_SECTION_ID'] ?? 0),
+                ];
+            }
+
+            return $sections;
+        }
+
+        // Legacy fallback for installations without the D7 SectionTable class.
+        foreach ($roots as $root) {
+            if (!is_array($root) || !isset($root['ID'], $root['LEFT_MARGIN'], $root['RIGHT_MARGIN'])) {
+                continue;
+            }
+
+            $rootId = (int) $root['ID'];
             $children = $this->sectionRepository->getListIncludingInactive($this->iblockId, [
                 'order' => ['LEFT_MARGIN' => 'ASC'],
                 'filter' => [
