@@ -5,7 +5,7 @@
  * Подключать после Composer autoload.
  */
 
-namespace Lema\Forms;
+namespace CodeMatrix\Legacy\Forms;
 
 class Form extends \Project\Validation\FormValidator
 {
