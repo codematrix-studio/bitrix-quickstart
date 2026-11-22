@@ -11,5 +11,11 @@
 defined('PROJECT_NAME') || define('PROJECT_NAME', 'MyProject');
 defined('PROJECT_ENV') || define('PROJECT_ENV', 'production');
 
+/**
+ * Управление файловым логированием.
+ * true — включить запись в /local/logs/; false — выключить (по умолчанию).
+ */
+defined('PROJECT_LOG_ENABLED') || define('PROJECT_LOG_ENABLED', false);
+
 // Пример:
 // defined('PROJECT_IBLOCK_CATALOG') || define('PROJECT_IBLOCK_CATALOG', 0);

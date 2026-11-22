@@ -22,6 +22,7 @@
             "@test:compatibility",
             "@test:forms",
             "@test:secure-ajax",
+            "@test:logger",
             "@test:iblock",
             "@test:iblock-validator",
             "@test:helper",
@@ -69,6 +70,7 @@
         "test:d7-basket-handler": "php ../tests/d7_basket_handler_smoke.php",
         "test:yes-no-property": "php ../tests/iblock_yes_no_property_smoke.php",
         "test:color-property": "php ../tests/iblock_color_property_smoke.php",
-        "test:youtube-property": "php ../tests/iblock_youtube_property_smoke.php"
+        "test:youtube-property": "php ../tests/iblock_youtube_property_smoke.php",
+        "test:logger": "php ../tests/logger_smoke.php"
     }
 }
