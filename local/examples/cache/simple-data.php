@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+namespace Project\Examples\Cache;
+
 use Bitrix\Main\Data\Cache;
+use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -34,12 +37,13 @@ function getCachedData(
 
     try {
         $data = $producer();
-        $cache->endDataCache($data);
-
-        return $data;
     } catch (Throwable $exception) {
         $cache->abortDataCache();
 
         throw $exception;
     }
+
+    $cache->endDataCache($data);
+
+    return $data;
 }
