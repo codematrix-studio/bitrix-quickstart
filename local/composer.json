@@ -22,6 +22,7 @@
             "@test:autoload-fallback",
             "@test:compatibility",
             "@test:forms",
+            "@test:video-url-parser",
             "@test:secure-ajax",
             "@test:logger",
             "@test:iblock",
@@ -78,6 +79,7 @@
         "test:autoload-fallback": "php ../tests/autoload_fallback_smoke.php",
         "test:autoload-composer": "php ../tests/autoload_composer_smoke.php",
         "test:d7-ajax": "php ../tests/d7_ajax_component_smoke.php",
-        "test:module-installer": "php ../tests/module_installer_lifecycle_smoke.php"
+        "test:module-installer": "php ../tests/module_installer_lifecycle_smoke.php",
+        "test:video-url-parser": "php ../tests/video_url_parser_smoke.php"
     }
 }
