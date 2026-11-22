@@ -4,12 +4,12 @@
 
 ## FormValidator
 
-Класс `Project\\Validation\\FormValidator` сохраняет формат правил старой библиотеки `Lema\\Forms\\Form`.
+Класс `Project\Validation\FormValidator` сохраняет формат правил старой библиотеки `Lema\Forms\Form`.
 
 Конструктор принимает сначала правила, затем данные:
 
 ```php
-$form = new \\Project\\Validation\\FormValidator(
+$form = new \Project\Validation\FormValidator(
     [
         ['email', 'email'],
         ['name', 'required'],
@@ -93,13 +93,13 @@ $form->setRecaptchaVerifier(
 
 ### Устройство валидаторов
 
-Каждое стандартное правило обслуживается отдельным классом в `Project\\Validation`: `RequiredValidator`, `BooleanValidator`, `EmailValidator`, `IpValidator`, `LengthValidator`, `RegexValidator`, `NumericValidator`, `PhoneValidator`, `UrlValidator` и `RecaptchaValidator`. `FormValidator` создаёт эти классы по карте `validators()`. Поэтому можно переопределить карту в наследнике и добавить собственный валидатор. Старые классы `Lema\\Forms\\Validators\\*` остаются адаптерами к этому механизму.
+Каждое стандартное правило обслуживается отдельным классом в `Project\Validation`: `RequiredValidator`, `BooleanValidator`, `EmailValidator`, `IpValidator`, `LengthValidator`, `RegexValidator`, `NumericValidator`, `PhoneValidator`, `UrlValidator` и `RecaptchaValidator`. `FormValidator` создаёт эти классы по карте `validators()`. Поэтому можно переопределить карту в наследнике и добавить собственный валидатор. Старые классы `Lema\Forms\Validators\*` остаются адаптерами к этому механизму.
 
-Базовый `Project\\Validation\\Validator` предоставляет общие методы для значения, параметров, ошибки и настройки `showAllErrors`. Он не вызывает `validate()` в конструкторе: новый код запускает проверку явно. Старый адаптер `LegacyFieldValidator` сохраняет прежнее поведение, при котором проверка вызывается при создании объекта.
+Базовый `Project\Validation\Validator` предоставляет общие методы для значения, параметров, ошибки и настройки `showAllErrors`. Он не вызывает `validate()` в конструкторе: новый код запускает проверку явно. Старый адаптер `LegacyFieldValidator` сохраняет прежнее поведение, при котором проверка вызывается при создании объекта.
 
 ## AjaxForm
 
-`Project\\Validation\\AjaxForm` добавляет интеграцию с API Битрикс:
+`Project\Validation\AjaxForm` добавляет интеграцию с API Битрикс:
 
 - `sendMessage($event, array $data, $siteId = 's1')` — отправка почтового события;
 - `addRecord($iblockId, array $data)` — добавление элемента инфоблока;
@@ -117,7 +117,7 @@ ID инфоблока из аргумента имеет приоритет на
 - `legacy/Lema/Forms/AjaxForm.php`;
 - `legacy/Lema/Forms/Validators/*.php`.
 
-Подключать после Composer autoload. Адаптер `AjaxForm` по-прежнему наследуется от `Lema\\Forms\\Form`. Реестр `validators()` возвращает прежние имена классов. Пользовательские валидаторы, унаследованные от `Lema\\Forms\\Validators\\Validator`, могут быть подключены через собственный класс формы и дополненный реестр.
+Подключать после Composer autoload. Адаптер `AjaxForm` по-прежнему наследуется от `Lema\Forms\Form`. Реестр `validators()` возвращает прежние имена классов. Пользовательские валидаторы, унаследованные от `Lema\Forms\Validators\Validator`, могут быть подключены через собственный класс формы и дополненный реестр.
 
 ### Изменения поведения относительно старой версии
 
