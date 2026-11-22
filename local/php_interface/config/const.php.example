@@ -1,15 +1,90 @@
 <?php
 
 /**
- * Пример конфигурации проекта.
+ * Пример локальной конфигурации проекта.
  *
- * Скопируйте файл в const.php и укажите значения конкретного сайта.
- * Файл const.php исключён из Git и не должен содержать данные доступа,
- * пароли или токены в репозитории.
+ * При необходимости скопируйте файл в const.php и измените значения
+ * под конкретный сайт. Сам const.php исключён из Git.
+ *
+ * Не размещайте здесь пароли, токены, ключи API и другие секреты.
  */
 
+// Основные параметры проекта.
 defined('PROJECT_NAME') || define('PROJECT_NAME', 'MyProject');
 defined('PROJECT_ENV') || define('PROJECT_ENV', 'production');
 
-// Пример:
-// defined('PROJECT_IBLOCK_CATALOG') || define('PROJECT_IBLOCK_CATALOG', 0);
+/**
+ * Файловое логирование.
+ *
+ * true  — включить запись в /local/logs/;
+ * false — выключить.
+ *
+ * Каталог local/logs входит в каркас проекта. Убедитесь, что у PHP
+ * есть необходимые права на запись.
+ */
+defined('PROJECT_LOG_ENABLED') || define('PROJECT_LOG_ENABLED', false);
+
+/**
+ * Необязательные пути к ресурсам сайта.
+ *
+ * Это примеры констант из прежнего quickstart, а не готовая структура
+ * каталогов текущего каркаса. Включайте только те определения, которые
+ * действительно используются вашим проектом, и предварительно создайте
+ * соответствующие каталоги и файлы.
+ *
+ * Сейчас в каркасе нет готовых каталогов assets/css, assets/js,
+ * assets/images, assets/bower_components, assets/lib, assets/backend,
+ * local/ajax и корневого include. Их наличие на конкретном сайте
+ * необходимо проверить самостоятельно.
+ *
+ * Чтобы использовать пример, удалите комментарии с нужных строк.
+ * Если включаете составные пути, сначала объявите базовую константу,
+ * от которой они зависят (например, PATH_CSS или PATH_JS).
+ */
+
+/*
+// Изображения и логотип.
+defined('SITE_PATH_LOGO') || define('SITE_PATH_LOGO', '/local/assets/images/logo');
+
+// Общие стили и скрипты.
+defined('PATH_CSS') || define('PATH_CSS', '/local/assets/css');
+defined('PATH_JS') || define('PATH_JS', '/local/assets/js');
+defined('PATH_GLOBAL_CSS') || define('PATH_GLOBAL_CSS', PATH_CSS . '/global.css');
+defined('PATH_GLOBAL_JS') || define('PATH_GLOBAL_JS', PATH_JS . '/global.js');
+defined('PATH_RESPONSIVE_CSS') || define('PATH_RESPONSIVE_CSS', PATH_CSS . '/responsive.css');
+
+// AJAX-обработчики и их JavaScript.
+defined('PATH_AJAX') || define('PATH_AJAX', '/local/ajax/');
+defined('PATH_AJAX_JS') || define('PATH_AJAX_JS', PATH_AJAX . 'ajax.js');
+
+// Сторонние библиотеки и дополнительные ресурсы.
+defined('PATH_BOWER_COMPONENTS') || define('PATH_BOWER_COMPONENTS', '/local/assets/bower_components');
+defined('PATH_LIBRARY') || define('PATH_LIBRARY', '/local/assets/lib');
+defined('PATH_BACKEND_JS') || define('PATH_BACKEND_JS', '/local/assets/backend/js');
+defined('PATH_BACKEND_CSS') || define('PATH_BACKEND_CSS', '/local/assets/backend/css');
+
+// Общие PHP-включения в корне сайта.
+defined('PATH_INCLUDE') || define('PATH_INCLUDE', '/include/');
+*/
+
+/**
+ * Идентификаторы инфоблоков.
+ *
+ * Указывайте реальные ID только после создания соответствующих инфоблоков
+ * на конкретном сайте. Не переносите ID из другого проекта.
+ */
+
+// defined('IBLOCK_ID__CATALOG') || define('IBLOCK_ID__CATALOG', 0);
+// defined('IBLOCK_ID__OFFERS') || define('IBLOCK_ID__OFFERS', 0);
+// defined('IBLOCK_ID__VIDEO') || define('IBLOCK_ID__VIDEO', 0);
+
+/**
+ * Пример получения почты администратора средствами Битрикс.
+ *
+ * Используйте после загрузки ядра и модуля main, в подходящем контексте.
+ */
+
+// defined('ADMIN_EMAIL') || define(
+//     'ADMIN_EMAIL',
+//     \Bitrix\Main\Config\Option::get('main', 'email_from')
+// );

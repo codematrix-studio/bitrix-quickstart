@@ -34,6 +34,11 @@ jobs:
         run: |
           find local/php_interface/classes local/php_interface/legacy tests -name '*.php' -print0 | xargs -0 -n1 php -l
 
-      - name: Запустить автономные тесты
+      - name: Проверить резервный автозагрузчик и автономные тесты
         working-directory: local
         run: composer test
+
+      - name: Проверить Composer autoload через init.php
+        run: |
+          composer dump-autoload --working-dir=local --no-interaction
+          composer --working-dir=local run-script test:autoload-composer

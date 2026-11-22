@@ -1,0 +1,2 @@
+# Запрещаем прямой HTTP-доступ к файлам логов в Apache 2.4.
+Require all denied

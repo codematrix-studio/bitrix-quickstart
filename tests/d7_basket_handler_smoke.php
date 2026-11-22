@@ -6,11 +6,11 @@ require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/BasketManage
 require_once __DIR__ . '/../local/php_interface/classes/Support/CharsetConverter.php';
 require_once __DIR__ . '/../local/php_interface/classes/Support/HtmlEscaper.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/BasketHandler.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Basket/BasketHandler.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Basket/BasketHandler.php';
 
 use Project\Bitrix\Sale\BasketHandler;
 use Project\Bitrix\Sale\BasketManager;
-use Lema\Basket\BasketHandler as LegacyBasketHandler;
+use CodeMatrix\Legacy\Basket\BasketHandler as LegacyBasketHandler;
 
 function basketHandlerExpect(bool $condition, string $message): void
 {
@@ -183,6 +183,12 @@ basketHandlerExpect($handler->getItemsCount() === 1, 'Удаление долж�
 $handler->clear();
 basketHandlerExpect($handler->getItemsCount() === 0, 'Очистка должна затрагивать только текущую корзину.');
 basketHandlerExpect($handler->getBasketItemsWithFields(9) === ['items' => [], 'fields' => []], 'Пустая корзина не должна запускать загрузку всех товаров инфоблока.');
+
+$handlerWithoutCustomLoader = new BasketHandler($manager);
+basketHandlerExpect(
+    $handlerWithoutCustomLoader->getBasketItemsWithFields(9) === ['items' => [], 'fields' => []],
+    'Пустая корзина должна возвращать пустой результат и без пользовательского загрузчика.'
+);
 
 $quickOrderRejected = false;
 try {
