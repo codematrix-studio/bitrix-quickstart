@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Project\Examples\Cache;
+
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
 use InvalidArgumentException;
@@ -52,15 +54,15 @@ function getTaggedCachedData(
         foreach ($tags as $tag) {
             $taggedCache->registerTag($tag);
         }
-
-        $taggedCache->endTagCache();
-        $cache->endDataCache($data);
-
-        return $data;
     } catch (Throwable $exception) {
         $taggedCache->abortTagCache();
         $cache->abortDataCache();
 
         throw $exception;
     }
+
+    $taggedCache->endTagCache();
+    $cache->endDataCache($data);
+
+    return $data;
 }
