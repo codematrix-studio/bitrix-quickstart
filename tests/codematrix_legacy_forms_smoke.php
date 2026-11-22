@@ -23,7 +23,7 @@ require_once __DIR__ . '/../local/php_interface/classes/Validation/LegacyFieldVa
 require_once __DIR__ . '/../local/php_interface/classes/Validation/AjaxFormActions.php';
 require_once __DIR__ . '/../local/php_interface/classes/Validation/AjaxForm.php';
 
-$legacyRoot = __DIR__ . '/../local/php_interface/legacy/Lema/Forms/';
+$legacyRoot = __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Forms/';
 require_once $legacyRoot . 'Form.php';
 require_once $legacyRoot . 'AjaxForm.php';
 
@@ -114,7 +114,7 @@ $repeatForm->setFields(['email' => 'ok@example.org']);
 formsExpect($repeatForm->validate() && $repeatForm->getErrors() === [], 'Corrected values must clear previous errors.');
 
 // Legacy API and validator class names.
-$legacy = new \Lema\Forms\Form(
+$legacy = new \CodeMatrix\Legacy\Forms\Form(
     [
         ['email', 'email'],
         ['enabled', 'boolean'],
@@ -123,13 +123,13 @@ $legacy = new \Lema\Forms\Form(
     ['email' => 'person@example.org', 'enabled' => false, 'amount' => '12.75']
 );
 formsExpect($legacy->validate(), 'Legacy Form must preserve old rule names and accept boolean false and decimal numeric values.');
-formsExpect($legacy->validators()['email'] === \Lema\Forms\Validators\EmailValidator::class, 'Legacy validator registry must return old class names.');
+formsExpect($legacy->validators()['email'] === \CodeMatrix\Legacy\Forms\Validators\EmailValidator::class, 'Legacy validator registry must return old class names.');
 
-$directValidator = new \Lema\Forms\Validators\LengthValidator('title', 'Привет', ['min' => 3, 'max' => 8]);
+$directValidator = new \CodeMatrix\Legacy\Forms\Validators\LengthValidator('title', 'Привет', ['min' => 3, 'max' => 8]);
 formsExpect($directValidator->validate(), 'Legacy validator constructors and validate() method must remain available.');
 
-$legacyAjax = new \Lema\Forms\AjaxForm();
-formsExpect($legacyAjax instanceof \Lema\Forms\Form, 'Legacy AjaxForm must remain a subclass of legacy Form.');
+$legacyAjax = new \CodeMatrix\Legacy\Forms\AjaxForm();
+formsExpect($legacyAjax instanceof \CodeMatrix\Legacy\Forms\Form, 'Legacy AjaxForm must remain a subclass of legacy Form.');
 formsExpect(!$legacyAjax->addRecord(0, []), 'AjaxForm must reject an empty iblock ID without requiring Bitrix.');
 formsExpect(isset($legacyAjax->getErrors()['empty_iblock']), 'AjaxForm must retain the legacy error key.');
 
@@ -154,7 +154,7 @@ $captchaForm->setFields(['captcha' => 'valid-token']);
 formsExpect($captchaForm->validate(), 'reCAPTCHA must use the explicitly injected verifier.');
 
 // Старый пользовательский валидатор должен запускаться один раз на одно поле и правило.
-class FormsCountedLegacyValidator extends \Lema\Forms\Validators\Validator
+class FormsCountedLegacyValidator extends \CodeMatrix\Legacy\Forms\Validators\Validator
 {
     protected string $ruleName = 'required';
     public static int $calls = 0;
@@ -167,7 +167,7 @@ class FormsCountedLegacyValidator extends \Lema\Forms\Validators\Validator
     }
 }
 
-class FormsCustomLegacyForm extends \Lema\Forms\Form
+class FormsCustomLegacyForm extends \CodeMatrix\Legacy\Forms\Form
 {
     public function validators(): array
     {
