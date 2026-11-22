@@ -79,7 +79,7 @@ local/
 
 ## Библиотека классов
 
-В `local/php_interface/classes/` постепенно собираются универсальные классы CodeMatrix Studio. Сейчас среди них есть:
+В `local/php_interface/classes/` постепенно собираются универсальные классы CodeMatrix STUDIO. Сейчас среди них есть:
 
 - `Support` — утилиты, пагинация, сообщения, генерация паролей, текстовые преобразования и базовые классы экземпляров ([описание](local/php_interface/classes/Support/README.md));
 - `Bitrix/IBlock` — работа с элементами и разделами инфоблоков;
