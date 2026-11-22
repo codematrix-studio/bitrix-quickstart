@@ -19,6 +19,7 @@
         "test:forms": "php ../tests/lema_forms_smoke.php",
         "test:secure-ajax": "php ../tests/secure_ajax_handler_smoke.php",
         "test": [
+            "@test:autoload-fallback",
             "@test:compatibility",
             "@test:forms",
             "@test:secure-ajax",
@@ -71,6 +72,8 @@
         "test:yes-no-property": "php ../tests/iblock_yes_no_property_smoke.php",
         "test:color-property": "php ../tests/iblock_color_property_smoke.php",
         "test:youtube-property": "php ../tests/iblock_youtube_property_smoke.php",
-        "test:logger": "php ../tests/logger_smoke.php"
+        "test:logger": "php ../tests/logger_smoke.php",
+        "test:autoload-fallback": "php ../tests/autoload_fallback_smoke.php",
+        "test:autoload-composer": "php ../tests/autoload_composer_smoke.php"
     }
 }
