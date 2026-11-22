@@ -37,6 +37,11 @@ final class YmlCatalogRenderer
     }
 
     /**
+     * Собирает XML в строку для обратной совместимости.
+     *
+     * Для больших каталогов используйте renderToStream(), чтобы не хранить
+     * одновременно массив строк и готовый XML-документ.
+     *
      * @param array $sections Разделы, индексированные по ID.
      * @param array $products Товары, индексированные по ID.
      * @param array $params Дополнительные поля и параметры YML.
@@ -48,9 +53,71 @@ final class YmlCatalogRenderer
         array $params = [],
         $generatedAt = null
     ): string {
+        return implode("\n", iterator_to_array(
+            $this->yieldXmlLines($sections, $products, $params, $generatedAt),
+            false
+        )) . "\n";
+    }
+
+    /**
+     * Записывает XML по строкам в переданный вызывающим кодом поток.
+     *
+     * Поток остаётся открытым и принадлежит вызывающему коду.
+     *
+     * @param resource $stream Открытый поток с правом записи.
+     * @return int Количество записанных байт.
+     */
+    public function renderToStream(
+        array $sections,
+        array $products,
+        $stream,
+        array $params = [],
+        $generatedAt = null
+    ): int {
+        if (!is_resource($stream) || get_resource_type($stream) !== 'stream') {
+            throw new InvalidArgumentException('Для потокового рендеринга требуется открытый stream resource.');
+        }
+
+        $metadata = stream_get_meta_data($stream);
+        $mode = (string) ($metadata['mode'] ?? '');
+        if (strpbrk($mode, 'waxc+') === false) {
+            throw new InvalidArgumentException('Поток YML должен быть открыт для записи.');
+        }
+
+        $bytesWritten = 0;
+        foreach ($this->yieldXmlLines($sections, $products, $params, $generatedAt) as $line) {
+            $chunk = $line . "\n";
+            $length = strlen($chunk);
+            $offset = 0;
+
+            while ($offset < $length) {
+                $written = @fwrite($stream, substr($chunk, $offset));
+                if ($written === false || $written === 0) {
+                    throw new \\RuntimeException('Не удалось полностью записать XML в поток.');
+                }
+
+                $offset += $written;
+                $bytesWritten += $written;
+            }
+        }
+
+        return $bytesWritten;
+    }
+
+    /**
+     * Генерирует отдельные строки XML, не накапливая весь документ.
+     *
+     * @return \\Generator<int, string>
+     */
+    private function yieldXmlLines(
+        array $sections,
+        array $products,
+        array $params = [],
+        $generatedAt = null
+    ): \\Generator {
         $timestamp = $this->normalizeTimestamp($generatedAt);
         $date = date('Y-m-d H:i', $timestamp);
-        $xml = [
+        yield from [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<!DOCTYPE yml_catalog SYSTEM "shops.dtd">',
             '<yml_catalog date="' . XmlEscaper::attribute($date) . '">',
@@ -74,15 +141,15 @@ final class YmlCatalogRenderer
             $hasExportedParent = (is_int($parentId) || (is_string($parentId) && ctype_digit($parentId)))
                 && array_key_exists((int) $parentId, $sections);
 
-            $xml[] = '<category id="' . XmlEscaper::attribute($sectionId) . '"'
+            yield '<category id="' . XmlEscaper::attribute($sectionId) . '"'
                 . ($hasExportedParent
                     ? ' parentId="' . XmlEscaper::attribute((int) $parentId) . '"'
                     : '')
                 . '>' . XmlEscaper::text($section['name']) . '</category>';
         }
 
-        $xml[] = '</categories>';
-        $xml[] = '<offers>';
+        yield '</categories>';
+        yield '<offers>';
 
         $fields = $this->normalizeFields($params['fields'] ?? []);
         $additionalParams = $this->normalizeParams($params['params'] ?? []);
@@ -96,33 +163,33 @@ final class YmlCatalogRenderer
             $available = ($product['ACTIVE'] ?? null) === 'Y'
                 && ($product['CATALOG_AVAILABLE'] ?? null) === 'Y';
 
-            $xml[] = '<offer id="' . XmlEscaper::attribute($id) . '" available="' . ($available ? 'true' : 'false') . '">';
+            yield '<offer id="' . XmlEscaper::attribute($id) . '" available="' . ($available ? 'true' : 'false') . '">';
 
             $productUrl = $this->absoluteUrl($product['DETAIL_PAGE_URL'] ?? null, true);
             if ($productUrl !== null) {
-                $xml[] = '<url>' . XmlEscaper::text($productUrl) . '</url>';
+                yield '<url>' . XmlEscaper::text($productUrl) . '</url>';
             }
 
             $pictureUrl = $this->absoluteUrl($product['PREVIEW_PICTURE'] ?? null);
             if ($pictureUrl !== null) {
-                $xml[] = '<picture>' . XmlEscaper::text($pictureUrl) . '</picture>';
+                yield '<picture>' . XmlEscaper::text($pictureUrl) . '</picture>';
             }
 
-            $xml[] = '<name>' . XmlEscaper::text($product['NAME'] ?? '') . '</name>';
+            yield '<name>' . XmlEscaper::text($product['NAME'] ?? '') . '</name>';
 
             foreach ($fields as $tag => $field) {
                 if (!array_key_exists($field, $product) || $product[$field] === null) {
                     continue;
                 }
 
-                $xml[] = '<' . $tag . '>' . XmlEscaper::text($this->valueToString($product[$field])) . '</' . $tag . '>';
+                yield '<' . $tag . '>' . XmlEscaper::text($this->valueToString($product[$field])) . '</' . $tag . '>';
             }
 
             $sectionId = $product['IBLOCK_SECTION_ID'] ?? null;
             if ((is_int($sectionId) || (is_string($sectionId) && ctype_digit($sectionId)))
                 && array_key_exists((int) $sectionId, $sections)
             ) {
-                $xml[] = '<categoryId>' . XmlEscaper::text((int) $sectionId) . '</categoryId>';
+                yield '<categoryId>' . XmlEscaper::text((int) $sectionId) . '</categoryId>';
             }
 
             $alternateDescription = [];
@@ -140,7 +207,7 @@ final class YmlCatalogRenderer
                     ? ' unit="' . XmlEscaper::attribute($item['unit']) . '"'
                     : '';
 
-                $xml[] = '<param name="' . XmlEscaper::attribute($label) . '"' . $unit . '>'
+                yield '<param name="' . XmlEscaper::attribute($label) . '"' . $unit . '>'
                     . XmlEscaper::text($value)
                     . '</param>';
             }
@@ -156,17 +223,15 @@ final class YmlCatalogRenderer
             }
 
             if ($description !== '') {
-                $xml[] = '<description>' . XmlEscaper::text($description) . '</description>';
+                yield '<description>' . XmlEscaper::text($description) . '</description>';
             }
 
-            $xml[] = '</offer>';
+            yield '</offer>';
         }
 
-        $xml[] = '</offers>';
-        $xml[] = '</shop>';
-        $xml[] = '</yml_catalog>';
-
-        return implode("\n", $xml) . "\n";
+        yield '</offers>';
+        yield '</shop>';
+        yield '</yml_catalog>';
     }
 
     private function normalizeTimestamp($generatedAt): int
