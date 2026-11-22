@@ -153,6 +153,22 @@ try {
 }
 basketHandlerExpect($partialAddPrevented, 'Ошибка валидации пакета добавления не должна менять корзину.');
 
+$invalidProductIdBatchPrevented = false;
+try {
+    $handler->add([
+        ['PRODUCT_ID' => 506, 'QUANTITY' => 1],
+        ['PRODUCT_ID' => -1, 'QUANTITY' => 1],
+    ]);
+} catch (InvalidArgumentException) {
+    $invalidProductIdBatchPrevented = $handler->getItemsCount() === 2
+        && $handler->getBasketItem(506) === false;
+}
+basketHandlerExpect(
+    $invalidProductIdBatchPrevented,
+    'Нулевой или отрицательный ID товара должен отклоняться до изменения корзины.'
+);
+
+
 $rawBasketRejected = false;
 try {
     $handler->getBasketItem(501, 1);
