@@ -36,8 +36,8 @@ if (is_file($configFile)) {
 }
 
 // По умолчанию логирование выключено; файлы хранятся в /local/logs.
-if (class_exists(\\Project\\Support\\Logger::class)) {
-    \\Project\\Support\\Logger::configure(
+if (class_exists(\Project\Support\Logger::class)) {
+    \Project\Support\Logger::configure(
         defined('PROJECT_LOG_ENABLED') ? (bool)PROJECT_LOG_ENABLED : false,
         $localRoot . '/logs'
     );
