@@ -5,7 +5,7 @@
  * Подключать после адаптера Form и Composer autoload.
  */
 
-namespace Lema\Forms;
+namespace CodeMatrix\Legacy\Forms;
 
 class AjaxForm extends Form
 {

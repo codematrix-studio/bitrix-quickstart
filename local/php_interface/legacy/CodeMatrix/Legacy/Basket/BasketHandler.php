@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 /**
- * Совместимый фасад старого Lema\Basket\BasketHandler.
+ * Совместимый фасад старого CodeMatrix\Legacy\Basket\BasketHandler.
  *
  * Подключать после Composer autoload. Небезопасный getBasket() не возвращает
  * изменяемый объект D7; метод явно сообщает об изменении контракта.
  */
 
-namespace Lema\Basket;
+namespace CodeMatrix\Legacy\Basket;
 
 class BasketHandler extends \Project\Bitrix\Sale\BasketHandler
 {

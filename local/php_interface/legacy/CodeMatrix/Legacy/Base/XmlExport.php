@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Совместимый фасад старого Lema\Base\XmlExport.
+ * Совместимый фасад старого CodeMatrix\Legacy\Base\XmlExport.
  * Подключать после Composer autoload.
  */
 
-namespace Lema\Base;
+namespace CodeMatrix\Legacy\Base;
 
 use InvalidArgumentException;
 use LogicException;
@@ -29,7 +29,7 @@ class XmlExport extends BitrixCatalogExporter
     {
         $documentRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
         if ($documentRoot === '') {
-            throw new LogicException('Для Lema\Base\XmlExport необходим DOCUMENT_ROOT.');
+            throw new LogicException('Для CodeMatrix\Legacy\Base\XmlExport необходим DOCUMENT_ROOT.');
         }
 
         $relativeDirectory = (string) ($params['storageDir'] ?? static::DEFAULT_DIR);

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lema\Common;
+namespace CodeMatrix\Legacy\Common;
 
 use Project\Bitrix\Context\Page as BitrixPage;
 
 /**
- * Переходный адаптер старого Lema\Common\Page.
+ * Переходный адаптер старого CodeMatrix\Legacy\Common\Page.
  *
  * Старые методы inDir() и inRootDir() сохранены. Для нового кода используйте
  * Project\Bitrix\Context\Page.

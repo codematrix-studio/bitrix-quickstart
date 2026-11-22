@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Совместимый фасад старого Lema\\Common\\Helper.
+ * Совместимый фасад старого CodeMatrix\Legacy\\Common\\Helper.
  * Подключать после Composer autoload.
  */
 
-namespace Lema\Common;
+namespace CodeMatrix\Legacy\Common;
 
 use InvalidArgumentException;
 use LogicException;
