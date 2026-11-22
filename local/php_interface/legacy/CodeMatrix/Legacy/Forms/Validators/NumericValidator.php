@@ -1,11 +1,11 @@
 <?php
 
-namespace CodeMatrix\\Legacy\\Forms\\Validators;
+namespace CodeMatrix\Legacy\Forms\Validators;
 
 /**
  * Сохраняет целочисленную семантику старого Lema NumericValidator.
  *
- * В отличие от современного Project\\Validation\\NumericValidator,
+ * В отличие от современного Project\Validation\NumericValidator,
  * legacy-правило numerical не принимает дробные значения.
  */
 class NumericValidator extends Validator
