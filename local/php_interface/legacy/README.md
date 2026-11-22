@@ -74,14 +74,14 @@ require_once $legacyForms . 'AjaxForm.php';
 ### Средний приоритет
 
 - `lib/Common/AssetManager.php`, `App.php`, `Request.php`, `Context.php`, `Server.php`, `User.php`: обёртки над Bitrix API, после проверки контракта и версий ядра.
-- `lib/Base/XmlExport.php` и `lib/Seo/YmlExport.php`: переписать кеш и XML-генерацию целиком, сохранив публичные методы и формат результата.
+- `lib/Base/XmlExport.php` и `lib/Seo/YmlExport.php`: **переработаны** в `Project\\Export\\BitrixCatalogExporter` и `YmlCatalogRenderer`; старые имена сохранены legacy-адаптерами. XML-экранирование, кеширование, доверенный URL и проверка пользовательских тегов вынесены в отдельные слои.
 - `lib/Template/TemplateHelper.php`: **переработан** в `Project\Bitrix\IBlock\TemplateHelper`; методы работы со списками и edit/delete actions сохранены, добавлен необязательный адаптер старого API.
 - `lib/Basket/BasketHandler.php`: **переработан** как `Project\Bitrix\Sale\BasketHandler`; старое имя сохранено адаптером `CodeMatrix\Legacy\Basket\BasketHandler`. Корзина привязана к текущим FUSER и сайту, наружу возвращаются снимки позиций, произвольная цена/валюта/сайт/свойства и прямой доступ к изменяемому объекту D7 запрещены. `fastOrderAction()` не является drop-in API: старый метод одновременно валидировал форму, отправлял сообщение и создавал запись в инфоблоке; новый `QuickOrder` отвечает только за создание заказа. Старую сигнатуру намеренно не имитируем.
 
 ### Не переносить без существенной переработки
 
 - `lib/Basket/Basket.php`, `BasketPosition.php`, `HighloadBlock.php`, `Settings.php`: жёстко заданные ID инфоблоков/HL-блоков, cookie-ID на слабом генераторе, проектная схема данных и операции очистки старых корзин.
-- `lib/Seo/ECommerce.php` и `GTMFormSubmit.php`: не передавать в аналитику ФИО, email, телефон, адрес и комментарии; требуется allowlist полей и удаление персональных данных.
+- `lib/Seo/ECommerce.php` и `GTMFormSubmit.php`: **переработаны** в `Project\\Seo\\Analytics`; персональные данные заказа и значения полей форм исключены из аналитических payload. Legacy-методы `setElement()` и `setElements()` оставлены как безопасные no-op.
 - `lib/Forms/ReCaptcha.php`: устаревший API, singleton с одним секретом, `die()`, отсутствие таймаута и слабая обработка ответа. Реализовать заново через актуальный API.
 - `lib/Sberbank/*`: в старом HTTP-клиенте отключена проверка TLS-сертификата (`CURLOPT_SSL_VERIFYHOST` и `CURLOPT_SSL_VERIFYPEER`). Платёжный API нельзя переносить до полного пересмотра TLS, таймаутов, ошибок и обработки статусов.
 - `lib/Handlers/*`: большинство методов пустые заготовки.
