@@ -30,6 +30,37 @@
 
 Адаптеры не подключаются автоматически. Их следует подключать после Composer autoload и только при миграции, когда старый модуль `lema.lib` уже отключён. Это предотвращает конфликт классов с исходным модулем.
 
+### Подключение адаптеров при миграции
+
+Composer автоматически загружает только пространство имён `Project\\`. Адаптеры `Lema\\` подключаются явно: универсальный PSR-4 mapping для `Lema\\` намеренно не добавлен, поскольку он может перехватить классы установленного `lema.lib`.
+
+Пример подключения базовых адаптеров и шаблонных представлений после отключения старого модуля:
+
+```php
+// Выполняется после Composer autoload и отключения старого модуля lema.lib.
+$legacyRoot = __DIR__ . '/legacy/Lema/';
+
+require_once $legacyRoot . 'Base/Paginator.php';
+require_once $legacyRoot . 'Base/Component.php';
+require_once $legacyRoot . 'Template/Item.php';
+require_once $legacyRoot . 'Template/Section.php';
+require_once $legacyRoot . 'Template/TemplateHelper.php';
+```
+
+Для форм подключайте сначала базовый класс, затем AJAX-форму и валидаторы:
+
+```php
+$legacyForms = __DIR__ . '/legacy/Lema/Forms/';
+require_once $legacyForms . 'Validators/Validator.php';
+foreach (['BooleanValidator', 'RecaptchaValidator', 'EmailValidator', 'IpValidator', 'LengthValidator', 'RegexValidator', 'NumericValidator', 'PhoneValidator', 'EmptyValidator', 'UrlValidator'] as $validator) {
+    require_once $legacyForms . 'Validators/' . $validator . '.php';
+}
+require_once $legacyForms . 'Form.php';
+require_once $legacyForms . 'AjaxForm.php';
+```
+
+Подключайте только те группы адаптеров, которые действительно нужны проекту. Не подключайте их одновременно с исходным модулем `lema.lib`: PHP не допускает повторного объявления одного класса. Этот пример относится к файлам нового каркаса; путь `__DIR__` нужно адаптировать к месту размещения bootstrap-файла.
+
 ## Приоритеты дальнейшей переработки
 
 ### Высокий приоритет
