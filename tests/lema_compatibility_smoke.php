@@ -25,6 +25,12 @@ class SmokeComponent extends Project\Bitrix\Component\ComponentInvoker
     protected static $params = ['CACHE_TYPE' => 'A', 'COUNT' => 10];
 }
 
+class LegacySmokeComponent extends \Lema\Base\Component
+{
+    protected static $componentName = 'legacy:test-component';
+    protected static $params = ['CACHE_TYPE' => 'A', 'COUNT' => 10];
+}
+
 class FakeApplication
 {
     public function IncludeComponent(...$arguments)
@@ -90,8 +96,16 @@ $merged = SmokeComponent::getParams(['COUNT' => 5, 'FILTER' => 'active']);
 expectTrue($merged['COUNT'] === 5 && $merged['CACHE_TYPE'] === 'A', 'ComponentInvoker must merge defaults and overrides.');
 expectTrue(SmokeComponent::getParams() === $defaults, 'ComponentInvoker must not mutate static defaults.');
 
+// Старый класс компонента должен сохранять тот же контракт через адаптер.
+$legacyDefaults = LegacySmokeComponent::getParams();
+$legacyMerged = LegacySmokeComponent::getParams(['COUNT' => 4]);
+expectTrue($legacyMerged['COUNT'] === 4 && $legacyMerged['CACHE_TYPE'] === 'A', 'Legacy Component adapter must merge parameters.');
+expectTrue(LegacySmokeComponent::getParams() === $legacyDefaults, 'Legacy Component adapter must not mutate defaults.');
+
 $GLOBALS['APPLICATION'] = new FakeApplication();
 $call = SmokeComponent::inc('default', ['COUNT' => 3]);
 expectTrue($call[0] === 'test:component' && $call[2]['COUNT'] === 3, 'ComponentInvoker must call the Bitrix component with merged parameters.');
+$legacyCall = LegacySmokeComponent::inc('legacy', ['COUNT' => 2]);
+expectTrue($legacyCall[0] === 'legacy:test-component' && $legacyCall[2]['COUNT'] === 2, 'Legacy Component adapter must invoke the configured Bitrix component.');
 
 echo "Lema compatibility smoke tests passed.\n";
