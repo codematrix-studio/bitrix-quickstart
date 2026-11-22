@@ -5,7 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/ElementView.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/SectionView.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/TemplateHelper.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Template/TemplateHelper.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Template/TemplateHelper.php';
 
 function templateHelperExpect(bool $condition, string $message): void
 {
@@ -134,15 +134,15 @@ $legacyTemplate = new TemplateHelperTemplate(new TemplateHelperComponent(
         ['ID' => 401, 'NAME' => 'Legacy item', 'EDIT_LINK' => '/edit/401', 'DELETE_LINK' => '/delete/401'],
     ]]
 ));
-$legacyHelper = new \Lema\Template\TemplateHelper($legacyTemplate);
-templateHelperExpect($legacyHelper->items()[0] instanceof \Lema\Template\Item, 'Legacy adapter должен возвращать старый класс Item.');
+$legacyHelper = new \CodeMatrix\Legacy\Template\TemplateHelper($legacyTemplate);
+templateHelperExpect($legacyHelper->items()[0] instanceof \CodeMatrix\Legacy\Template\Item, 'Legacy adapter должен возвращать старый класс Item.');
 templateHelperExpect($legacyHelper->items()[0]->getName() === 'Legacy item', 'Legacy Item должен сохранять доступ к данным.');
 templateHelperExpect($legacyHelper->items()[0]->editId(false) === 'edit-area-401', 'Legacy Item должен сохранять editAreaId.');
 
-$legacySingle = new \Lema\Template\TemplateHelper(new TemplateHelperTemplate(
+$legacySingle = new \CodeMatrix\Legacy\Template\TemplateHelper(new TemplateHelperTemplate(
     new TemplateHelperComponent([], ['ID' => 402, 'NAME' => 'Legacy single'])
 ));
-templateHelperExpect($legacySingle->item() instanceof \Lema\Template\Item, 'Legacy item() должен возвращать старый класс Item.');
+templateHelperExpect($legacySingle->item() instanceof \CodeMatrix\Legacy\Template\Item, 'Legacy item() должен возвращать старый класс Item.');
 
 $legacySectionTemplate = new TemplateHelperTemplate(new TemplateHelperComponent(
     ['IBLOCK_ID' => 25],
@@ -150,9 +150,9 @@ $legacySectionTemplate = new TemplateHelperTemplate(new TemplateHelperComponent(
         ['ID' => 403, 'NAME' => 'Legacy section', 'EDIT_LINK' => '/edit/403', 'DELETE_LINK' => '/delete/403'],
     ]]
 ));
-$legacySectionHelper = new \Lema\Template\TemplateHelper($legacySectionTemplate);
-templateHelperExpect($legacySectionHelper->sections()[0] instanceof \Lema\Template\Section, 'Legacy sections() должен возвращать старый класс Section.');
-templateHelperExpect($legacySectionHelper->items()[0] instanceof \Lema\Template\Section, 'Legacy items() должен возвращать Section для коллекции SECTIONS.');
+$legacySectionHelper = new \CodeMatrix\Legacy\Template\TemplateHelper($legacySectionTemplate);
+templateHelperExpect($legacySectionHelper->sections()[0] instanceof \CodeMatrix\Legacy\Template\Section, 'Legacy sections() должен возвращать старый класс Section.');
+templateHelperExpect($legacySectionHelper->items()[0] instanceof \CodeMatrix\Legacy\Template\Section, 'Legacy items() должен возвращать Section для коллекции SECTIONS.');
 
 
 echo "Проверки TemplateHelper пройдены.\n";

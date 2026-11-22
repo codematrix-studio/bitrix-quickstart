@@ -15,8 +15,8 @@
         "allow-plugins": {}
     },
     "scripts": {
-        "test:compatibility": "php ../tests/lema_compatibility_smoke.php",
-        "test:forms": "php ../tests/lema_forms_smoke.php",
+        "test:compatibility": "php ../tests/codematrix_legacy_compatibility_smoke.php",
+        "test:forms": "php ../tests/codematrix_legacy_forms_smoke.php",
         "test:secure-ajax": "php ../tests/secure_ajax_handler_smoke.php",
         "test": [
             "@test:autoload-fallback",
@@ -48,13 +48,13 @@
             "@test:youtube-property"
         ],
         "test:iblock": [
-            "php ../tests/lema_iblock_smoke.php",
-            "php ../tests/lema_iblock_checker_smoke.php"
+            "php ../tests/codematrix_legacy_iblock_smoke.php",
+            "php ../tests/codematrix_legacy_iblock_checker_smoke.php"
         ],
-        "test:helper": "php ../tests/lema_helper_smoke.php",
-        "test:base": "php ../tests/lema_base_instances_smoke.php",
-        "test:markup": "php ../tests/lema_markup_smoke.php",
-        "test:export": "php ../tests/lema_export_smoke.php",
+        "test:helper": "php ../tests/codematrix_legacy_helper_smoke.php",
+        "test:base": "php ../tests/codematrix_legacy_base_instances_smoke.php",
+        "test:markup": "php ../tests/codematrix_legacy_markup_smoke.php",
+        "test:export": "php ../tests/codematrix_legacy_export_smoke.php",
         "test:iblock-validator": "php ../tests/iblock_validator_compatibility_smoke.php",
         "test:template": "php ../tests/template_helper_smoke.php",
         "test:page": "php ../tests/page_path_matcher_smoke.php",
