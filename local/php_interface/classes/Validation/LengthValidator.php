@@ -39,7 +39,7 @@ class LengthValidator extends Validator
         }
 
         $value = trim($value);
-        $length = preg_match_all('/\\X/u', $value, $matches);
+        $length = preg_match_all('/\X/u', $value, $matches);
 
         if ($length === false) {
             return $this->fail();
