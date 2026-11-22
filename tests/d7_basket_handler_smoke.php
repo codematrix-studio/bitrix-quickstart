@@ -6,11 +6,11 @@ require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/BasketManage
 require_once __DIR__ . '/../local/php_interface/classes/Support/CharsetConverter.php';
 require_once __DIR__ . '/../local/php_interface/classes/Support/HtmlEscaper.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Sale/BasketHandler.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/Basket/BasketHandler.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Basket/BasketHandler.php';
 
 use Project\Bitrix\Sale\BasketHandler;
 use Project\Bitrix\Sale\BasketManager;
-use Lema\Basket\BasketHandler as LegacyBasketHandler;
+use CodeMatrix\Legacy\Basket\BasketHandler as LegacyBasketHandler;
 
 function basketHandlerExpect(bool $condition, string $message): void
 {
