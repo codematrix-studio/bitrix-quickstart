@@ -112,6 +112,17 @@ exportExpect(
     'YML must not reference a category that is absent from the exported category tree.'
 );
 
+$orphanParentXml = $renderer->render(
+    [
+        6 => ['name' => 'Подраздел', 'parentId' => 99],
+    ],
+    []
+);
+exportExpect(
+    !str_contains($orphanParentXml, 'parentId="99"'),
+    'YML must not reference a parent category that is absent from the exported category tree.'
+);
+
 
 $externalUrlRejected = false;
 try {
