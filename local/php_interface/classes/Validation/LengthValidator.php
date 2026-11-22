@@ -63,13 +63,23 @@ class LengthValidator extends Validator
 
         $value = $this->options[$name];
 
+        if (is_int($value)) {
+            if ($value < 0) {
+                throw new \InvalidArgumentException(sprintf('Параметр %s должен быть неотрицательным целым числом.', $name));
+            }
+
+            return $value;
+        }
+
         if (!is_numeric($value)) {
             throw new \InvalidArgumentException(sprintf('Параметр %s должен быть неотрицательным целым числом.', $name));
         }
 
         $number = (float) $value;
 
-        if (!is_finite($number) || $number < 0 || floor($number) !== $number || $number > PHP_INT_MAX) {
+        // PHP_INT_MAX cannot be represented exactly as a float on 64-bit PHP.
+        // Reject the rounded boundary instead of allowing an overflowing cast.
+        if (!is_finite($number) || $number < 0 || floor($number) !== $number || $number >= (float) PHP_INT_MAX) {
             throw new \InvalidArgumentException(sprintf('Параметр %s должен быть неотрицательным целым числом.', $name));
         }
 
