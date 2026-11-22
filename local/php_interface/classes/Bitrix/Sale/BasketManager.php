@@ -268,7 +268,7 @@ class BasketManager
         return $fuserId;
     }
 
-    /** Возвращает базовую валюту текущего сайта. */
+    /** Возвращает базовую валюту, настроенную в модуле валют. */
     public function getCurrency(): string
     {
         if ($this->currencyProvider !== null) {
