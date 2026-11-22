@@ -108,4 +108,4 @@ expectTrue($call[0] === 'test:component' && $call[2]['COUNT'] === 3, 'ComponentI
 $legacyCall = LegacySmokeComponent::inc('legacy', ['COUNT' => 2]);
 expectTrue($legacyCall[0] === 'legacy:test-component' && $legacyCall[2]['COUNT'] === 2, 'Legacy Component adapter must invoke the configured Bitrix component.');
 
-echo "Lema compatibility smoke tests passed.\n";
+echo "CodeMatrix Legacy compatibility smoke tests passed.\n";

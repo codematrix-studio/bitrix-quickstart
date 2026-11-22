@@ -97,4 +97,4 @@ baseExpect(SecondGlobalProxy::get() === $GLOBALS['LEMA_GLOBAL_SECOND'], 'Second 
 baseExpect((new FirstGlobalProxy())->combine('one', 'two') === 'one:two', '__call must forward arguments as separate parameters.');
 baseExpect(FirstGlobalProxy::get() === $GLOBALS['LEMA_GLOBAL_FIRST'], 'Global proxy must not reuse another subclass object.');
 
-echo "Проверки базовых экземпляров Lema пройдены.\n";
+echo "Проверки базовых экземпляров CodeMatrix Legacy пройдены.\n";

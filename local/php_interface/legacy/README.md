@@ -28,16 +28,16 @@
 | `CodeMatrix\Legacy\Template\TemplateHelper` | `Project\Bitrix\IBlock\TemplateHelper` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
 | `CodeMatrix\Legacy\Base\Component` | `Project\Bitrix\Component\ComponentInvoker` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Base/Component.php` |
 
-Адаптеры не подключаются автоматически. Их следует подключать после Composer autoload и только при миграции, когда старый модуль `lema.lib` уже отключён. Это предотвращает конфликт классов с исходным модулем.
+Адаптеры не подключаются автоматически: их следует подключать после Composer autoload и только при миграции. Новое пространство имён `CodeMatrix\\Legacy` не конфликтует с исходным `Lema\\` и позволяет временно держать старый модуль `lema.lib` включённым.
 
 ### Подключение адаптеров при миграции
 
 Composer автоматически загружает только пространство имён `Project\\`. Адаптеры `CodeMatrix\Legacy\\` подключаются явно: универсальный PSR-4 mapping для `CodeMatrix\Legacy\\` намеренно не добавлен, поскольку он может перехватить классы установленного `lema.lib`.
 
-Пример подключения базовых адаптеров и шаблонных представлений после отключения старого модуля:
+Пример подключения базовых адаптеров и шаблонных представлений:
 
 ```php
-// Выполняется после Composer autoload и отключения старого модуля lema.lib.
+// Выполняется после Composer autoload.
 $legacyRoot = __DIR__ . '/legacy/CodeMatrix/Legacy/';
 
 require_once $legacyRoot . 'Base/Paginator.php';
@@ -59,7 +59,7 @@ require_once $legacyForms . 'Form.php';
 require_once $legacyForms . 'AjaxForm.php';
 ```
 
-Подключайте только те группы адаптеров, которые действительно нужны проекту. Не подключайте их одновременно с исходным модулем `lema.lib`: PHP не допускает повторного объявления одного класса. Этот пример относится к файлам нового каркаса; путь `__DIR__` нужно адаптировать к месту размещения bootstrap-файла.
+Подключайте только те группы адаптеров, которые действительно нужны проекту. Адаптеры используют отдельное пространство имён и могут сосуществовать с исходным модулем `lema.lib`; не подключайте одну и ту же группу адаптеров повторно без `require_once`. Этот пример относится к файлам нового каркаса; путь `__DIR__` нужно адаптировать к месту размещения bootstrap-файла.
 
 ## Приоритеты дальнейшей переработки
 
@@ -145,7 +145,7 @@ composer test:compatibility
 - Формат правила: `[имена_полей, тип_проверки, дополнительные_параметры]`.
 - Методы `rules()`, `setRules()`, `setFields()`, `getFields()`, `getField()`, `getFieldCP1251()`, `validate()`, `getErrors()`, `getErrorsCP1251()`, `validators()`.
 - Имена правил `boolean`, `recaptcha`, `email`, `ip`, `length`, `regex`, `numerical`, `phone`, `required`, `url`.
-- Старые имена классов формы, AJAX-формы и валидаторов доступны через адаптеры в `legacy/CodeMatrix/Legacy/Forms/`.
+- Адаптеры миграционного API форм, AJAX-формы и валидаторов доступны через пространство имён `CodeMatrix\\Legacy` в `legacy/CodeMatrix/Legacy/Forms/`.
 - `CodeMatrix\Legacy\Forms\AjaxForm` остаётся наследником `CodeMatrix\Legacy\Forms\Form`.
 - Пользовательские валидаторы могут наследоваться от совместимого `CodeMatrix\Legacy\Forms\Validators\Validator`.
 
@@ -237,7 +237,7 @@ composer test
 - `Project\Bitrix\IBlock\PropertyAccessor`;
 - `Project\Bitrix\IBlock\ImageWatermarker`.
 
-Старый фасад сохранён в `legacy/CodeMatrix/Legacy/Common/Helper.php`. Перечень методов, примеры и ограничения описаны в [classes/Support/README.md](../classes/Support/README.md).
+Адаптер нового пространства имён `CodeMatrix\\Legacy\\Common\\Helper` находится в `legacy/CodeMatrix/Legacy/Common/Helper.php`. Перечень методов, примеры и ограничения описаны в [classes/Support/README.md](../classes/Support/README.md).
 
 ### Обратная совместимость
 
