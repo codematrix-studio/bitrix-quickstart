@@ -95,6 +95,61 @@ exportExpect(str_contains($xml, 'https://shop.example.org/catalog/item/?from=yml
 exportExpect(str_contains($xml, 'https://shop.example.org/upload/item.jpg'), 'Relative image URLs must use the trusted site URL.');
 exportExpect(str_contains($xml, 'available="true"'), 'Available products must retain the legacy availability rule.');
 
+// Потоковый рендерер должен выдавать побайтно тот же XML и не закрывать поток.
+$stream = fopen('php://temp', 'w+b');
+exportExpect(is_resource($stream), 'Temporary stream must be opened.');
+$streamBytes = $renderer->renderToStream(
+    [
+        5 => ['name' => 'Товары & аксессуары'],
+        6 => ['name' => 'Подраздел', 'parentId' => 5],
+    ],
+    [
+        10 => [
+            'ID' => 10,
+            'ACTIVE' => 'Y',
+            'CATALOG_AVAILABLE' => 'Y',
+            'DETAIL_PAGE_URL' => '/catalog/item/?from=yml',
+            'PREVIEW_PICTURE' => '/upload/item.jpg',
+            'NAME' => 'Кружка <белая>',
+            'PRICE' => 0,
+            'COLOR' => 'Синий & белый',
+            'IBLOCK_SECTION_ID' => 6,
+            'DETAIL_TEXT' => '<p>Описание &amp; характеристики</p>',
+        ],
+    ],
+    $stream,
+    [
+        'fields' => ['price' => 'PRICE'],
+        'params' => [[0 => 'Цвет', 1 => 'COLOR', 'unit' => 'шт.']],
+    ],
+    1700000000
+);
+rewind($stream);
+$streamXml = stream_get_contents($stream);
+exportExpect($streamXml === $xml, 'Streamed YML must be byte-for-byte identical to render().');
+exportExpect($streamBytes === strlen($xml), 'Streamed YML must report the number of bytes written.');
+exportExpect(is_resource($stream), 'YML renderer must not close the caller-owned stream.');
+fclose($stream);
+
+$invalidStreamRejected = false;
+try {
+    $renderer->renderToStream([], [], 'not-a-stream');
+} catch (InvalidArgumentException $exception) {
+    $invalidStreamRejected = true;
+}
+exportExpect($invalidStreamRejected, 'Streamed YML must reject non-resource output targets.');
+
+$readOnlyStream = fopen('php://memory', 'r');
+$readOnlyStreamRejected = false;
+try {
+    $renderer->renderToStream([], [], $readOnlyStream);
+} catch (InvalidArgumentException $exception) {
+    $readOnlyStreamRejected = true;
+}
+fclose($readOnlyStream);
+exportExpect($readOnlyStreamRejected, 'Streamed YML must reject read-only output streams.');
+
+
 $orphanCategoryXml = $renderer->render(
     [5 => ['name' => 'Товары']],
     [
