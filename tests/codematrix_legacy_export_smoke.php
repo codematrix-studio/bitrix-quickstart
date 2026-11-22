@@ -236,6 +236,42 @@ exportExpect(
     'Bitrix exporter must resolve preview page URLs against the trusted base URL.'
 );
 
+// A plain export limit should be pushed down to CIBlockElement::GetList().
+$limitedNavigation = null;
+$limitedElementRepository = new Project\Bitrix\IBlock\ElementRepository(
+    static fn (): bool => true,
+    null,
+    static function ($order, $filter, $groupBy, $navigation, $select) use (&$limitedNavigation): array {
+        $limitedNavigation = $navigation;
+
+        return [
+            ['ID' => 20, 'NAME' => 'Первый'],
+            ['ID' => 21, 'NAME' => 'Второй'],
+        ];
+    }
+);
+$limitedExporter = new Project\Export\BitrixCatalogExporter(
+    12,
+    $urls,
+    $exportDirectory,
+    ['cacheKey' => 'catalog-export-limit-test'],
+    $limitedElementRepository,
+    new Project\Bitrix\IBlock\SectionRepository(
+        static fn (): bool => true,
+        null,
+        static fn (): array => []
+    )
+);
+$limitedData = $limitedExporter->loadData(['limit' => 1], true);
+exportExpect(
+    ($limitedNavigation['nTopCount'] ?? null) === 1,
+    'A plain export limit must be passed to Bitrix as nTopCount.'
+);
+exportExpect(
+    count($limitedData['products']) === 1,
+    'A plain export limit must still cap the returned product list.'
+);
+
 $exportCache = new Project\Support\JsonFileCache($exportDirectory);
 $storedExport = $exportCache->get('catalog-export-test');
 exportExpect(is_array($storedExport), 'Bitrix exporter must write its catalog cache.');
