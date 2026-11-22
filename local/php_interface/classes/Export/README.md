@@ -41,7 +41,7 @@ $isFresh = $cache->isFresh('catalog', 86400);
 
 ## YmlCatalogRenderer
 
-`Project\Export\YmlCatalogRenderer` строит строку YML из уже подготовленных массивов. К ядру Битрикс и файловой системе не обращается.
+`Project\Export\YmlCatalogRenderer` формирует YML из уже подготовленных массивов. К ядру Битрикс и файловой системе не обращается. Поддерживает возврат XML-строки через `render()` и построчную запись в открытый поток через `renderToStream()`.
 
 ```php
 $urls = new \Project\Support\UrlGenerator('https://shop.example.org');
@@ -87,7 +87,33 @@ $xml = $renderer->render(
 5. Описание очищается от HTML и приводится к обычному тексту.
 6. Нулевые значения полей не теряются из-за `empty()`.
 
-Метод `render()` возвращает XML-строку и ничего не выводит. Отправка HTTP-заголовков и `echo` остаются ответственностью контроллера или совместимого фасада.
+Метод `render()` возвращает XML-строку и ничего не выводит. Для записи без сборки полного XML-документа в строку используйте `renderToStream()`:
+
+```php
+$stream = fopen('php://output', 'wb');
+
+if ($stream === false) {
+    throw new RuntimeException('Не удалось открыть поток вывода.');
+}
+
+try {
+    $bytesWritten = $renderer->renderToStream(
+        $sections,
+        $products,
+        $stream,
+        ['fields' => ['price' => 'PRICE']],
+        $exporter->getGeneratedAt()
+    );
+} finally {
+    fclose($stream);
+}
+```
+
+`renderToStream()` принимает открытый поток с правом записи, возвращает количество записанных байт и не закрывает поток: им владеет вызывающий код. Метод обрабатывает частичные записи. `render()` сохраняет прежний контракт, но по-прежнему собирает XML в памяти.
+
+Важно: потоковым становится только формирование XML. `BitrixCatalogExporter` пока загружает товары и разделы в массивы, а `JsonFileCache` читает и записывает целый JSON-документ. Поэтому весь экспортный конвейер пока не является constant-memory.
+
+Отправка HTTP-заголовков остаётся ответственностью контроллера или совместимого фасада. Legacy `CodeMatrix\Legacy\Seo\YmlExport::showData()` сохраняет старый побочный эффект вывода и пишет непосредственно в `php://output`.
 
 ## BitrixCatalogExporter
 
@@ -151,7 +177,7 @@ echo $renderer->render(
 - `getAdditionalData()`, `getProducts()`, `getSections()`;
 - `getGeneratedAt()` — время формирования текущего набора данных.
 
-При обновлении вызывается защищённый хук `prepareAdditionalData()`. Старый адаптер `Lema\\Base\\XmlExport` дополнительно вызывает переопределённый наследником метод `loadAdditionalData()` только при обновлении кеша. Это сохраняет старую точку расширения, не стирая данные, переданные в конструктор.
+При обновлении вызывается защищённый хук `prepareAdditionalData()`. Миграционный адаптер `CodeMatrix\Legacy\Base\XmlExport` дополнительно вызывает переопределённый наследником метод `loadAdditionalData()` только при обновлении кеша. Это сохраняет старую точку расширения, не стирая данные, переданные в конструктор.
 
 В `$params` для `loadData()` передаются старые ключи запроса инфоблока: `order`, `filter`, `bIncCnt`, `arNavStartParams`, `arSelect`; дополнительно поддерживаются `limit` и `callback`.
 
@@ -163,18 +189,22 @@ echo $renderer->render(
 
 ## Миграция старых Lema-классов
 
-Старые имена доступны через адаптеры:
+Исходный API использовал имена `Lema\Base\XmlExport` и `Lema\Seo\YmlExport`. В новом каркасе адаптеры намеренно вынесены в отдельное пространство имён `CodeMatrix\Legacy`; это не drop-in замена классов с исходными FQCN.
 
-- `local/php_interface/legacy/Lema/Base/XmlExport.php` — `Lema\Base\XmlExport`;
-- `local/php_interface/legacy/Lema/Seo/YmlExport.php` — `Lema\Seo\YmlExport`.
+Файлы адаптеров:
 
-Подключение:
+- `local/php_interface/legacy/CodeMatrix/Legacy/Base/XmlExport.php` — `CodeMatrix\Legacy\Base\XmlExport`;
+- `local/php_interface/legacy/CodeMatrix/Legacy/Seo/YmlExport.php` — `CodeMatrix\Legacy\Seo\YmlExport`.
+
+Подключение после Composer autoload:
 
 ```php
-require_once $_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/legacy/Lema/Base/XmlExport.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/legacy/Lema/Seo/YmlExport.php';
+$legacyRoot = $_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/legacy/CodeMatrix/Legacy/';
 
-$export = new \Lema\Seo\YmlExport(12, [
+require_once $legacyRoot . 'Base/XmlExport.php';
+require_once $legacyRoot . 'Seo/YmlExport.php';
+
+$export = new \CodeMatrix\Legacy\Seo\YmlExport(12, [
     'serverUrl' => 'https://shop.example.org',
     'storageDir' => '/bitrix/catalog_export/export',
     'sectionIds' => [5],
@@ -189,11 +219,11 @@ $export->showData([
 ]);
 ```
 
-`storageDir` в старом формате остаётся путём относительно `DOCUMENT_ROOT`. Переходы `.` и `..` запрещены. `serverUrl` теперь обязателен и должен содержать доверенный адрес сайта; прежняя подстановка `HTTP_HOST` небезопасна.
+`storageDir` в старом формате остаётся путём относительно `DOCUMENT_ROOT`. Переходы `.` и `..` запрещены. `serverUrl` обязателен и должен содержать доверенный адрес сайта; прежняя подстановка `HTTP_HOST` небезопасна.
 
-`Lema\Seo\YmlExport::showData()` сохраняет старый побочный эффект `echo`. Заголовок отправляется как `application/xml; charset=UTF-8`, если `sendHeader=true` и заголовки ещё не отправлены.
+`CodeMatrix\Legacy\Seo\YmlExport::showData()` сохраняет побочный эффект вывода через `php://output`, включая работу с output buffering. Заголовок отправляется как `application/xml; charset=UTF-8`, если `sendHeader=true` и заголовки ещё не отправлены.
 
-Базовый `Lema\Base\XmlExport::showData()` раньше содержал заглушку `...`, а не полноценную XML-схему. Теперь он явно выбрасывает `LogicException`; формат должен задаваться наследником.
+Базовый `CodeMatrix\Legacy\Base\XmlExport::showData()` выбрасывает `LogicException`: формат должен задаваться наследником.
 
 ### Отличия от старой реализации
 
