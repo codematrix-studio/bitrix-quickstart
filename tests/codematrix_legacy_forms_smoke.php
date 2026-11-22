@@ -90,6 +90,31 @@ foreach ([
     formsExpect($invalidBoundsRejected, 'NumericValidator must reject invalid or contradictory range options.');
 }
 
+// Length bounds describe character counts and therefore must be finite non-negative integers.
+$validLengthBounds = new Project\Validation\LengthValidator('title', 'abc', ['min' => '2.0', 'max' => 3]);
+formsExpect($validLengthBounds->validate(), 'LengthValidator must accept integral numeric bounds.');
+$maximumIntegerLengthBound = new Project\Validation\LengthValidator('title', 'abc', ['max' => PHP_INT_MAX]);
+formsExpect($maximumIntegerLengthBound->validate(), 'LengthValidator must accept the largest native integer bound.');
+
+foreach ([
+    ['min' => 1.5],
+    ['max' => 2.5],
+    ['min' => INF],
+    ['max' => '999999999999999999999999999999'],
+    ['min' => -1],
+    ['min' => 4, 'max' => 2],
+] as $invalidLengthBounds) {
+    $invalidLengthBoundsRejected = false;
+
+    try {
+        (new Project\Validation\LengthValidator('title', 'abc', $invalidLengthBounds))->validate();
+    } catch (InvalidArgumentException $exception) {
+        $invalidLengthBoundsRejected = true;
+    }
+
+    formsExpect($invalidLengthBoundsRejected, 'LengthValidator must reject fractional, non-finite, negative, or contradictory bounds.');
+}
+
 // required сохраняет старый смысл: false — неотмеченный флажок, а 0 — заданное значение.
 $requiredBoolean = new Project\Validation\FormValidator(
     [['accepted', 'required'], ['quantity', 'required']],
