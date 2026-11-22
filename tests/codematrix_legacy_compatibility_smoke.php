@@ -7,10 +7,10 @@ require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/ElementVie
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/SectionView.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Component/ComponentInvoker.php';
 
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/Paginator.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/Component.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Template/Item.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Template/Section.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Base/Paginator.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Base/Component.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Template/Item.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Template/Section.php';
 
 function expectTrue(bool $condition, string $message): void
 {

@@ -6,9 +6,9 @@ require_once __DIR__ . '/../local/php_interface/classes/Support/PerClassInstance
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/Context/PerClassBitrixInstance.php';
 require_once __DIR__ . '/../local/php_interface/classes/Support/PerClassGlobalProxy.php';
 
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/StaticInstance.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/BitrixInstances.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/GlobalVars.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Base/StaticInstance.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Base/BitrixInstances.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Base/GlobalVars.php';
 
 function baseExpect(bool $condition, string $message): void
 {

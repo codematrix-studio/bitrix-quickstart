@@ -23,7 +23,7 @@ require_once __DIR__ . '/../local/php_interface/classes/Validation/LegacyFieldVa
 require_once __DIR__ . '/../local/php_interface/classes/Validation/AjaxFormActions.php';
 require_once __DIR__ . '/../local/php_interface/classes/Validation/AjaxForm.php';
 
-$legacyRoot = __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Forms/';
+$legacyRoot = __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Forms/';
 require_once $legacyRoot . 'Form.php';
 require_once $legacyRoot . 'AjaxForm.php';
 

@@ -244,8 +244,8 @@ $documentRoot = $tempDirectory . '/document-root';
 mkdir($documentRoot, 0750, true);
 $_SERVER['DOCUMENT_ROOT'] = $documentRoot;
 
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Base/XmlExport.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Seo/YmlExport.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Base/XmlExport.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Seo/YmlExport.php';
 
 $legacyYml = new \CodeMatrix\Legacy\Seo\YmlExport(12, [
     'serverUrl' => 'https://shop.example.org',
