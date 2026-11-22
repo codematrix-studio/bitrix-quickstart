@@ -305,7 +305,7 @@ $customData = $customExporter->loadData([
     'arSelect' => ['ID', 'PROPERTY_COLOR'],
 ], true);
 exportExpect(
-    $customNavigation === [],
+    $customNavigation === false,
     'Custom field selections must not be converted to nTopCount queries.'
 );
 exportExpect(
