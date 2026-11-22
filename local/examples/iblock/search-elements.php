@@ -3,8 +3,6 @@
 declare(strict_types=1);
 
 use Bitrix\Main\Loader;
-use RuntimeException;
-use InvalidArgumentException;
 
 /**
  * Ищет элементы и разделы инфоблока через поисковый индекс Битрикс.
