@@ -113,7 +113,7 @@ try {
 
 Важно: потоковым становится только формирование XML. `BitrixCatalogExporter` пока загружает товары и разделы в массивы, а `JsonFileCache` читает и записывает целый JSON-документ. Поэтому весь экспортный конвейер пока не является constant-memory.
 
-Отправка HTTP-заголовков остаётся ответственностью контроллера или совместимого фасада. Legacy `CodeMatrix\\Legacy\\Seo\\YmlExport::showData()` сохраняет старый побочный эффект вывода и пишет непосредственно в `php://output`.
+Отправка HTTP-заголовков остаётся ответственностью контроллера или совместимого фасада. Legacy `CodeMatrix\Legacy\Seo\YmlExport::showData()` сохраняет старый побочный эффект вывода и пишет непосредственно в `php://output`.
 
 ## BitrixCatalogExporter
 
@@ -177,7 +177,7 @@ echo $renderer->render(
 - `getAdditionalData()`, `getProducts()`, `getSections()`;
 - `getGeneratedAt()` — время формирования текущего набора данных.
 
-При обновлении вызывается защищённый хук `prepareAdditionalData()`. Миграционный адаптер `CodeMatrix\\Legacy\\Base\\XmlExport` дополнительно вызывает переопределённый наследником метод `loadAdditionalData()` только при обновлении кеша. Это сохраняет старую точку расширения, не стирая данные, переданные в конструктор.
+При обновлении вызывается защищённый хук `prepareAdditionalData()`. Миграционный адаптер `CodeMatrix\Legacy\Base\XmlExport` дополнительно вызывает переопределённый наследником метод `loadAdditionalData()` только при обновлении кеша. Это сохраняет старую точку расширения, не стирая данные, переданные в конструктор.
 
 В `$params` для `loadData()` передаются старые ключи запроса инфоблока: `order`, `filter`, `bIncCnt`, `arNavStartParams`, `arSelect`; дополнительно поддерживаются `limit` и `callback`.
 
@@ -189,12 +189,12 @@ echo $renderer->render(
 
 ## Миграция старых Lema-классов
 
-Исходный API использовал имена `Lema\\Base\\XmlExport` и `Lema\\Seo\\YmlExport`. В новом каркасе адаптеры намеренно вынесены в отдельное пространство имён `CodeMatrix\\Legacy`; это не drop-in замена классов с исходными FQCN.
+Исходный API использовал имена `Lema\Base\XmlExport` и `Lema\Seo\YmlExport`. В новом каркасе адаптеры намеренно вынесены в отдельное пространство имён `CodeMatrix\Legacy`; это не drop-in замена классов с исходными FQCN.
 
 Файлы адаптеров:
 
-- `local/php_interface/legacy/CodeMatrix/Legacy/Base/XmlExport.php` — `CodeMatrix\\Legacy\\Base\\XmlExport`;
-- `local/php_interface/legacy/CodeMatrix/Legacy/Seo/YmlExport.php` — `CodeMatrix\\Legacy\\Seo\\YmlExport`.
+- `local/php_interface/legacy/CodeMatrix/Legacy/Base/XmlExport.php` — `CodeMatrix\Legacy\Base\XmlExport`;
+- `local/php_interface/legacy/CodeMatrix/Legacy/Seo/YmlExport.php` — `CodeMatrix\Legacy\Seo\YmlExport`.
 
 Подключение после Composer autoload:
 
@@ -204,7 +204,7 @@ $legacyRoot = $_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/legacy/CodeMatri
 require_once $legacyRoot . 'Base/XmlExport.php';
 require_once $legacyRoot . 'Seo/YmlExport.php';
 
-$export = new \\CodeMatrix\\Legacy\\Seo\\YmlExport(12, [
+$export = new \CodeMatrix\Legacy\Seo\YmlExport(12, [
     'serverUrl' => 'https://shop.example.org',
     'storageDir' => '/bitrix/catalog_export/export',
     'sectionIds' => [5],
@@ -221,9 +221,9 @@ $export->showData([
 
 `storageDir` в старом формате остаётся путём относительно `DOCUMENT_ROOT`. Переходы `.` и `..` запрещены. `serverUrl` обязателен и должен содержать доверенный адрес сайта; прежняя подстановка `HTTP_HOST` небезопасна.
 
-`CodeMatrix\\Legacy\\Seo\\YmlExport::showData()` сохраняет побочный эффект вывода через `php://output`, включая работу с output buffering. Заголовок отправляется как `application/xml; charset=UTF-8`, если `sendHeader=true` и заголовки ещё не отправлены.
+`CodeMatrix\Legacy\Seo\YmlExport::showData()` сохраняет побочный эффект вывода через `php://output`, включая работу с output buffering. Заголовок отправляется как `application/xml; charset=UTF-8`, если `sendHeader=true` и заголовки ещё не отправлены.
 
-Базовый `CodeMatrix\\Legacy\\Base\\XmlExport::showData()` выбрасывает `LogicException`: формат должен задаваться наследником.
+Базовый `CodeMatrix\Legacy\Base\XmlExport::showData()` выбрасывает `LogicException`: формат должен задаваться наследником.
 
 ### Отличия от старой реализации
 
