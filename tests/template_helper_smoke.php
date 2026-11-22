@@ -144,5 +144,15 @@ $legacySingle = new \Lema\Template\TemplateHelper(new TemplateHelperTemplate(
 ));
 templateHelperExpect($legacySingle->item() instanceof \Lema\Template\Item, 'Legacy item() должен возвращать старый класс Item.');
 
+$legacySectionTemplate = new TemplateHelperTemplate(new TemplateHelperComponent(
+    ['IBLOCK_ID' => 25],
+    ['SECTIONS' => [
+        ['ID' => 403, 'NAME' => 'Legacy section', 'EDIT_LINK' => '/edit/403', 'DELETE_LINK' => '/delete/403'],
+    ]]
+));
+$legacySectionHelper = new \Lema\Template\TemplateHelper($legacySectionTemplate);
+templateHelperExpect($legacySectionHelper->sections()[0] instanceof \Lema\Template\Section, 'Legacy sections() должен возвращать старый класс Section.');
+templateHelperExpect($legacySectionHelper->items()[0] instanceof \Lema\Template\Section, 'Legacy items() должен возвращать Section для коллекции SECTIONS.');
+
 
 echo "Проверки TemplateHelper пройдены.\n";
