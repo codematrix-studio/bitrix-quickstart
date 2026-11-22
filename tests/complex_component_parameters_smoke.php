@@ -36,4 +36,4 @@ $assert(
     'Специальные параметры не должны находиться вне PARAMETERS.'
 );
 
-echo "Complex component parameter descriptor smoke test: OK\\n";
+echo "Complex component parameter descriptor smoke test: OK\n";
