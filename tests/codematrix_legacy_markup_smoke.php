@@ -53,6 +53,10 @@ markupExpect(!str_contains($html, '<script>'), 'Meta output must escape HTML mar
 
 $og->setItem('description', 'Новое описание');
 markupExpect($og->getItemMeta('description') !== false, 'getItemMeta must return formatted tag.');
+$og->setItem('empty-value', '');
+$og->setItem('zero-value', '0');
+markupExpect($og->getItemMeta('empty-value') === false, 'Legacy getItemMeta must treat an empty value as absent.');
+markupExpect($og->getItemMeta('zero-value') === false, 'Legacy getItemMeta must treat string zero as absent.');
 
 $GLOBALS['APPLICATION'] = new FakeApplicationForMarkup();
 $og->setViewContent();
