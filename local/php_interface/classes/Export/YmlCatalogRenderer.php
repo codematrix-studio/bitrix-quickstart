@@ -114,8 +114,11 @@ final class YmlCatalogRenderer
                 $xml[] = '<' . $tag . '>' . XmlEscaper::text($this->valueToString($product[$field])) . '</' . $tag . '>';
             }
 
-            if (isset($product['IBLOCK_SECTION_ID']) && is_scalar($product['IBLOCK_SECTION_ID'])) {
-                $xml[] = '<categoryId>' . XmlEscaper::text($product['IBLOCK_SECTION_ID']) . '</categoryId>';
+            $sectionId = $product['IBLOCK_SECTION_ID'] ?? null;
+            if ((is_int($sectionId) || (is_string($sectionId) && ctype_digit($sectionId)))
+                && array_key_exists((int) $sectionId, $sections)
+            ) {
+                $xml[] = '<categoryId>' . XmlEscaper::text((int) $sectionId) . '</categoryId>';
             }
 
             $alternateDescription = [];
