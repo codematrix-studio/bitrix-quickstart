@@ -78,8 +78,9 @@ final class JsonFileCache
                 throw new RuntimeException('Не удалось создать временный файл кеша.');
             }
 
-            if (file_put_contents($temporaryFile, $json, LOCK_EX) === false) {
-                throw new RuntimeException('Не удалось записать временный файл кеша.');
+            $writtenBytes = file_put_contents($temporaryFile, $json, LOCK_EX);
+            if ($writtenBytes === false || $writtenBytes !== strlen($json)) {
+                throw new RuntimeException('Не удалось полностью записать временный файл кеша.');
             }
 
             @chmod($temporaryFile, 0640);
