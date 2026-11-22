@@ -33,6 +33,12 @@ $cacheData = [
     'sections' => [5 => ['name' => 'Раздел']],
 ];
 $cache->put('catalog', $cacheData);
+$cacheFile = $tempDirectory . '/catalog.json';
+$cacheJson = file_get_contents($cacheFile);
+exportExpect(
+    is_string($cacheJson) && filesize($cacheFile) === strlen($cacheJson),
+    'JSON cache must publish the complete serialized payload.'
+);
 exportExpect($cache->get('catalog') === $cacheData, 'JSON cache must preserve arrays.');
 exportExpect($cache->isFresh('catalog', 60), 'Newly written cache must be fresh.');
 
