@@ -5,7 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/ElementView.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/SectionView.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/TemplateHelper.php';
-require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Template/TemplateHelper.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/Legacy/Template/TemplateHelper.php';
 
 function templateHelperExpect(bool $condition, string $message): void
 {

@@ -22,11 +22,11 @@
 
 | Старый API | Новый API | Совместимость |
 |---|---|---|
-| `CodeMatrix\Legacy\Base\Paginator` | `Project\Support\ArrayPaginator` | Есть необязательный адаптер `legacy/CodeMatrix/Base/Paginator.php` |
-| `CodeMatrix\Legacy\Template\Item` | `Project\Bitrix\IBlock\ElementView` | Есть необязательный адаптер `legacy/CodeMatrix/Template/Item.php` |
-| `CodeMatrix\Legacy\Template\Section` | `Project\Bitrix\IBlock\SectionView` | Есть необязательный адаптер `legacy/CodeMatrix/Template/Section.php` |
-| `CodeMatrix\Legacy\Template\TemplateHelper` | `Project\Bitrix\IBlock\TemplateHelper` | Есть необязательный адаптер `legacy/CodeMatrix/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
-| `CodeMatrix\Legacy\Base\Component` | `Project\Bitrix\Component\ComponentInvoker` | Есть необязательный адаптер `legacy/CodeMatrix/Base/Component.php` |
+| `CodeMatrix\Legacy\Base\Paginator` | `Project\Support\ArrayPaginator` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Base/Paginator.php` |
+| `CodeMatrix\Legacy\Template\Item` | `Project\Bitrix\IBlock\ElementView` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/Item.php` |
+| `CodeMatrix\Legacy\Template\Section` | `Project\Bitrix\IBlock\SectionView` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/Section.php` |
+| `CodeMatrix\Legacy\Template\TemplateHelper` | `Project\Bitrix\IBlock\TemplateHelper` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
+| `CodeMatrix\Legacy\Base\Component` | `Project\Bitrix\Component\ComponentInvoker` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Base/Component.php` |
 
 Адаптеры не подключаются автоматически. Их следует подключать после Composer autoload и только при миграции, когда старый модуль `lema.lib` уже отключён. Это предотвращает конфликт классов с исходным модулем.
 
@@ -38,7 +38,7 @@ Composer автоматически загружает только простр
 
 ```php
 // Выполняется после Composer autoload и отключения старого модуля lema.lib.
-$legacyRoot = __DIR__ . '/legacy/CodeMatrix/';
+$legacyRoot = __DIR__ . '/legacy/CodeMatrix/Legacy/';
 
 require_once $legacyRoot . 'Base/Paginator.php';
 require_once $legacyRoot . 'Base/Component.php';
@@ -50,7 +50,7 @@ require_once $legacyRoot . 'Template/TemplateHelper.php';
 Для форм подключайте сначала базовый класс, затем AJAX-форму и валидаторы:
 
 ```php
-$legacyForms = __DIR__ . '/legacy/CodeMatrix/Forms/';
+$legacyForms = __DIR__ . '/legacy/CodeMatrix/Legacy/Forms/';
 require_once $legacyForms . 'Validators/Validator.php';
 foreach (['BooleanValidator', 'RecaptchaValidator', 'EmailValidator', 'IpValidator', 'LengthValidator', 'RegexValidator', 'NumericValidator', 'PhoneValidator', 'EmptyValidator', 'UrlValidator'] as $validator) {
     require_once $legacyForms . 'Validators/' . $validator . '.php';
@@ -145,7 +145,7 @@ composer test:compatibility
 - Формат правила: `[имена_полей, тип_проверки, дополнительные_параметры]`.
 - Методы `rules()`, `setRules()`, `setFields()`, `getFields()`, `getField()`, `getFieldCP1251()`, `validate()`, `getErrors()`, `getErrorsCP1251()`, `validators()`.
 - Имена правил `boolean`, `recaptcha`, `email`, `ip`, `length`, `regex`, `numerical`, `phone`, `required`, `url`.
-- Старые имена классов формы, AJAX-формы и валидаторов доступны через адаптеры в `legacy/CodeMatrix/Forms/`.
+- Старые имена классов формы, AJAX-формы и валидаторов доступны через адаптеры в `legacy/CodeMatrix/Legacy/Forms/`.
 - `CodeMatrix\Legacy\Forms\AjaxForm` остаётся наследником `CodeMatrix\Legacy\Forms\Form`.
 - Пользовательские валидаторы могут наследоваться от совместимого `CodeMatrix\Legacy\Forms\Validators\Validator`.
 
@@ -198,8 +198,8 @@ composer test
 - `Project\Bitrix\IBlock\SectionRepository`.
 
 Адаптеры старых имён:
-- `legacy/CodeMatrix/IBlock/Element.php`;
-- `legacy/CodeMatrix/IBlock/Section.php`.
+- `legacy/CodeMatrix/Legacy/IBlock/Element.php`;
+- `legacy/CodeMatrix/Legacy/IBlock/Section.php`.
 
 Подробное описание методов и параметров: [classes/Bitrix/IBlock/README.md](../classes/Bitrix/IBlock/README.md).
 
@@ -237,7 +237,7 @@ composer test
 - `Project\Bitrix\IBlock\PropertyAccessor`;
 - `Project\Bitrix\IBlock\ImageWatermarker`.
 
-Старый фасад сохранён в `legacy/CodeMatrix/Common/Helper.php`. Перечень методов, примеры и ограничения описаны в [classes/Support/README.md](../classes/Support/README.md).
+Старый фасад сохранён в `legacy/CodeMatrix/Legacy/Common/Helper.php`. Перечень методов, примеры и ограничения описаны в [classes/Support/README.md](../classes/Support/README.md).
 
 ### Обратная совместимость
 
@@ -279,9 +279,9 @@ composer test
 - `Project\Support\PerClassGlobalProxy`.
 
 Совместимые адаптеры:
-- `legacy/CodeMatrix/Base/StaticInstance.php`;
-- `legacy/CodeMatrix/Base/BitrixInstances.php`;
-- `legacy/CodeMatrix/Base/GlobalVars.php`.
+- `legacy/CodeMatrix/Legacy/Base/StaticInstance.php`;
+- `legacy/CodeMatrix/Legacy/Base/BitrixInstances.php`;
+- `legacy/CodeMatrix/Legacy/Base/GlobalVars.php`.
 
 Подробности: [classes/Support/README.md](../classes/Support/README.md).
 
@@ -305,8 +305,8 @@ composer test
 Новый класс: `Project\Seo\MetaMarkup`.
 
 Совместимые адаптеры:
-- `legacy/CodeMatrix/Base/Markup.php`;
-- `legacy/CodeMatrix/Seo/OpenGraph.php`.
+- `legacy/CodeMatrix/Legacy/Base/Markup.php`;
+- `legacy/CodeMatrix/Legacy/Seo/OpenGraph.php`.
 
 Подробное описание и примеры: [classes/Seo/README.md](../classes/Seo/README.md).
 
@@ -453,7 +453,7 @@ $name = $validator->xss($name);
 
 - `Project\Support\PagePathMatcher` — независимая от Bitrix логика сопоставления путей;
 - `Project\Bitrix\Context\Page` — получение текущего каталога через HTTP-запрос Bitrix;
-- `legacy/CodeMatrix/Common/Page.php` — необязательный адаптер старых статических методов.
+- `legacy/CodeMatrix/Legacy/Common/Page.php` — необязательный адаптер старых статических методов.
 
 Старый код:
 
@@ -488,7 +488,7 @@ if (Page::inRootDirectory('catalog')) {
 
 ## AssetManager
 
-Старый `CodeMatrix\Legacy\Common\AssetManager` переработан в `Project\Bitrix\Asset\AssetManager`. Необязательный адаптер `legacy/CodeMatrix/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `CodeMatrix\Legacy\Common\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
+Старый `CodeMatrix\Legacy\Common\AssetManager` переработан в `Project\Bitrix\Asset\AssetManager`. Необязательный адаптер `legacy/CodeMatrix/Legacy/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `CodeMatrix\Legacy\Common\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
 
 Основная реализация и границы интеграционного тестирования описаны в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md).
 
@@ -510,8 +510,8 @@ if (Page::inRootDirectory('catalog')) {
 - `Project\\Seo\\Analytics\\ScriptRenderer`.
 
 Совместимые адаптеры:
-- `legacy/CodeMatrix/Seo/ECommerce.php`;
-- `legacy/CodeMatrix/Seo/GTMFormSubmit.php`.
+- `legacy/CodeMatrix/Legacy/Seo/ECommerce.php`;
+- `legacy/CodeMatrix/Legacy/Seo/GTMFormSubmit.php`.
 
 Сохранены основные публичные методы старых классов. Намеренные изменения безопасности:
 - ФИО, email, телефон, адрес и комментарии заказа исключены из Google payload;
@@ -639,7 +639,7 @@ $name = $validator->xss($name);
 
 - `Project\Support\PagePathMatcher` — независимая от Bitrix логика сопоставления путей;
 - `Project\Bitrix\Context\Page` — получение текущего каталога через HTTP-запрос Bitrix;
-- `legacy/CodeMatrix/Common/Page.php` — необязательный адаптер старых статических методов.
+- `legacy/CodeMatrix/Legacy/Common/Page.php` — необязательный адаптер старых статических методов.
 
 Старый код:
 
@@ -674,7 +674,7 @@ if (Page::inRootDirectory('catalog')) {
 
 ## AssetManager
 
-Старый `CodeMatrix\Legacy\Common\AssetManager` переработан в `Project\Bitrix\Asset\AssetManager`. Необязательный адаптер `legacy/CodeMatrix/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `CodeMatrix\Legacy\Common\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
+Старый `CodeMatrix\Legacy\Common\AssetManager` переработан в `Project\Bitrix\Asset\AssetManager`. Необязательный адаптер `legacy/CodeMatrix/Legacy/Common/AssetManager.php` сохраняет методы `addJsArray()`, `addCssArray()`, `init()`, а также статические `get()` и `resetInstance()`. Старый `CodeMatrix\Legacy\Common\Asset` не переносится: он только возвращал singleton штатного Bitrix Asset.
 
 Основная реализация и границы интеграционного тестирования описаны в [Bitrix/Asset/README.md](../Bitrix/Asset/README.md).
 
