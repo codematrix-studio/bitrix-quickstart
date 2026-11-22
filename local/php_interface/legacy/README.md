@@ -81,7 +81,7 @@ require_once $legacyForms . 'AjaxForm.php';
 ### Не переносить без существенной переработки
 
 - `lib/Basket/Basket.php`, `BasketPosition.php`, `HighloadBlock.php`, `Settings.php`: жёстко заданные ID инфоблоков/HL-блоков, cookie-ID на слабом генераторе, проектная схема данных и операции очистки старых корзин.
-- `lib/Seo/ECommerce.php` и `GTMFormSubmit.php`: **переработаны** в `Project\Seo\Analytics`; Старые реализации не копировались как есть: новые классы исключают персональные данные заказа и значения полей форм из аналитических payload. Legacy-методы `setElement()` и `setElements()` оставлены как безопасные no-op.
+- Старые `lib/Seo/ECommerce.php` и `GTMFormSubmit.php` не переносились как есть: новая реализация находится в `Project\Seo\Analytics` и исключает персональные данные заказа и значения полей форм из аналитических payload. Legacy-методы `setElement()` и `setElements()` оставлены как безопасные no-op.
 - `lib/Forms/ReCaptcha.php`: устаревший API, singleton с одним секретом, `die()`, отсутствие таймаута и слабая обработка ответа. Реализовать заново через актуальный API.
 - `lib/Sberbank/*`: в старом HTTP-клиенте отключена проверка TLS-сертификата (`CURLOPT_SSL_VERIFYHOST` и `CURLOPT_SSL_VERIFYPEER`). Платёжный API нельзя переносить до полного пересмотра TLS, таймаутов, ошибок и обработки статусов.
 - `lib/Handlers/*`: большинство методов пустые заготовки.
