@@ -32,7 +32,7 @@ jobs:
 
       - name: Проверить синтаксис PHP
         run: |
-          find local/php_interface/classes local/php_interface/legacy tests -name '*.php' -print0 | xargs -0 -n1 php -l
+          find local/php_interface/classes local/php_interface/legacy tests templates -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: Проверить резервный автозагрузчик и автономные тесты
         working-directory: local
