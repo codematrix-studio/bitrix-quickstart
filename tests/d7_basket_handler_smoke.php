@@ -184,6 +184,12 @@ $handler->clear();
 basketHandlerExpect($handler->getItemsCount() === 0, 'Очистка должна затрагивать только текущую корзину.');
 basketHandlerExpect($handler->getBasketItemsWithFields(9) === ['items' => [], 'fields' => []], 'Пустая корзина не должна запускать загрузку всех товаров инфоблока.');
 
+$handlerWithoutCustomLoader = new BasketHandler($manager);
+basketHandlerExpect(
+    $handlerWithoutCustomLoader->getBasketItemsWithFields(9) === ['items' => [], 'fields' => []],
+    'Пустая корзина должна возвращать пустой результат и без пользовательского загрузчика.'
+);
+
 $quickOrderRejected = false;
 try {
     $handler->fastOrderAction();
