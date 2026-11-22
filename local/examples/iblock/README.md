@@ -14,9 +14,11 @@
 
 Функция `searchIblockItems()` принимает поисковую строку, ID инфоблока, ID сайта, необязательный ID раздела и лимит. Возвращает два массива ID: `ELEMENTS` и `SECTIONS`. Префикс `S` в `ITEM_ID` поискового индекса распознаётся как ID раздела.
 
-Пример вызова после подключения Composer autoload и файла:
+Пример вызова внутри компонента или другого кода БУС:
 
 ```php
+require_once $_SERVER['DOCUMENT_ROOT'] . '/local/examples/iblock/search-elements.php';
+
 $result = searchIblockItems(
     'текст поиска',
     12,
