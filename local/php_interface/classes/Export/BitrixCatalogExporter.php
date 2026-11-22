@@ -240,6 +240,25 @@ class BitrixCatalogExporter
 
     protected function loadProducts(array $params = []): array
     {
+        $limit = isset($params['limit']) ? (int) $params['limit'] : 0;
+        $navigation = $params['arNavStartParams'] ?? [];
+
+        // A plain export can enforce its limit in the SQL query instead of
+        // loading the complete catalog and slicing it afterwards. Keep the
+        // existing in-memory path when custom filters, sorting, selected
+        // fields, productIds, or explicit navigation affect the selection.
+        $hasCustomQuery = !empty($params['filter'])
+            || !empty($params['order'])
+            || !empty($params['arSelect']);
+
+        if ($limit > 0
+            && $this->productIds === []
+            && !$hasCustomQuery
+            && (!is_array($navigation) || $navigation === [])
+        ) {
+            $params['arNavStartParams'] = ['nTopCount' => $limit];
+        }
+
         $products = $this->elementRepository->getAll($this->iblockId, $params);
 
         if ($this->productIds !== []) {
@@ -251,11 +270,8 @@ class BitrixCatalogExporter
             );
         }
 
-        if (isset($params['limit'])) {
-            $limit = (int) $params['limit'];
-            if ($limit > 0) {
-                $products = array_slice($products, 0, $limit, true);
-            }
+        if ($limit > 0) {
+            $products = array_slice($products, 0, $limit, true);
         }
 
         $callback = $params['callback'] ?? null;

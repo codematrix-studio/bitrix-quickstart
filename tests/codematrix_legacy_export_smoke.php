@@ -236,6 +236,83 @@ exportExpect(
     'Bitrix exporter must resolve preview page URLs against the trusted base URL.'
 );
 
+// A plain export limit should be pushed down to CIBlockElement::GetList().
+$limitedNavigation = null;
+$limitedElementRepository = new Project\Bitrix\IBlock\ElementRepository(
+    static fn (): bool => true,
+    null,
+    static function ($order, $filter, $groupBy, $navigation, $select) use (&$limitedNavigation): array {
+        $limitedNavigation = $navigation;
+
+        return [
+            ['ID' => 20, 'NAME' => 'Первый'],
+            ['ID' => 21, 'NAME' => 'Второй'],
+        ];
+    }
+);
+$limitedExporter = new Project\Export\BitrixCatalogExporter(
+    12,
+    $urls,
+    $exportDirectory,
+    ['cacheKey' => 'catalog-export-limit-test'],
+    $limitedElementRepository,
+    new Project\Bitrix\IBlock\SectionRepository(
+        static fn (): bool => true,
+        null,
+        static fn (): array => []
+    )
+);
+$limitedData = $limitedExporter->loadData(['limit' => 1], true);
+exportExpect(
+    ($limitedNavigation['nTopCount'] ?? null) === 1,
+    'A plain export limit must be passed to Bitrix as nTopCount.'
+);
+exportExpect(
+    count($limitedData['products']) === 1,
+    'A plain export limit must still cap the returned product list.'
+);
+
+// Custom selections may involve multi-value properties, where nTopCount can
+// truncate joined rows before unique element IDs are collected. Keep the
+// in-memory limit path for such queries.
+$customNavigation = null;
+$customElementRepository = new Project\Bitrix\IBlock\ElementRepository(
+    static fn (): bool => true,
+    null,
+    static function ($order, $filter, $groupBy, $navigation, $select) use (&$customNavigation): array {
+        $customNavigation = $navigation;
+
+        return [
+            ['ID' => 30, 'NAME' => 'Первый'],
+            ['ID' => 31, 'NAME' => 'Второй'],
+        ];
+    }
+);
+$customExporter = new Project\Export\BitrixCatalogExporter(
+    12,
+    $urls,
+    $exportDirectory,
+    ['cacheKey' => 'catalog-export-custom-limit-test'],
+    $customElementRepository,
+    new Project\Bitrix\IBlock\SectionRepository(
+        static fn (): bool => true,
+        null,
+        static fn (): array => []
+    )
+);
+$customData = $customExporter->loadData([
+    'limit' => 1,
+    'arSelect' => ['ID', 'PROPERTY_COLOR'],
+], true);
+exportExpect(
+    $customNavigation === false,
+    'Custom field selections must not be converted to nTopCount queries.'
+);
+exportExpect(
+    count($customData['products']) === 1,
+    'Custom queries must retain the in-memory result limit.'
+);
+
 $exportCache = new Project\Support\JsonFileCache($exportDirectory);
 $storedExport = $exportCache->get('catalog-export-test');
 exportExpect(is_array($storedExport), 'Bitrix exporter must write its catalog cache.');
