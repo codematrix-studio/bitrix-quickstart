@@ -198,8 +198,27 @@ final class YmlCatalogRenderer
                 throw new InvalidArgumentException('Для XML-тега ' . $tag . ' не задано имя поля товара.');
             }
 
-            // Служебные элементы YML формируются самим классом.
-            if (in_array($tag, ['url', 'picture', 'name', 'categoryId', 'description', 'param'], true)) {
+            // Структурные элементы документа YML формируются самим классом.
+            $reservedTags = [
+                'yml_catalog',
+                'shop',
+                'name',
+                'company',
+                'url',
+                'platform',
+                'currencies',
+                'currency',
+                'categories',
+                'category',
+                'offers',
+                'offer',
+                'picture',
+                'categoryId',
+                'description',
+                'param',
+            ];
+
+            if (in_array($tag, $reservedTags, true)) {
                 throw new InvalidArgumentException('Поле ' . $tag . ' зарезервировано форматом YML.');
             }
 
