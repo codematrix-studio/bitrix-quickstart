@@ -94,6 +94,60 @@ class SectionRepository
         return $this->keyRowsById($this->fetchRows($result));
     }
 
+    /**
+     * Получает потомков нескольких корневых разделов одним D7-запросом.
+     * Возвращает null, если SectionTable недоступен и D7 callback не внедрён.
+     */
+    public function getDescendantsByIntervalsD7($iblockId, array $intervals): ?array
+    {
+        $this->ensureModule();
+
+        if ($this->d7List === null && !class_exists('Bitrix\\Iblock\\SectionTable')) {
+            return null;
+        }
+
+        $conditions = [];
+        foreach ($intervals as $interval) {
+            if (!is_array($interval)
+                || !isset($interval['left'], $interval['right'])
+                || !is_numeric($interval['left'])
+                || !is_numeric($interval['right'])
+            ) {
+                throw new RuntimeException('Некорректный интервал раздела для D7-выборки.');
+            }
+
+            $left = (int) $interval['left'];
+            $right = (int) $interval['right'];
+            if ($left < 1 || $right <= $left) {
+                throw new RuntimeException('Границы интервала раздела должны быть положительными и упорядоченными.');
+            }
+
+            $conditions[] = [
+                '>LEFT_MARGIN' => $left,
+                '<RIGHT_MARGIN' => $right,
+            ];
+        }
+
+        if ($conditions === []) {
+            return [];
+        }
+
+        $params = [
+            'order' => ['LEFT_MARGIN' => 'ASC'],
+            'select' => ['ID', 'NAME', 'IBLOCK_SECTION_ID'],
+            'filter' => [
+                'IBLOCK_ID' => (int) $iblockId,
+                ['LOGIC' => 'OR', ...$conditions],
+            ],
+        ];
+
+        $result = $this->d7List !== null
+            ? ($this->d7List)($params)
+            : $this->callD7List($params);
+
+        return $this->keyRowsById($this->fetchRows($result));
+    }
+
     public function getAll($iblockId, array $params = []): array
     {
         return $this->getList($iblockId, $params);
