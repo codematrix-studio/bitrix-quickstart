@@ -62,7 +62,7 @@ class BasketManager
                 'QUANTITY' => $quantity,
                 'CURRENCY' => $this->getCurrency(),
                 'LID' => $this->getSiteId(),
-                'PRODUCT_PROVIDER_CLASS' => 'CCatalogProductProvider',
+                'PRODUCT_PROVIDER_CLASS' => \Bitrix\Catalog\Product\CatalogProvider::class,
             ];
         } else {
             if (!is_callable([$item, 'getQuantity'])) {
