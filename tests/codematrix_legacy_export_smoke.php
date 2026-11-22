@@ -113,6 +113,18 @@ try {
 }
 exportExpect($invalidTagRejected, 'YML renderer must reject untrusted XML tag names.');
 
+foreach (['yml_catalog', 'shop', 'currencies', 'currency', 'categories', 'category', 'offers', 'offer'] as $reservedTag) {
+    $reservedTagRejected = false;
+
+    try {
+        $renderer->render([], [], ['fields' => [$reservedTag => 'PRICE']]);
+    } catch (InvalidArgumentException $exception) {
+        $reservedTagRejected = true;
+    }
+
+    exportExpect($reservedTagRejected, 'YML renderer must reject structural tag: ' . $reservedTag);
+}
+
 class ExportSmokeCFile
 {
     public static function GetPath(int $fileId): string
