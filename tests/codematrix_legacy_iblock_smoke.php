@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/ElementRepository.php';
 require_once __DIR__ . '/../local/php_interface/classes/Bitrix/IBlock/SectionRepository.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/IBlock/Element.php';
-require_once __DIR__ . '/../local/php_interface/legacy/Lema/IBlock/Section.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/IBlock/Element.php';
+require_once __DIR__ . '/../local/php_interface/legacy/CodeMatrix/IBlock/Section.php';
 
 function iblockExpect(bool $condition, string $message): void
 {
@@ -133,8 +133,8 @@ $allSections->getListIncludingInactive(4, ['filter' => ['ID' => [77]]]);
 iblockExpect(!array_key_exists('ACTIVE', $allSectionArgs[1]), 'getListIncludingInactive must not force ACTIVE=Y.');
 
 // Old class names and constants remain available through explicit adapters.
-iblockExpect(\Lema\IBlock\Element::CLASS_NAME === '\\Bitrix\\Iblock\\ElementTable', 'Legacy Element class constant must remain available.');
-iblockExpect(\Lema\IBlock\Section::OLD_CLASS_NAME === '\\CIBlockSection', 'Legacy Section class constant must remain available.');
+iblockExpect(\CodeMatrix\Legacy\IBlock\Element::CLASS_NAME === '\\Bitrix\\Iblock\\ElementTable', 'Legacy Element class constant must remain available.');
+iblockExpect(\CodeMatrix\Legacy\IBlock\Section::OLD_CLASS_NAME === '\\CIBlockSection', 'Legacy Section class constant must remain available.');
 
 $failed = false;
 try {
