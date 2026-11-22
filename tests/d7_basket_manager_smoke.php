@@ -159,6 +159,13 @@ $firstId = $manager->add(100, 2);
 $secondCallId = $manager->add(100, 3);
 $secondId = $manager->add(200, 1);
 
+$firstItem = $basket->getItemById($firstId);
+basketManagerExpect(
+    $firstItem instanceof FakeSaleBasketItem
+        && $firstItem->getFields()['PRODUCT_PROVIDER_CLASS'] === \\Bitrix\\Catalog\\Product\\CatalogProvider::class,
+    'Для новых позиций должен использоваться актуальный D7-провайдер каталога.'
+);
+
 basketManagerExpect($firstId === $secondCallId, 'Повторное добавление товара должно увеличивать существующую позицию.');
 basketManagerExpect($firstId !== $secondId, 'Разные товары должны занимать разные позиции.');
 basketManagerExpect(count($loaderCalls) === 1, 'Корзина должна загружаться один раз в пределах экземпляра менеджера.');
