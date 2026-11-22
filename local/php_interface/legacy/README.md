@@ -28,11 +28,11 @@
 | `Lema\Template\TemplateHelper` | `Project\Bitrix\IBlock\TemplateHelper` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
 | `Lema\Base\Component` | `Project\Bitrix\Component\ComponentInvoker` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Base/Component.php` |
 
-Адаптеры не подключаются автоматически: их следует подключать после Composer autoload и только при миграции. Новое пространство имён `CodeMatrix\\Legacy` не конфликтует с исходным `Lema\\` и позволяет временно держать старый модуль `lema.lib` включённым.
+Адаптеры не подключаются автоматически: их следует подключать после Composer autoload и только при миграции. Новое пространство имён `CodeMatrix\Legacy` не конфликтует с исходным `Lema\` и позволяет временно держать старый модуль `lema.lib` включённым.
 
 ### Подключение адаптеров при миграции
 
-Composer автоматически загружает только пространство имён `Project\\`. Адаптеры `CodeMatrix\Legacy\\` подключаются явно через `require_once`; отдельный PSR-4 mapping для них не добавлен, поскольку это необязательный миграционный слой, а не основная библиотека проекта. Пространство имён `CodeMatrix\\Legacy` отделено от исходного `Lema\\` и не конфликтует с модулем `lema.lib`.
+Composer автоматически загружает только пространство имён `Project\`. Адаптеры `CodeMatrix\Legacy\` подключаются явно через `require_once`; отдельный PSR-4 mapping для них не добавлен, поскольку это необязательный миграционный слой, а не основная библиотека проекта. Пространство имён `CodeMatrix\Legacy` отделено от исходного `Lema\` и не конфликтует с модулем `lema.lib`.
 
 Пример подключения базовых адаптеров и шаблонных представлений:
 
@@ -145,7 +145,7 @@ composer test:compatibility
 - Формат правила: `[имена_полей, тип_проверки, дополнительные_параметры]`.
 - Методы `rules()`, `setRules()`, `setFields()`, `getFields()`, `getField()`, `getFieldCP1251()`, `validate()`, `getErrors()`, `getErrorsCP1251()`, `validators()`.
 - Имена правил `boolean`, `recaptcha`, `email`, `ip`, `length`, `regex`, `numerical`, `phone`, `required`, `url`.
-- Адаптеры миграционного API форм, AJAX-формы и валидаторов доступны через пространство имён `CodeMatrix\\Legacy` в `legacy/CodeMatrix/Legacy/Forms/`.
+- Адаптеры миграционного API форм, AJAX-формы и валидаторов доступны через пространство имён `CodeMatrix\Legacy` в `legacy/CodeMatrix/Legacy/Forms/`.
 - `CodeMatrix\Legacy\Forms\AjaxForm` остаётся наследником `CodeMatrix\Legacy\Forms\Form`.
 - Пользовательские валидаторы могут наследоваться от совместимого `CodeMatrix\Legacy\Forms\Validators\Validator`.
 
@@ -237,7 +237,7 @@ composer test
 - `Project\Bitrix\IBlock\PropertyAccessor`;
 - `Project\Bitrix\IBlock\ImageWatermarker`.
 
-Адаптер нового пространства имён `CodeMatrix\\Legacy\\Common\\Helper` находится в `legacy/CodeMatrix/Legacy/Common/Helper.php`. Перечень методов, примеры и ограничения описаны в [classes/Support/README.md](../classes/Support/README.md).
+Адаптер нового пространства имён `CodeMatrix\Legacy\Common\Helper` находится в `legacy/CodeMatrix/Legacy/Common/Helper.php`. Перечень методов, примеры и ограничения описаны в [classes/Support/README.md](../classes/Support/README.md).
 
 ### Обратная совместимость
 
@@ -495,7 +495,7 @@ if (Page::inRootDirectory('catalog')) {
 
 ## Files Checker
 
-Старый `Ns\\Bitrix\\Helper\\Files\\Checker::chooseFileIcoClass($id)` заменён адаптером `legacy/Ns/Bitrix/Helper/Files/Checker.php`. Он делегирует определение иконки классу `Project\\Bitrix\\File\\FileIconResolver`. Глобальные MIME-константы старой реализации не создаются, а `HelperCore` не наследуется, поскольку его магическое состояние не использовалось. Подробности: [FileTypeIconResolver.md](../classes/Support/FileTypeIconResolver.md).
+Старый `Ns\Bitrix\Helper\Files\Checker::chooseFileIcoClass($id)` заменён адаптером `legacy/Ns/Bitrix/Helper/Files/Checker.php`. Он делегирует определение иконки классу `Project\Bitrix\File\FileIconResolver`. Глобальные MIME-константы старой реализации не создаются, а `HelperCore` не наследуется, поскольку его магическое состояние не использовалось. Подробности: [FileTypeIconResolver.md](../classes/Support/FileTypeIconResolver.md).
 
 
 ## ECommerce и GTMFormSubmit — безопасная переработка
@@ -505,9 +505,9 @@ if (Page::inRootDirectory('catalog')) {
 - `lib/Seo/GTMFormSubmit.php`.
 
 Новая реализация:
-- `Project\\Seo\\Analytics\\BitrixECommerce`;
-- `Project\\Seo\\Analytics\\GtmFormEvent`;
-- `Project\\Seo\\Analytics\\ScriptRenderer`.
+- `Project\Seo\Analytics\BitrixECommerce`;
+- `Project\Seo\Analytics\GtmFormEvent`;
+- `Project\Seo\Analytics\ScriptRenderer`.
 
 Совместимые адаптеры:
 - `legacy/CodeMatrix/Legacy/Seo/ECommerce.php`;
@@ -681,4 +681,4 @@ if (Page::inRootDirectory('catalog')) {
 
 ## Files Checker
 
-Старый `Ns\\Bitrix\\Helper\\Files\\Checker::chooseFileIcoClass($id)` заменён адаптером `legacy/Ns/Bitrix/Helper/Files/Checker.php`. Он делегирует определение иконки классу `Project\\Bitrix\\File\\FileIconResolver`. Глобальные MIME-константы старой реализации не создаются, а `HelperCore` не наследуется, поскольку его магическое состояние не использовалось. Подробности: [FileTypeIconResolver.md](../classes/Support/FileTypeIconResolver.md).
+Старый `Ns\Bitrix\Helper\Files\Checker::chooseFileIcoClass($id)` заменён адаптером `legacy/Ns/Bitrix/Helper/Files/Checker.php`. Он делегирует определение иконки классу `Project\Bitrix\File\FileIconResolver`. Глобальные MIME-константы старой реализации не создаются, а `HelperCore` не наследуется, поскольку его магическое состояние не использовалось. Подробности: [FileTypeIconResolver.md](../classes/Support/FileTypeIconResolver.md).
