@@ -7,6 +7,17 @@
 ```text
 local/
 ├── components/                         # собственные компоненты проекта
+├── templates/
+│   ├── .default/
+│   │   ├── components/                  # шаблоны компонентов по умолчанию
+│   │   └── page_templates/
+│   │       └── standard.php             # базовая заготовка шаблона страницы
+│   └── main/                            # основной шаблон сайта
+│       ├── components/                  # переопределения шаблонов компонентов
+│       ├── description.php
+│       ├── header.php
+│       ├── footer.php
+│       └── template_styles.css
 ├── logs/                               # закрытый от HTTP-доступа каталог логов
 │   ├── .gitkeep                        # сохраняет пустой каталог в Git
 │   ├── .htaccess                       # запрет доступа для Apache
