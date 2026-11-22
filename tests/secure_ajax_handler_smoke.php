@@ -80,11 +80,11 @@ $public = $handler->handle('POST', [
     'message' => 'Здравствуйте',
 ]);
 secureAjaxExpect(($public['success'] ?? false) === true, 'Публичное действие может работать без авторизации и объектного разрешения.');
-secureAjaxExpect($permissionCalls === 3, 'Для публичного действия не должна запускаться проверка объектных прав.');
+secureAjaxExpect($permissionCalls === 2, 'Для публичного действия не должна запускаться проверка объектных прав.');
 
 $invalidRegistrationFailed = false;
 try {
-    $handler->register('Bad Action', static fn (): null => null);
+    $handler->register('Bad Action', static fn (): mixed => null);
 } catch (InvalidArgumentException) {
     $invalidRegistrationFailed = true;
 }
