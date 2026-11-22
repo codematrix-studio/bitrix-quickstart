@@ -15,7 +15,9 @@ class EmailValidator extends Validator
     {
         $value = $this->stringValue();
 
-        return $value !== null && filter_var(trim($value), FILTER_VALIDATE_EMAIL) !== false
+        $validator = new \Project\Support\EmailValidator();
+
+        return $value !== null && $validator->isValid($value)
             ? true
             : $this->fail();
     }
