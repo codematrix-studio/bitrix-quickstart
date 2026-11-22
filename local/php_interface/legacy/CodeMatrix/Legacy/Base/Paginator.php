@@ -7,7 +7,7 @@
  * не регистрируется глобально, чтобы избежать конфликтов с уже установленным lema.lib.
  */
 
-namespace Lema\Base;
+namespace CodeMatrix\Legacy\Base;
 
 class Paginator extends \Project\Support\ArrayPaginator
 {

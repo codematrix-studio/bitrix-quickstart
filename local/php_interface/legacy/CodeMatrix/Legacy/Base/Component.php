@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Адаптер совместимости со старым классом Lema\Base\Component.
+ * Адаптер совместимости со старым классом CodeMatrix\Legacy\Base\Component.
  * Подключайте файл после загрузки Composer autoloader.
  */
 
-namespace Lema\Base;
+namespace CodeMatrix\Legacy\Base;
 
 abstract class Component extends \Project\Bitrix\Component\ComponentInvoker
 {

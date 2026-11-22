@@ -4,7 +4,7 @@
  * Совместимая база meta-разметки из lema.lib.
  */
 
-namespace Lema\Base;
+namespace CodeMatrix\Legacy\Base;
 
 abstract class Markup extends \Project\Seo\MetaMarkup
 {

@@ -4,7 +4,7 @@
  * Совместимая база доступа к глобальным объектам из lema.lib.
  */
 
-namespace Lema\Base;
+namespace CodeMatrix\Legacy\Base;
 
 abstract class GlobalVars extends \Project\Support\PerClassGlobalProxy
 {

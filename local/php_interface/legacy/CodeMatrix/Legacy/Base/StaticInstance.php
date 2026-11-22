@@ -4,7 +4,7 @@
  * Совместимая база singleton-классов lema.lib.
  */
 
-namespace Lema\Base;
+namespace CodeMatrix\Legacy\Base;
 
 abstract class StaticInstance extends \Project\Support\PerClassInstance
 {

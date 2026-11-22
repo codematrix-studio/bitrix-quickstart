@@ -4,7 +4,7 @@
  * Совместимая база фасадов над объектами Bitrix.
  */
 
-namespace Lema\Base;
+namespace CodeMatrix\Legacy\Base;
 
 abstract class BitrixInstances extends \Project\Bitrix\Context\PerClassBitrixInstance
 {
