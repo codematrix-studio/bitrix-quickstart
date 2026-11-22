@@ -323,7 +323,7 @@ namespace {
     $assert(!$installer->DoInstall(), 'Исключение отката не должно считаться успешной установкой.');
     $assert(IsModuleInstalled('vendor.module'), 'После исключения отката модуль должен остаться зарегистрированным.');
     $assert(
-        \\Bitrix\\Main\\Config\\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
+        \Bitrix\Main\Config\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
         'После исключения отката должна сохраниться отметка незавершённой установки.'
     );
 
