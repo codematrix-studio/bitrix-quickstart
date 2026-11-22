@@ -2,7 +2,7 @@
 
 /**
  * Совместимый адаптер старого CodeMatrix\Legacy\Common\AssetManager.
- * Подключать после Composer autoload и только после отключения старого lema.lib.
+ * Подключать после Composer autoload. Пространство имён CodeMatrix\\Legacy
  */
 
 namespace CodeMatrix\Legacy\Common;
