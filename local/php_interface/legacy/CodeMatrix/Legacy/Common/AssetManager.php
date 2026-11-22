@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Совместимый адаптер старого CodeMatrix\Legacy\Common\AssetManager.
- * Подключать после Composer autoload. Пространство имён CodeMatrix\\Legacy
+ * Совместимый адаптер старого Lema\Common\AssetManager.
+ * Подключать после Composer autoload. Пространство имён CodeMatrix\Legacy
+ * не конфликтует с исходным Lema\ и допускает временное сосуществование.
  */
-
 namespace CodeMatrix\Legacy\Common;
 
 class AssetManager extends \Project\Bitrix\Asset\AssetManager
