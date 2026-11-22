@@ -70,6 +70,26 @@ formsExpect($form->validate(), 'FormValidator must accept a valid form and boole
 formsExpect($form->getField('name') === 'Иван', 'String fields must be trimmed.');
 formsExpect($form->getField('active') === false, 'Boolean false must not be converted to an empty string.');
 
+// Numeric range options must be valid finite numbers and form a consistent interval.
+$boundedNumeric = new Project\\Validation\\NumericValidator('amount', '10.5', ['min' => '10', 'max' => '11']);
+formsExpect($boundedNumeric->validate(), 'NumericValidator must accept values inside a valid decimal range.');
+
+foreach ([
+    ['min' => 'abc'],
+    ['max' => INF],
+    ['min' => 10, 'max' => 5],
+] as $invalidBounds) {
+    $invalidBoundsRejected = false;
+
+    try {
+        (new Project\\Validation\\NumericValidator('amount', '10', $invalidBounds))->validate();
+    } catch (InvalidArgumentException $exception) {
+        $invalidBoundsRejected = true;
+    }
+
+    formsExpect($invalidBoundsRejected, 'NumericValidator must reject invalid or contradictory range options.');
+}
+
 // required сохраняет старый смысл: false — неотмеченный флажок, а 0 — заданное значение.
 $requiredBoolean = new Project\Validation\FormValidator(
     [['accepted', 'required'], ['quantity', 'required']],
