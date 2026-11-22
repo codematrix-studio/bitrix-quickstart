@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use Bitrix\Main\SystemException;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -23,7 +21,7 @@ class ExampleComponent extends CBitrixComponent
      * @param array<string, mixed> $arParams
      * @return array<string, mixed>
      */
-    public function onPrepareComponentParams($arParams): array
+    public function onPrepareComponentParams($arParams)
     {
         $arParams['CACHE_TIME'] = max(0, (int) ($arParams['CACHE_TIME'] ?? 3600));
 
@@ -33,7 +31,7 @@ class ExampleComponent extends CBitrixComponent
     /**
      * Точка входа компонента.
      */
-    public function executeComponent(): void
+    public function executeComponent()
     {
         if (!$this->startResultCache($this->arParams['CACHE_TIME'])) {
             return;
@@ -54,14 +52,12 @@ class ExampleComponent extends CBitrixComponent
 
     /**
      * Подключает только те модули, которые действительно нужны компоненту.
-     *
-     * @throws SystemException
      */
     private function loadModules(): void
     {
         // Пример проверки зависимости:
         // if (!\Bitrix\Main\Loader::includeModule('iblock')) {
-        //     throw new SystemException('Модуль iblock не установлен.');
+        //     throw new \RuntimeException('Модуль iblock не установлен.');
         // }
     }
 
