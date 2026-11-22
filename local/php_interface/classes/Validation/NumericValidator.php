@@ -17,7 +17,7 @@ class NumericValidator extends Validator
         $max = $this->numericBound('max');
 
         if ($min !== null && $max !== null && $min > $max) {
-            throw new \\InvalidArgumentException('Параметр min не может быть больше max.');
+            throw new \InvalidArgumentException('Параметр min не может быть больше max.');
         }
 
         $value = $this->stringValue();
@@ -52,7 +52,7 @@ class NumericValidator extends Validator
         $value = $this->options[$name];
 
         if (!is_numeric($value) || !is_finite((float) $value)) {
-            throw new \\InvalidArgumentException(sprintf('Параметр %s должен быть конечным числом.', $name));
+            throw new \InvalidArgumentException(sprintf('Параметр %s должен быть конечным числом.', $name));
         }
 
         return (float) $value;
