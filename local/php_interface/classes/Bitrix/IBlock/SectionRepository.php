@@ -102,7 +102,7 @@ class SectionRepository
     {
         $this->ensureModule();
 
-        if ($this->d7List === null && !class_exists('Bitrix\\\\Iblock\\\\SectionTable')) {
+        if ($this->d7List === null && !class_exists('Bitrix\\Iblock\\SectionTable')) {
             return null;
         }
 
