@@ -236,6 +236,51 @@ exportExpect(
     'Bitrix exporter must resolve preview page URLs against the trusted base URL.'
 );
 
+// Multiple selected section trees should use one D7 descendants query.
+$d7SectionParams = [];
+$d7LegacyCalls = 0;
+$d7SectionRepository = new Project\\Bitrix\\IBlock\\SectionRepository(
+    static fn (): bool => true,
+    static function (array $params) use (&$d7SectionParams): array {
+        $d7SectionParams[] = $params;
+
+        return [
+            ['ID' => 6, 'NAME' => 'Потомок первого', 'IBLOCK_SECTION_ID' => 5],
+            ['ID' => 8, 'NAME' => 'Потомок второго', 'IBLOCK_SECTION_ID' => 7],
+        ];
+    },
+    static function ($order, $filter) use (&$d7LegacyCalls): array {
+        $d7LegacyCalls++;
+        return [
+            ['ID' => 5, 'NAME' => 'Первый корень', 'LEFT_MARGIN' => 1, 'RIGHT_MARGIN' => 4],
+            ['ID' => 7, 'NAME' => 'Второй корень', 'LEFT_MARGIN' => 5, 'RIGHT_MARGIN' => 8],
+        ];
+    }
+);
+$d7Exporter = new Project\\Export\\BitrixCatalogExporter(
+    12,
+    $urls,
+    $exportDirectory,
+    ['sectionIds' => [5, 7], 'cacheKey' => 'catalog-export-d7-sections'],
+    new Project\\Bitrix\\IBlock\\ElementRepository(static fn (): bool => true, null, static fn (): array => []),
+    $d7SectionRepository
+);
+$d7Loaded = $d7Exporter->loadData([], true);
+exportExpect(count($d7SectionParams) === 1, 'Selected section descendants must be loaded with one D7 query.');
+exportExpect($d7LegacyCalls === 1, 'D7 descendant loading must retain one legacy root query.');
+exportExpect(
+    ($d7SectionParams[0]['filter']['IBLOCK_ID'] ?? null) === 12
+        && ($d7SectionParams[0]['filter'][0]['LOGIC'] ?? null) === 'OR'
+        && count($d7SectionParams[0]['filter'][0]) === 3,
+    'D7 descendant query must scope the OR intervals to the requested iblock.'
+);
+exportExpect(
+    isset($d7Loaded['sections'][6], $d7Loaded['sections'][8])
+        && $d7Loaded['sections'][6]['parentId'] === 5
+        && $d7Loaded['sections'][8]['parentId'] === 7,
+    'D7 descendants must preserve each actual parent section ID.'
+);
+
 // A plain export limit should be pushed down to CIBlockElement::GetList().
 $limitedNavigation = null;
 $limitedElementRepository = new Project\Bitrix\IBlock\ElementRepository(
