@@ -16,7 +16,7 @@ local/
 ├── php_interface/
 │   ├── classes/
 │   │   └── Support/
-│   │       └── Logger.php              # файловый логгер Project\\Support\\Logger
+│   │       └── Logger.php              # файловый логгер Project\Support\Logger
 │   ├── config/
 │   │   └── const.php.example           # пример конфигурации, включая PROJECT_LOG_ENABLED
 │   ├── include/
