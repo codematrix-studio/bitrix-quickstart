@@ -69,7 +69,7 @@ class XmlExport extends BitrixCatalogExporter
                 'productIds' => $params['productIds'] ?? [],
                 'additionalData' => $params['additionalData'] ?? [],
                 'cacheTtl' => $params['cacheTtl'] ?? 86400,
-                'cacheKey' => $params['cacheKey'] ?? 'lema_catalog_' . (int) $iblockId,
+                'cacheKey' => $params['cacheKey'] ?? 'codematrix_legacy_catalog_' . (int) $iblockId,
             ]
         );
     }
