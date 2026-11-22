@@ -22,17 +22,17 @@
 
 | Старый API | Новый API | Совместимость |
 |---|---|---|
-| `CodeMatrix\Legacy\Base\Paginator` | `Project\Support\ArrayPaginator` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Base/Paginator.php` |
-| `CodeMatrix\Legacy\Template\Item` | `Project\Bitrix\IBlock\ElementView` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/Item.php` |
-| `CodeMatrix\Legacy\Template\Section` | `Project\Bitrix\IBlock\SectionView` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/Section.php` |
-| `CodeMatrix\Legacy\Template\TemplateHelper` | `Project\Bitrix\IBlock\TemplateHelper` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
-| `CodeMatrix\Legacy\Base\Component` | `Project\Bitrix\Component\ComponentInvoker` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Base/Component.php` |
+| `Lema\Base\Paginator` | `Project\Support\ArrayPaginator` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Base/Paginator.php` |
+| `Lema\Template\Item` | `Project\Bitrix\IBlock\ElementView` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/Item.php` |
+| `Lema\Template\Section` | `Project\Bitrix\IBlock\SectionView` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/Section.php` |
+| `Lema\Template\TemplateHelper` | `Project\Bitrix\IBlock\TemplateHelper` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Template/TemplateHelper.php`; `items()`/`sections()` возвращают старые `Item`/`Section` |
+| `Lema\Base\Component` | `Project\Bitrix\Component\ComponentInvoker` | Есть необязательный адаптер `legacy/CodeMatrix/Legacy/Base/Component.php` |
 
 Адаптеры не подключаются автоматически: их следует подключать после Composer autoload и только при миграции. Новое пространство имён `CodeMatrix\\Legacy` не конфликтует с исходным `Lema\\` и позволяет временно держать старый модуль `lema.lib` включённым.
 
 ### Подключение адаптеров при миграции
 
-Composer автоматически загружает только пространство имён `Project\\`. Адаптеры `CodeMatrix\Legacy\\` подключаются явно: универсальный PSR-4 mapping для `CodeMatrix\Legacy\\` намеренно не добавлен, поскольку он может перехватить классы установленного `lema.lib`.
+Composer автоматически загружает только пространство имён `Project\\`. Адаптеры `CodeMatrix\Legacy\\` подключаются явно через `require_once`; отдельный PSR-4 mapping для них не добавлен, поскольку это необязательный миграционный слой, а не основная библиотека проекта. Пространство имён `CodeMatrix\\Legacy` отделено от исходного `Lema\\` и не конфликтует с модулем `lema.lib`.
 
 Пример подключения базовых адаптеров и шаблонных представлений:
 
