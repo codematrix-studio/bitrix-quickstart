@@ -41,4 +41,4 @@ jobs:
       - name: Проверить Composer autoload через init.php
         run: |
           composer dump-autoload --working-dir=local --no-interaction
-          composer run-script test:autoload-composer --working-dir=local
+          composer --working-dir=local run-script test:autoload-composer
