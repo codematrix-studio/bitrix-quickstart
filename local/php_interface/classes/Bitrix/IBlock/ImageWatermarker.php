@@ -28,6 +28,7 @@ final class ImageWatermarker
 
         $defaults = [
             'name' => 'watermark',
+            'type' => 'image',
             'position' => 'center',
             'size' => 'real',
         ];
