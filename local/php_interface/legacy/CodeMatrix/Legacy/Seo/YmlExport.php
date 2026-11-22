@@ -28,17 +28,25 @@ class YmlExport extends \CodeMatrix\Legacy\Base\XmlExport
             array_filter($config, static fn ($value) => $value !== null)
         );
 
-        $xml = $renderer->render(
-            $this->getSections(),
-            $this->getProducts(),
-            $params,
-            $this->getGeneratedAt()
-        );
-
         if (!empty($params['sendHeader']) && !headers_sent()) {
             header('Content-Type: application/xml; charset=UTF-8');
         }
 
-        echo $xml;
+        $stream = fopen('php://output', 'wb');
+        if (!is_resource($stream)) {
+            throw new \\RuntimeException('Не удалось открыть поток вывода YML.');
+        }
+
+        try {
+            $renderer->renderToStream(
+                $this->getSections(),
+                $this->getProducts(),
+                $stream,
+                $params,
+                $this->getGeneratedAt()
+            );
+        } finally {
+            fclose($stream);
+        }
     }
 }
