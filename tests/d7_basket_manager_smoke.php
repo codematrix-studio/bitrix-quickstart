@@ -184,6 +184,7 @@ basketManagerExpect($manager->getPrice() === 60.0, 'Стоимость долж�
 
 $manager->setQuantity($firstId, 4);
 basketManagerExpect($manager->getGoodsCount() === 5.0, 'setQuantity() должен устанавливать, а не прибавлять количество.');
+basketManagerExpect($basket->refreshCalls === 4, 'Изменение количества должно пересчитывать данные провайдера до сохранения.');
 
 $manager->remove($secondId);
 basketManagerExpect($manager->getItemsCount() === 1, 'remove() должен удалять позицию по ID позиции корзины.');
