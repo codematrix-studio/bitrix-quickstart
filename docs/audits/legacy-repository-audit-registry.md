@@ -29,7 +29,7 @@
 | `local/php_interface/classes/Helper/UserProp/` | Основные типы просмотрены; Simai/CProp разобраны полностью статически, проверка БД/runtime остаётся открытой | [Аудит пользовательских типов свойств](legacy-user-properties-audit-2026-11-20.md) |
 | `local/php_interface/classes/Helper/MHT.php`, `Helper/MHT/IBlocksParser.php` | Проектный фасад магазина и генератор структуры каталога; вызов parser подтверждён из трёх импортёров | [Аудит MHT и генератора инфоблоков](legacy-mht-audit-2026-11-20.md) |
 | Кастомный 1С-обмен, UserHelper и CropImage | Проверены ключевые режимы активного компонента 1С, CustomCML2, UserHelper и CropImage; найдены отключённая CSRF/source check и массовая деактивация | [Аудит 1С, UserHelper и CropImage](legacy-1c-import-user-media-audit-2026-11-20.md) |
-| `Helper/Media`, `Favorite`, `Cloud`, `FollowService`, `ImageSitemapFile` | Статический проход выполнен; обнаружены риски файлового доступа, cookie, целостности XML и незавершённый cloud adapter | [Аудит media и пользовательских списков](legacy-media-user-state-audit-2026-11-20.md) |
+| `Helper/Media`, `Favorite`, `Cloud`, `FollowService`, `ImageSitemapFile` | Статический просмотр выполнен; дополнительно сверены точки подключения Thumbnail и маркер THUMB; прямой HTTP-доступ и серверные правила остаются открытыми | [Аудит media и пользовательских списков](legacy-media-user-state-audit-2026-11-20.md) |
 | EPG/CTW импорт и экспорт | Статический проход выполнен; найдены риски порчи цен/остатков, stored XSS и небезопасных путей | [Аудит обменов каталогом](legacy-catalog-exchange-audit-2026-11-20.md) |
 | Itsfera и утилиты | Itsfera/CDebug/CSoloTools просмотрены; HelperFunctions расширенно проверен статически, runtime и полный анализ использования не выполнены | [Аудит утилит и Itsfera](legacy-utility-helpers-audit-2026-11-20.md) |
 | Парсеры `local/codes/Ns/Parser/` | Статический просмотр выполнен; точки запуска/cron не подтверждены; обнаружены ошибки автозагрузки, наследования и логики импорта | [Аудит legacy-парсеров](legacy-parser-audit-2026-11-20.md) |
@@ -730,3 +730,19 @@
 
 
 **Дополнение по Altasib feedback.form:** POST/sessid и CAPTCHA checks есть, но file upload проверяет только extension из FILE_TYPE; пустой FILE_TYPE разрешает любое расширение, MIME/size validation нет. reCAPTCHA branch использует $server_key с закомментированным присваиванием. Call site в Git tree не найден.
+
+
+## Дополнение от 2026-11-23 — автозагрузка и использование Helper/Media, Favorite, Follow, Sitemap, Cloud
+
+Проверены Composer PSR-4 карта, цепочка `init.php`, регистрации событий и статические точки использования. `init.php` подключает Composer autoload и затем config/include-файлы; `config/events.php` пуст, а `include/handlers.php` содержит пять регистраций, не относящихся к проверенным helper-классам. В доступном Git tree не найдены внешние вызовы `FollowService`, `ImageSitemapFile`, `CYandexDiskCloud` и `AddToFavoritesHandler`; `FavoritesManager` используется только из этого неподтверждённого handler. У handler подтверждена ошибка namespace: он наследуется от несуществующего `Helper\\Favorite\\BaseHandler` вместо `Helper\\BaseHandler`. В репозитории есть иные, независимые реализации избранного (MHT-компонент на таблице `mht_favorites` и отдельный учебный cookie/UF пример); связь с `FavoritesManager` не подтверждена. См. дополнение в [аудите media и пользовательских списков](legacy-media-user-state-audit-2026-11-20.md).
+
+**Ограничение:** статический поиск по Git не исключает динамические include, внешнюю конфигурацию, БД-настройки и production-код вне репозитория. Composer также содержит `disable-tls: true` и `secure-http: false`; это отмечено как отдельный риск supply chain, требующий проверки lock-файла и фактических версий зависимостей.
+
+
+**Дополнение по Composer autoload:** явный префикс `Wizard\\` из `local/composer.json` отсутствует в generated maps, но корневой PSR-4 fallback присутствует и покрывает тот же каталог. Это структурное расхождение, не подтверждённая поломка автозагрузки. См. [дополнение к аудиту media и helper-классов](legacy-media-user-state-audit-2026-11-20.md).
+
+
+**Уточнение PSR-4 и Favorite/Follow:** отсутствие явного `Wizard\\` префикса в generated map не доказывает поломку, поскольку корневой PSR-4 mapping покрывает namespace fallback. В `FavoritesManager` и `FollowService` подтверждено использование `unserialize()` для клиентских cookie без ограничения классов; это небезопасная десериализация, но эксплуатация зависит от gadget chain и достижимости. Также выявлены namespace-ошибка при создании `InvalidArgumentException` в `FollowService` и преждевременный `Response::flush()` из helper-сервисов. Детали и безопасные варианты исправления — в [аудите media/user-state](legacy-media-user-state-audit-2026-11-20.md).
+
+
+**Дополнение по Media/Cloud:** `CropImage` пропускает нулевые размеры и не проверяет результат `getimagesize()`, а также не ограничивает ресурсы/пути; внешняя точка вызова не найдена, поэтому exploit path не подтверждён. `CYandexDiskCloud` — незавершённый прототип: операции с bucket/files/multipart оставлены TODO, регистрация и внешние вызовы не найдены. Не переносить как готовые решения. Подробности — в [аудите media/user-state](legacy-media-user-state-audit-2026-11-20.md).
