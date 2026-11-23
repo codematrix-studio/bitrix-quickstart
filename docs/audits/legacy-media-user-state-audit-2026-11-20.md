@@ -214,3 +214,15 @@
 `Helper\\BaseHandler` объявлен в `local/php_interface/classes/Helper/BaseHandler.php`. Но `AddToFavoritesHandler` находится в namespace `Helper\\Favorite` и объявлен как `extends BaseHandler` без `use Helper\\BaseHandler` или полного имени. PHP будет искать `Helper\\Favorite\\BaseHandler`, которого в исходном дереве нет. При попытке загрузить handler это приводит к ошибке отсутствующего родительского класса. Дополнительно файл подключает `prolog_before.php` на уровне файла, создавая побочный эффект при самом подключении класса.
 
 **Решение по группе:** не переносить ни один из перечисленных классов. Для Favorite сначала выбрать одну подтверждённую модель хранения; затем реализовать новый сервис/контроллер с безопасным форматом cookie и проверками. Sitemap строить на штатном API или новом writer. Cloud adapter разрабатывать отдельно только при подтверждённой потребности. Динамическое/production использование остаётся вне доказуемой границы Git-аудита.
+
+
+### Сверка Composer manifest с фактически подключаемым autoloader
+
+Дополнительно проверены отслеживаемые `local/vendor/composer/autoload_static.php`, `autoload_real.php`, `autoload_psr4.php` и `composer.lock`.
+
+- `composer.json` объявляет PSR-4 namespace `Wizard\\` → `php_interface/classes/Wizard`.
+- Фактически используемый при обычном запуске PHP static loader подключается из `autoload_real.php` и берёт карту из `autoload_static.php`. В этой карте namespace `Wizard\\` отсутствует. Он отсутствует и в fallback `autoload_psr4.php`.
+- Следовательно, checked-in Composer autoloader не соответствует manifest: классы `Wizard\\...` не будут автоматически найдены через этот сгенерированный loader, пока не выполнен корректный `composer dump-autoload` и не зафиксированы актуальные generated-файлы. Наличие каталога само по себе не исправляет расхождение.
+- Для `Helper\\` mapping в manifest и generated static loader совпадает; это не исправляет отдельную ошибку наследования `AddToFavoritesHandler` от неверного namespace базового класса.
+
+**Решение:** после проверки требуемых namespace обновлять generated autoload только воспроизводимой командой Composer, сверять manifest и generated maps в CI; не редактировать generated-файлы вручную.
