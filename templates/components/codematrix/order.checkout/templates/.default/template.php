@@ -278,6 +278,7 @@ if (!empty($arResult['IS_EMPTY'])) {
 BX.ready(function () {
     const { createApp, ref, reactive } = BX.Vue3;
     const initialState = <?= Json::encode($arResult['INITIAL_STATE']) ?>;
+    const checkoutRequestId = '<?= bin2hex(random_bytes(16)) ?>';
     const signedParameters = '<?= CUtil::JSEscape($arResult['SIGNED_PARAMS']) ?>';
     const dadataEnabled = <?= $arResult['DADATA_ENABLED'] ? 'true' : 'false' ?>;
     const autoRedirectPayment = <?= $arResult['AUTO_REDIRECT_PAYMENT'] ? 'true' : 'false' ?>;
@@ -308,7 +309,8 @@ BX.ready(function () {
                 paySystemId: initialState.selectedPaySystemId,
                 comment: '',
                 coupon: '',
-                clearCoupon: false
+                clearCoupon: false,
+                requestId: checkoutRequestId
             });
 
             const isAddressProp = (code) => ['ADDRESS', 'COMPANY_ADR', 'LEGAL_ADDRESS'].includes(code);

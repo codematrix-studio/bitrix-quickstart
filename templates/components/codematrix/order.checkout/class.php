@@ -260,6 +260,61 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         Loader::includeModule('sale');
         Loader::includeModule('catalog');
 
+        $requestId = (string)($payload['requestId'] ?? '');
+        if (!preg_match('/^[a-f0-9]{32}$/i', $requestId)) {
+            $this->errorCollection->setError(new Error('Не удалось проверить запрос оформления заказа. Обновите страницу и повторите попытку.'));
+            return null;
+        }
+
+        $fingerprint = $this->getOrderRequestFingerprint($payload);
+        $sessionKey = $this->getOrderIdempotencySessionKey();
+        $_SESSION['CODEMATRIX_ORDER_CHECKOUT_IDEMPOTENCY'] ??= [];
+        $_SESSION['CODEMATRIX_ORDER_CHECKOUT_IDEMPOTENCY'][$sessionKey] ??= [];
+        $requests = &$_SESSION['CODEMATRIX_ORDER_CHECKOUT_IDEMPOTENCY'][$sessionKey];
+
+        // Храним только недавние ключи, чтобы сессия не разрасталась.
+        $expirationTime = time() - 86400;
+        foreach ($requests as $key => $entry) {
+            if ((int)($entry['updatedAt'] ?? 0) < $expirationTime) {
+                unset($requests[$key]);
+            }
+        }
+
+        if (isset($requests[$requestId])) {
+            $entry = $requests[$requestId];
+            if (!hash_equals((string)($entry['fingerprint'] ?? ''), $fingerprint)) {
+                $this->errorCollection->setError(new Error('Данные заказа изменились. Обновите страницу перед повторным оформлением.'));
+                return null;
+            }
+
+            if (($entry['status'] ?? '') === 'completed' && (int)($entry['orderId'] ?? 0) > 0) {
+                $existingOrder = Order::load((int)$entry['orderId']);
+                global $USER;
+                $currentUserId = ($USER && $USER->IsAuthorized())
+                    ? (int)$USER->GetID()
+                    : (int)\\CSaleUser::GetAnonymousUserID();
+
+                if ($existingOrder
+                    && (int)$existingOrder->getField('USER_ID') === $currentUserId
+                    && (int)$existingOrder->getField('FUSER_ID') === Fuser::getId()
+                ) {
+                    return [
+                        'orderId'         => $existingOrder->getId(),
+                        'accountNumber'   => $existingOrder->getField('ACCOUNT_NUMBER'),
+                        'payment'         => null,
+                        'alreadyProcessed' => true,
+                    ];
+                }
+
+                unset($requests[$requestId]);
+            } elseif (($entry['status'] ?? '') === 'processing') {
+                $this->errorCollection->setError(new Error('Заказ с этим запросом уже обрабатывается. Подождите и обновите страницу.'));
+                return null;
+            } else {
+                unset($requests[$requestId]);
+            }
+        }
+
         $basket = $this->getCurrentBasket();
         if ($basket->isEmpty()) {
             $this->errorCollection->setError(new Error('Ваша корзина пуста'));
@@ -299,13 +354,38 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
+        // Резервируем ключ до сохранения. При стандартной PHP session handler
+        // параллельные AJAX-запросы одной сессии выполняются последовательно.
+        $requests[$requestId] = [
+            'fingerprint' => $fingerprint,
+            'status' => 'processing',
+            'orderId' => 0,
+            'updatedAt' => time(),
+        ];
+
         $saveResult = $order->save();
 
         if (!$saveResult->isSuccess()) {
+            unset($requests[$requestId]);
             foreach ($saveResult->getErrors() as $err) {
                 $this->errorCollection->setError($err);
             }
             return null;
+        }
+
+        // Фиксируем заказ сразу после успешного сохранения, до обращения к эквайрингу.
+        $requests[$requestId] = [
+            'fingerprint' => $fingerprint,
+            'status' => 'completed',
+            'orderId' => (int)$order->getId(),
+            'updatedAt' => time(),
+        ];
+
+        if (count($requests) > 20) {
+            uasort($requests, static function (array $a, array $b): int {
+                return (int)($a['updatedAt'] ?? 0) <=> (int)($b['updatedAt'] ?? 0);
+            });
+            $requests = array_slice($requests, -20, null, true);
         }
 
         $paymentData = null;
@@ -314,10 +394,53 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         return [
-            'orderId'       => $order->getId(),
-            'accountNumber' => $order->getField('ACCOUNT_NUMBER'),
-            'payment'       => $paymentData,
+            'orderId'          => $order->getId(),
+            'accountNumber'    => $order->getField('ACCOUNT_NUMBER'),
+            'payment'          => $paymentData,
+            'alreadyProcessed' => false,
         ];
+    }
+
+    /**
+     * Создаёт отпечаток пользовательских данных оформления без самого ключа запроса.
+     */
+    private function getOrderRequestFingerprint(array $payload): string
+    {
+        unset($payload['requestId']);
+        $normalize = static function (&$value) use (&$normalize): void {
+            if (!is_array($value)) {
+                return;
+            }
+
+            foreach ($value as &$item) {
+                $normalize($item);
+            }
+            unset($item);
+
+            if (array_keys($value) !== range(0, count($value) - 1)) {
+                ksort($value);
+            }
+        };
+        $normalize($payload);
+
+        return hash('sha256', Json::encode($payload));
+    }
+
+    /**
+     * Изолирует ключи идемпотентности по сайту, пользователю и Fuser.
+     */
+    private function getOrderIdempotencySessionKey(): string
+    {
+        global $USER;
+        $userId = ($USER && $USER->IsAuthorized())
+            ? (int)$USER->GetID()
+            : (int)\\CSaleUser::GetAnonymousUserID();
+
+        return hash('sha256', implode(':', [
+            Context::getCurrent()->getSite(),
+            $userId,
+            Fuser::getId(),
+        ]));
     }
 
     /**
