@@ -41,6 +41,7 @@ exportExpect(
 );
 exportExpect($cache->get('catalog') === $cacheData, 'JSON cache must preserve arrays.');
 exportExpect($cache->isFresh('catalog', 60), 'Newly written cache must be fresh.');
+exportExpect(!$cache->isFresh('catalog', 0), 'A zero cache TTL must expire immediately, including within the same second.');
 
 file_put_contents($tempDirectory . '/broken.json', '{broken');
 exportExpect($cache->get('broken') === null, 'Invalid JSON cache must be treated as a cache miss.');
