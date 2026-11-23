@@ -97,7 +97,7 @@ $form->setRecaptchaVerifier(
 
 ### Устройство валидаторов
 
-Каждое стандартное правило обслуживается отдельным классом в `Project\Validation`: `RequiredValidator`, `BooleanValidator`, `EmailValidator`, `IpValidator`, `LengthValidator`, `RegexValidator`, `NumericValidator`, `PhoneValidator`, `UrlValidator` и `RecaptchaValidator`. `FormValidator` создаёт эти классы по карте `validators()`. Поэтому можно переопределить карту в наследнике и добавить собственный валидатор. Старые классы `Lema\Forms\Validators\*` остаются адаптерами к этому механизму.
+Каждое стандартное правило обслуживается отдельным классом в `Project\\Validation`: `RequiredValidator`, `BooleanValidator`, `EmailValidator`, `IpValidator`, `LengthValidator`, `RegexValidator`, `NumericValidator`, `PhoneValidator`, `UrlValidator` и `RecaptchaValidator`. `FormValidator` создаёт эти классы по карте `validators()`. Поэтому можно переопределить карту в наследнике и добавить собственный валидатор. Совместимые адаптеры `CodeMatrix\\Legacy\\Forms\\Validators\\*` делегируют проверку новым классам и сохраняют прежний контракт для миграции.
 
 Базовый `Project\Validation\Validator` предоставляет общие методы для значения, параметров, ошибки и настройки `showAllErrors`. Он не вызывает `validate()` в конструкторе: новый код запускает проверку явно. Старый адаптер `LegacyFieldValidator` сохраняет прежнее поведение, при котором проверка вызывается при создании объекта.
 
