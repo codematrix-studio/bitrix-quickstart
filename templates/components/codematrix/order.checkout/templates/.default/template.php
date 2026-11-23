@@ -63,10 +63,20 @@ if (!empty($arResult['IS_EMPTY'])) {
                 <h3>1. Тип плательщика</h3>
                 <div class="cm-checkout__radio-group">
                     <label v-for="pt in state.personTypes" :key="pt.id" class="cm-radio-pill" :class="{ active: form.personTypeId === pt.id }">
-                        <input type="radio" :value="pt.id" v-model="form.personTypeId" @change="recalculate">
+                        <input type="radio" :value="pt.id" v-model="form.personTypeId" @change="onPersonTypeChange">
                         <span>{{ pt.name }}</span>
                     </label>
                 </div>
+            </section>
+
+            <section class="cm-checkout__section" v-if="state.profiles && state.profiles.length">
+                <h3>Профиль покупателя</h3>
+                <select v-model="form.profileId" @change="selectBuyerProfile">
+                    <option :value="0">Заполнить данные вручную</option>
+                    <option v-for="profile in state.profiles" :key="profile.id" :value="profile.id">
+                        {{ profile.name }}
+                    </option>
+                </select>
             </section>
 
             <!-- 2. Данные покупателя -->
@@ -284,6 +294,7 @@ BX.ready(function () {
 
             const form = reactive({
                 personTypeId: initialState.personTypeId,
+                profileId: initialState.selectedProfileId || 0,
                 properties: { ...initialState.propValues },
                 deliveryId: initialState.selectedDeliveryId,
                 paySystemId: initialState.selectedPaySystemId,
@@ -333,6 +344,7 @@ BX.ready(function () {
             const syncFormWithState = (newState) => {
                 state.value = newState;
                 form.personTypeId = newState.personTypeId;
+                form.profileId = newState.selectedProfileId || 0;
                 form.deliveryId = newState.selectedDeliveryId;
                 form.paySystemId = newState.selectedPaySystemId;
 
@@ -366,6 +378,17 @@ BX.ready(function () {
                     generalErrors.value = (response.errors || []).map(e => e.message);
                     loading.value = false;
                 });
+            };
+
+            const onPersonTypeChange = () => {
+                form.profileId = 0;
+                form.properties = {};
+                recalculate();
+            };
+
+            const selectBuyerProfile = () => {
+                form.properties = {};
+                recalculate();
             };
 
             const clearCoupon = () => {
@@ -546,6 +569,8 @@ BX.ready(function () {
                 isPartyProp,
                 isPhoneProp,
                 onPhoneInput,
+                onPersonTypeChange,
+                selectBuyerProfile,
                 recalculate,
                 clearCoupon,
                 onLocationInput,

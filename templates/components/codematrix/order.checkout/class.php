@@ -22,7 +22,9 @@ use Bitrix\Sale\Internals\PersonTypeTable;
 use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\OrderUserProperties;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\Internals\UserPropsTable;
 use Bitrix\Sale\PaySystem;
 
 class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Controllerable, Errorable
@@ -435,14 +437,27 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         $propValues = $payload['properties'] ?? [];
         $defaultLocation = (string)($this->arParams['DEFAULT_LOCATION'] ?? '0000073738');
+        $profileValues = [];
+        $profileId = (int)($payload['profileId'] ?? 0);
+
+        if ($profileId > 0 && $userId > 0 && $userId !== (int)\\CSaleUser::GetAnonymousUserID()
+            && OrderUserProperties::checkCorrect($profileId, $personTypeId, $userId)
+        ) {
+            $profileValues = OrderUserProperties::getProfileValues($profileId);
+        }
 
         foreach ($order->getPropertyCollection() as $property) {
             $propData = $property->getProperty();
             $code = (string)$propData['CODE'];
+            $propertyId = (int)$propData['ID'];
+
+            if (array_key_exists($propertyId, $profileValues)) {
+                $property->setValue($profileValues[$propertyId]);
+            }
 
             if (array_key_exists($code, $propValues) && $propValues[$code] !== '') {
                 $property->setValue($propValues[$code]);
-            } elseif ($propData['IS_LOCATION'] === 'Y') {
+            } elseif ($propData['IS_LOCATION'] === 'Y' && $property->getValue() === null) {
                 $property->setValue($defaultLocation);
             }
         }
@@ -580,6 +595,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         return [
             'personTypes'         => array_values($this->getPersonTypes($siteId)),
+            'profiles'            => $this->getBuyerProfiles((int)$order->getPersonTypeId()),
+            'selectedProfileId'   => (int)($payload['profileId'] ?? 0),
             'personTypeId'        => $order->getPersonTypeId(),
             'properties'          => $properties,
             'propValues'          => $propValues,
@@ -650,6 +667,37 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     {
         $siteId = Context::getCurrent()->getSite();
         return Basket::loadItemsForFUser(Fuser::getId(), $siteId)->getOrderableItems();
+    }
+
+    private function getBuyerProfiles(int $personTypeId): array
+    {
+        global $USER;
+
+        if (!$USER || !$USER->IsAuthorized() || $personTypeId <= 0) {
+            return [];
+        }
+
+        $profiles = UserPropsTable::getList([
+            'select' => ['ID', 'NAME'],
+            'filter' => [
+                '=USER_ID' => (int)$USER->GetID(),
+                '=PERSON_TYPE_ID' => $personTypeId,
+            ],
+            'order' => [
+                'DATE_UPDATE' => 'DESC',
+                'ID' => 'DESC',
+            ],
+        ]);
+
+        $result = [];
+        while ($profile = $profiles->fetch()) {
+            $result[] = [
+                'id' => (int)$profile['ID'],
+                'name' => (string)$profile['NAME'],
+            ];
+        }
+
+        return $result;
     }
 
     private function getPersonTypes(string $siteId): array
