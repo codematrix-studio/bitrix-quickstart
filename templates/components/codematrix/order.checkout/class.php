@@ -186,6 +186,14 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return ['items' => []];
         }
 
+        if (mb_strlen($query) > 120) {
+            return ['items' => []];
+        }
+
+        if (!in_array($type, ['address', 'party'], true)) {
+            $type = 'address';
+        }
+
         $endpoint = $type === 'party'
             ? 'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party'
             : 'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address';
@@ -227,12 +235,17 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     'address' => (string)($data['address']['unrestricted_value'] ?? $data['address']['value'] ?? ''),
                 ];
             } else {
-                $kladrId = (string)($data['settlement_kladr_id'] ?: $data['city_kladr_id'] ?: $data['region_kladr_id'] ?: '');
+                $kladrId = (string)(
+                    ($data['settlement_kladr_id'] ?? '')
+                    ?: ($data['city_kladr_id'] ?? '')
+                    ?: ($data['region_kladr_id'] ?? '')
+                );
+                $cityName = (string)(($data['settlement'] ?? '') ?: ($data['city'] ?? ''));
                 $items[] = [
                     'value'        => (string)($suggestion['value'] ?? ''),
                     'postalCode'   => (string)($data['postal_code'] ?? ''),
-                    'city'         => (string)($data['settlement'] ?: $data['city'] ?: ''),
-                    'locationCode' => $this->resolveBitrixLocationByKladr($kladrId, (string)($data['city'] ?? '')),
+                    'city'         => $cityName,
+                    'locationCode' => $this->resolveBitrixLocationByKladr($kladrId),
                 ];
             }
         }
@@ -276,7 +289,14 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
-        $order->doFinalAction(true);
+        $finalResult = $order->doFinalAction(true);
+        if (!$finalResult->isSuccess()) {
+            foreach ($finalResult->getErrors() as $error) {
+                $this->errorCollection->setError($error);
+            }
+            return null;
+        }
+
         $saveResult = $order->save();
 
         if (!$saveResult->isSuccess()) {
@@ -373,40 +393,22 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         return $resultData;
     }
 
-    private function resolveBitrixLocationByKladr(string $kladrId, string $cityName = ''): string
+    private function resolveBitrixLocationByKladr(string $kladrId): string
     {
-        if ($kladrId !== '') {
-            $ext = ExternalTable::getList([
-                'filter' => [
-                    '=XML_ID'       => $kladrId,
-                    '=SERVICE.CODE' => 'KLADR',
-                ],
-                'select' => ['LOCATION_CODE' => 'LOCATION.CODE'],
-                'limit'  => 1,
-            ])->fetch();
-
-            if (!empty($ext['LOCATION_CODE'])) {
-                return (string)$ext['LOCATION_CODE'];
-            }
+        if ($kladrId === '') {
+            return '';
         }
 
-        if ($cityName !== '') {
-            $loc = LocationTable::getList([
-                'filter' => [
-                    '=NAME.LANGUAGE_ID' => LANGUAGE_ID,
-                    '=NAME.NAME'        => $cityName,
-                    '=TYPE.CODE'        => ['CITY', 'VILLAGE', 'TOWN'],
-                ],
-                'select' => ['CODE'],
-                'limit'  => 1,
-            ])->fetch();
+        $ext = ExternalTable::getList([
+            'filter' => [
+                '=XML_ID'       => $kladrId,
+                '=SERVICE.CODE' => 'KLADR',
+            ],
+            'select' => ['LOCATION_CODE' => 'LOCATION.CODE'],
+            'limit'  => 1,
+        ])->fetch();
 
-            if (!empty($loc['CODE'])) {
-                return (string)$loc['CODE'];
-            }
-        }
-
-        return '';
+        return !empty($ext['LOCATION_CODE']) ? (string)$ext['LOCATION_CODE'] : '';
     }
 
     private function createVirtualOrder(array $payload): Order
@@ -638,7 +640,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         return array_filter([
             'FIO'     => $fio,
             'EMAIL'   => (string)($userRow['EMAIL'] ?? ''),
-            'PHONE'   => (string)($userRow['PERSONAL_PHONE'] ?: $userRow['PERSONAL_MOBILE'] ?: ''),
+            'PHONE'   => (string)(($userRow['PERSONAL_PHONE'] ?? '') ?: ($userRow['PERSONAL_MOBILE'] ?? '')),
             'ADDRESS' => (string)($userRow['PERSONAL_STREET'] ?? ''),
             'ZIP'     => (string)($userRow['PERSONAL_ZIP'] ?? ''),
         ]);

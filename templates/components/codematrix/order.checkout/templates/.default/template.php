@@ -304,7 +304,7 @@ BX.ready(function () {
                     return;
                 }
 
-                let digits = String(event.target.value || '').replace(/\\D/g, '');
+                let digits = String(event.target.value || '').replace(/\D/g, '');
                 if (digits.startsWith('8')) {
                     digits = '7' + digits.slice(1);
                 } else if (!digits.startsWith('7') && digits.length > 0) {
@@ -312,7 +312,7 @@ BX.ready(function () {
                 }
                 digits = digits.slice(0, 11);
 
-                let formatted = '+7';
+                let formatted = digits.length === 0 ? '' : '+7';
                 if (digits.length > 1) {
                     formatted += ' (' + digits.slice(1, 4);
                 }
@@ -376,8 +376,10 @@ BX.ready(function () {
 
             const onLocationInput = (propCode) => {
                 clearTimeout(locationTimer);
+                // Любое редактирование текста аннулирует ранее выбранный Bitrix location CODE.
+                form.properties[propCode] = '';
+                locationSuggestions.value = [];
                 if (locationQuery.value.trim().length < 2) {
-                    locationSuggestions.value = [];
                     return;
                 }
                 locationTimer = setTimeout(() => {
@@ -423,12 +425,15 @@ BX.ready(function () {
                 }
 
                 const locProp = state.value.properties.find(p => p.isLocation);
-                if (locProp && item.locationCode) {
-                    form.properties[locProp.code] = item.locationCode;
+                if (locProp) {
+                    // Не оставляем старый код, если DaData не сопоставилась с каталогом Bitrix.
+                    form.properties[locProp.code] = item.locationCode || '';
                     if (item.city) {
                         locationQuery.value = item.city;
                     }
-                    recalculate();
+                    if (item.locationCode) {
+                        recalculate();
+                    }
                 }
 
                 dadataSuggestions.value = [];
