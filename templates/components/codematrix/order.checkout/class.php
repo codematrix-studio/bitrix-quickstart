@@ -440,7 +440,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $profileValues = [];
         $profileId = (int)($payload['profileId'] ?? 0);
 
-        if ($profileId > 0 && $userId > 0 && $userId !== (int)\\CSaleUser::GetAnonymousUserID()
+        if ($profileId > 0 && $userId > 0 && $userId !== (int)\CSaleUser::GetAnonymousUserID()
             && OrderUserProperties::checkCorrect($profileId, $personTypeId, $userId)
         ) {
             $profileValues = OrderUserProperties::getProfileValues($profileId);
