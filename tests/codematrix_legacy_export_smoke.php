@@ -57,6 +57,16 @@ exportExpect($invalidKeyRejected, 'Cache keys must not allow directory traversal
 $escaped = Project\Export\XmlEscaper::text("A & B <tag> \"quoted\" 'text' \x01");
 exportExpect(str_contains($escaped, 'A &amp; B &lt;tag&gt;'), 'XML text must escape markup characters.');
 exportExpect(!str_contains($escaped, "\x01"), 'XML text must remove invalid XML control characters.');
+$malformedUtf8 = "До повреждения \xF4\x90\x80\x80 после повреждения";
+exportExpect(
+    Project\Export\XmlEscaper::text($malformedUtf8) === 'До повреждения � после повреждения',
+    'Malformed UTF-8 must not discard valid XML text surrounding the invalid sequence.'
+);
+exportExpect(
+    Project\Export\XmlEscaper::attribute("Товар \"\xF4\x90\x80\x80 & описание")
+        === 'Товар &quot;� &amp; описание',
+    'Malformed UTF-8 in XML attributes must be substituted while preserving surrounding text.'
+);
 
 $urls = new Project\Support\UrlGenerator('https://shop.example.org');
 $renderer = new Project\Export\YmlCatalogRenderer($urls, [
