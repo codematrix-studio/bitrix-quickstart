@@ -97,7 +97,7 @@ $form->setRecaptchaVerifier(
 
 ### Устройство валидаторов
 
-Каждое стандартное правило обслуживается отдельным классом в `Project\Validation`: `RequiredValidator`, `BooleanValidator`, `EmailValidator`, `IpValidator`, `LengthValidator`, `RegexValidator`, `NumericValidator`, `PhoneValidator`, `UrlValidator` и `RecaptchaValidator`. `FormValidator` создаёт эти классы по карте `validators()`. Поэтому можно переопределить карту в наследнике и добавить собственный валидатор. Старые классы `Lema\Forms\Validators\*` остаются адаптерами к этому механизму.
+Каждое стандартное правило обслуживается отдельным классом в `Project\\Validation`: `RequiredValidator`, `BooleanValidator`, `EmailValidator`, `IpValidator`, `LengthValidator`, `RegexValidator`, `NumericValidator`, `PhoneValidator`, `UrlValidator` и `RecaptchaValidator`. `FormValidator` создаёт эти классы по карте `validators()`. Поэтому можно переопределить карту в наследнике и добавить собственный валидатор. Совместимые адаптеры `CodeMatrix\\Legacy\\Forms\\Validators\\*` делегируют проверку новым классам и сохраняют прежний контракт для миграции.
 
 Базовый `Project\Validation\Validator` предоставляет общие методы для значения, параметров, ошибки и настройки `showAllErrors`. Он не вызывает `validate()` в конструкторе: новый код запускает проверку явно. Старый адаптер `LegacyFieldValidator` сохраняет прежнее поведение, при котором проверка вызывается при создании объекта.
 
@@ -115,13 +115,13 @@ ID инфоблока из аргумента имеет приоритет на
 
 ## Совместимость с lema.lib
 
-Старые имена доступны через явно подключаемые адаптеры:
+Совместимые адаптеры доступны в отдельном пространстве имён `CodeMatrix\Legacy\Forms` и подключаются явно:
 
-- `legacy/Lema/Forms/Form.php`;
-- `legacy/Lema/Forms/AjaxForm.php`;
-- `legacy/Lema/Forms/Validators/*.php`.
+- `local/php_interface/legacy/CodeMatrix/Legacy/Forms/Form.php`;
+- `local/php_interface/legacy/CodeMatrix/Legacy/Forms/AjaxForm.php`;
+- `local/php_interface/legacy/CodeMatrix/Legacy/Forms/Validators/*.php`.
 
-Подключать после Composer autoload. Адаптер `AjaxForm` по-прежнему наследуется от `Lema\Forms\Form`. Реестр `validators()` возвращает прежние имена классов. Пользовательские валидаторы, унаследованные от `Lema\Forms\Validators\Validator`, могут быть подключены через собственный класс формы и дополненный реестр.
+Подключать после Composer autoload. Адаптер `CodeMatrix\Legacy\Forms\AjaxForm` наследуется от `CodeMatrix\Legacy\Forms\Form`, а тот — от `Project\Validation\FormValidator`. Реестр `validators()` возвращает имена классов из пространства `CodeMatrix\Legacy\Forms\Validators`. Пользовательские валидаторы могут наследоваться от `CodeMatrix\Legacy\Forms\Validators\Validator` и подключаться через собственный класс формы и дополненный реестр. Пространство `Lema` не регистрируется, поэтому адаптеры могут сосуществовать с исходным модулем `lema.lib`.
 
 ### Изменения поведения относительно старой версии
 
