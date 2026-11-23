@@ -740,3 +740,6 @@
 
 
 **Дополнение по Composer autoload:** явный префикс `Wizard\\` из `local/composer.json` отсутствует в generated maps, но корневой PSR-4 fallback присутствует и покрывает тот же каталог. Это структурное расхождение, не подтверждённая поломка автозагрузки. См. [дополнение к аудиту media и helper-классов](legacy-media-user-state-audit-2026-11-20.md).
+
+
+**Уточнение PSR-4 и Favorite/Follow:** отсутствие явного `Wizard\\` префикса в generated map не доказывает поломку, поскольку корневой PSR-4 mapping покрывает namespace fallback. В `FavoritesManager` и `FollowService` подтверждено использование `unserialize()` для клиентских cookie без ограничения классов; это небезопасная десериализация, но эксплуатация зависит от gadget chain и достижимости. Также выявлены namespace-ошибка при создании `InvalidArgumentException` в `FollowService` и преждевременный `Response::flush()` из helper-сервисов. Детали и безопасные варианты исправления — в [аудите media/user-state](legacy-media-user-state-audit-2026-11-20.md).
