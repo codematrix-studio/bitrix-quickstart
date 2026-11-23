@@ -12,13 +12,17 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Json;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Delivery;
 use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Internals\PersonTypeTable;
+use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem;
 
 class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Controllerable, Errorable
@@ -50,7 +54,13 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     new ActionFilter\Csrf(),
                 ],
             ],
-            'searchLocation' => [
+            'searchLocations' => [
+                'prefilters' => [
+                    new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
+                    new ActionFilter\Csrf(),
+                ],
+            ],
+            'suggestDadata' => [
                 'prefilters' => [
                     new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
                     new ActionFilter\Csrf(),
@@ -65,24 +75,41 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         ];
     }
 
+    protected function listKeysSignedParameters(): array
+    {
+        return [
+            'DEFAULT_LOCATION',
+            'DADATA_API_KEY',
+            'AUTO_INIT_PAYMENT',
+            'AUTO_REDIRECT_PAYMENT',
+        ];
+    }
+
     public function executeComponent(): void
     {
         if (!Loader::includeModule('sale') || !Loader::includeModule('catalog')) {
-            ShowError('Модули sale или catalog не установлены');
+            ShowError('Модули интернет-магазина (sale, catalog) не установлены.');
             return;
         }
 
         $basket = $this->getCurrentBasket();
         if ($basket->isEmpty()) {
             $this->arResult['IS_EMPTY'] = true;
+            $this->arResult['PATH_TO_BASKET'] = (string)($this->arParams['PATH_TO_BASKET'] ?? '/personal/cart/');
             $this->includeComponentTemplate();
             return;
         }
 
         $this->arResult['IS_EMPTY'] = false;
+        $this->arResult['SIGNED_PARAMS'] = $this->getSignedParameters();
+        $this->arResult['PATH_TO_PERSONAL'] = (string)($this->arParams['PATH_TO_PERSONAL'] ?? '/personal/orders/');
+        $this->arResult['DADATA_ENABLED'] = trim((string)($this->arParams['DADATA_API_KEY'] ?? '')) !== '';
+        $this->arResult['AUTO_REDIRECT_PAYMENT'] = ($this->arParams['AUTO_REDIRECT_PAYMENT'] ?? 'Y') === 'Y';
+
+        $initialProperties = $this->getUserProfileDefaults();
         $this->arResult['INITIAL_STATE'] = $this->buildOrderState([
             'personTypeId' => $this->getDefaultPersonTypeId(),
-            'properties'   => $this->getAuthorizedUserProps(),
+            'properties'   => $initialProperties,
             'deliveryId'   => 0,
             'paySystemId'  => 0,
             'comment'      => '',
@@ -90,38 +117,6 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         ]);
 
         $this->includeComponentTemplate();
-    }
-
-    public function searchLocationAction(string $query = ''): array
-    {
-        Loader::includeModule('sale');
-        $query = trim($query);
-        if (mb_strlen($query) < 2) {
-            return ['locations' => []];
-        }
-
-        $res = LocationTable::getList([
-            'filter' => [
-                '=NAME.LANGUAGE_ID' => LANGUAGE_ID,
-                '%NAME.NAME'        => $query,
-                '=TYPE.CODE'        => ['CITY', 'VILLAGE'],
-            ],
-            'select' => [
-                'CODE',
-                'CITY_NAME' => 'NAME.NAME',
-            ],
-            'limit' => 10,
-        ]);
-
-        $locations = [];
-        while ($row = $res->fetch()) {
-            $locations[] = [
-                'code' => $row['CODE'],
-                'name' => $this->getFullLocationName((string)$row['CODE']),
-            ];
-        }
-
-        return ['locations' => $locations];
     }
 
     public function recalculateAction(array $payload = []): array
@@ -133,9 +128,116 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         if ($coupon !== '') {
             DiscountCouponsManager::init();
             DiscountCouponsManager::add($coupon);
+        } elseif (isset($payload['clearCoupon']) && $payload['clearCoupon'] === true) {
+            DiscountCouponsManager::init();
+            DiscountCouponsManager::clear(true);
         }
 
         return $this->buildOrderState($payload);
+    }
+
+    public function searchLocationsAction(string $query = ''): array
+    {
+        Loader::includeModule('sale');
+        $query = trim($query);
+        if (mb_strlen($query) < 2) {
+            return ['items' => []];
+        }
+
+        $items = [];
+        $res = LocationTable::getList([
+            'filter' => [
+                '=NAME.LANGUAGE_ID' => LANGUAGE_ID,
+                '%NAME.NAME'        => $query,
+                '=TYPE.CODE'        => ['CITY', 'VILLAGE', 'TOWN'],
+            ],
+            'select' => [
+                'ID',
+                'CODE',
+                'CITY_NAME'   => 'NAME.NAME',
+                'PARENT_NAME' => 'PARENT.NAME.NAME',
+            ],
+            'limit' => 10,
+            'order' => ['SORT' => 'ASC', 'NAME.NAME' => 'ASC'],
+        ]);
+
+        while ($row = $res->fetch()) {
+            $label = $row['CITY_NAME'];
+            if (!empty($row['PARENT_NAME']) && $row['PARENT_NAME'] !== $row['CITY_NAME']) {
+                $label .= ' (' . $row['PARENT_NAME'] . ')';
+            }
+            $items[] = [
+                'code'  => $row['CODE'],
+                'label' => $label,
+            ];
+        }
+
+        return ['items' => $items];
+    }
+
+    public function suggestDadataAction(string $type = 'address', string $query = ''): array
+    {
+        Loader::includeModule('sale');
+
+        $apiKey = trim((string)($this->arParams['DADATA_API_KEY'] ?? ''));
+        $query = trim($query);
+
+        if ($apiKey === '' || mb_strlen($query) < 2) {
+            return ['items' => []];
+        }
+
+        $endpoint = $type === 'party'
+            ? 'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party'
+            : 'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address';
+
+        $http = new HttpClient([
+            'socketTimeout' => 5,
+            'streamTimeout' => 5,
+        ]);
+        $http->setHeader('Content-Type', 'application/json', true);
+        $http->setHeader('Accept', 'application/json', true);
+        $http->setHeader('Authorization', 'Token ' . $apiKey, true);
+
+        $rawResponse = $http->post($endpoint, Json::encode([
+            'query' => $query,
+            'count' => 7,
+        ]));
+
+        if ($rawResponse === false || $http->getStatus() !== 200) {
+            return ['items' => []];
+        }
+
+        try {
+            $decoded = Json::decode($rawResponse);
+        } catch (\Throwable $e) {
+            return ['items' => []];
+        }
+
+        $items = [];
+        foreach (($decoded['suggestions'] ?? []) as $suggestion) {
+            $data = $suggestion['data'] ?? [];
+
+            if ($type === 'party') {
+                $items[] = [
+                    'value'   => (string)($suggestion['value'] ?? ''),
+                    'name'    => (string)($data['name']['short_with_opf'] ?? $suggestion['value'] ?? ''),
+                    'inn'     => (string)($data['inn'] ?? ''),
+                    'kpp'     => (string)($data['kpp'] ?? ''),
+                    'ogrn'    => (string)($data['ogrn'] ?? ''),
+                    'address' => (string)($data['address']['unrestricted_value'] ?? $data['address']['value'] ?? ''),
+                ];
+            } else {
+                $kladrId = (string)($data['settlement_kladr_id'] ?: $data['city_kladr_id'] ?: $data['region_kladr_id'] ?: '');
+                $items[] = [
+                    'value'        => (string)($suggestion['value'] ?? ''),
+                    'postalCode'   => (string)($data['postal_code'] ?? ''),
+                    'city'         => (string)($data['settlement'] ?: $data['city'] ?: ''),
+                    'locationCode' => $this->resolveBitrixLocationByKladr($kladrId, (string)($data['city'] ?? '')),
+                ];
+            }
+        }
+
+        return ['items' => $items];
     }
 
     public function createOrderAction(array $payload = []): ?array
@@ -150,8 +252,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         $order = $this->createVirtualOrder($payload);
-        $propValues = $payload['properties'] ?? [];
 
+        $propValues = $payload['properties'] ?? [];
         foreach ($order->getPropertyCollection() as $property) {
             $propData = $property->getProperty();
             $code = (string)$propData['CODE'];
@@ -161,9 +263,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $this->errorCollection->setError(
                     new Error('Заполните обязательное поле: ' . $propData['NAME'], 'PROP_' . $code)
                 );
-            } elseif ($propData['IS_EMAIL'] === 'Y' && $val !== '' && !check_email($val)) {
+            }
+
+            if ($val !== '' && ($propData['IS_EMAIL'] === 'Y' || $code === 'EMAIL') && !check_email($val)) {
                 $this->errorCollection->setError(
-                    new Error('Некорректный E-Mail в поле: ' . $propData['NAME'], 'PROP_' . $code)
+                    new Error('Укажите корректный E-mail', 'PROP_' . $code)
                 );
             }
         }
@@ -182,17 +286,136 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
+        $paymentData = null;
+        if (($this->arParams['AUTO_INIT_PAYMENT'] ?? 'Y') === 'Y') {
+            $paymentData = $this->initiateOrderPayment($order);
+        }
+
         return [
             'orderId'       => $order->getId(),
             'accountNumber' => $order->getField('ACCOUNT_NUMBER'),
+            'payment'       => $paymentData,
         ];
+    }
+
+    /**
+     * Инициализация платёжной системы после сохранения заказа
+     * Извлекает URL редиректа (ЮKassa, Сбер, Т-Банк и др.) или HTML-форму/виджет эквайринга
+     */
+    private function initiateOrderPayment(Order $order): ?array
+    {
+        /** @var Payment|null $targetPayment */
+        $targetPayment = null;
+        foreach ($order->getPaymentCollection() as $payment) {
+            if (!$payment->isInner() && !$payment->isPaid()) {
+                $targetPayment = $payment;
+                break;
+            }
+        }
+
+        if (!$targetPayment) {
+            return null;
+        }
+
+        $paySystemId = (int)$targetPayment->getPaymentSystemId();
+        if ($paySystemId <= 0) {
+            return null;
+        }
+
+        $service = PaySystem\Manager::getObjectById($paySystemId);
+        if (!$service) {
+            return null;
+        }
+
+        $isCash = $service->isCash();
+        $resultData = [
+            'paySystemId'   => $paySystemId,
+            'paySystemName' => $targetPayment->getPaymentSystemName(),
+            'isCash'        => $isCash,
+            'paymentUrl'    => '',
+            'html'          => '',
+            'error'         => '',
+        ];
+
+        if ($isCash) {
+            return $resultData;
+        }
+
+        try {
+            $request = Context::getCurrent()->getRequest();
+            $initResult = $service->initiatePay($targetPayment, $request, PaySystem\BaseServiceHandler::STRING);
+
+            if (!$initResult->isSuccess()) {
+                $resultData['error'] = implode('; ', $initResult->getErrorMessages());
+                return $resultData;
+            }
+
+            if (method_exists($initResult, 'getPaymentUrl')) {
+                $paymentUrl = (string)$initResult->getPaymentUrl();
+                if ($paymentUrl !== '') {
+                    $resultData['paymentUrl'] = $paymentUrl;
+                }
+            }
+
+            $templateHtml = (string)$initResult->getTemplate();
+            if ($templateHtml !== '') {
+                $resultData['html'] = $templateHtml;
+
+                // Если шлюз вернул HTML с авто-редиректом или прямую ссылку в атрибуте action/href
+                if ($resultData['paymentUrl'] === '' && preg_match('/(?:window\.location(?:\.href)?\s*=\s*|location\.replace\()["\'](https?:\/\/[^"\']+)["\']/i', $templateHtml, $m)) {
+                    $resultData['paymentUrl'] = $m[1];
+                }
+            }
+        } catch (\Throwable $e) {
+            $resultData['error'] = $e->getMessage();
+        }
+
+        return $resultData;
+    }
+
+    private function resolveBitrixLocationByKladr(string $kladrId, string $cityName = ''): string
+    {
+        if ($kladrId !== '') {
+            $ext = ExternalTable::getList([
+                'filter' => [
+                    '=XML_ID'       => $kladrId,
+                    '=SERVICE.CODE' => 'KLADR',
+                ],
+                'select' => ['LOCATION_CODE' => 'LOCATION.CODE'],
+                'limit'  => 1,
+            ])->fetch();
+
+            if (!empty($ext['LOCATION_CODE'])) {
+                return (string)$ext['LOCATION_CODE'];
+            }
+        }
+
+        if ($cityName !== '') {
+            $loc = LocationTable::getList([
+                'filter' => [
+                    '=NAME.LANGUAGE_ID' => LANGUAGE_ID,
+                    '=NAME.NAME'        => $cityName,
+                    '=TYPE.CODE'        => ['CITY', 'VILLAGE', 'TOWN'],
+                ],
+                'select' => ['CODE'],
+                'limit'  => 1,
+            ])->fetch();
+
+            if (!empty($loc['CODE'])) {
+                return (string)$loc['CODE'];
+            }
+        }
+
+        return '';
     }
 
     private function createVirtualOrder(array $payload): Order
     {
         global $USER;
         $siteId = Context::getCurrent()->getSite();
-        $userId = ($USER && $USER->IsAuthorized()) ? (int)$USER->GetID() : (int)\CSaleUser::GetAnonymousUserID();
+        $userId = ($USER && $USER->IsAuthorized())
+            ? (int)$USER->GetID()
+            : (int)\CSaleUser::GetAnonymousUserID();
 
         $personTypes = $this->getPersonTypes($siteId);
         $personTypeId = (int)($payload['personTypeId'] ?? 0);
@@ -209,13 +432,16 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $order->setBasket($basket);
 
         $propValues = $payload['properties'] ?? [];
+        $defaultLocation = (string)($this->arParams['DEFAULT_LOCATION'] ?? '0000073738');
+
         foreach ($order->getPropertyCollection() as $property) {
             $propData = $property->getProperty();
             $code = (string)$propData['CODE'];
+
             if (array_key_exists($code, $propValues) && $propValues[$code] !== '') {
                 $property->setValue($propValues[$code]);
-            } elseif ($propData['IS_LOCATION'] === 'Y' && !$property->getValue()) {
-                $property->setValue((string)($this->arParams['DEFAULT_LOCATION'] ?? '0000073738'));
+            } elseif ($propData['IS_LOCATION'] === 'Y') {
+                $property->setValue($defaultLocation);
             }
         }
 
@@ -285,6 +511,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $properties = [];
         $propValues = [];
         $locationName = '';
+
         foreach ($order->getPropertyCollection() as $property) {
             $p = $property->getProperty();
             $code = (string)$p['CODE'];
@@ -292,7 +519,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $propValues[$code] = $val;
 
             if ($p['IS_LOCATION'] === 'Y' && $val !== '') {
-                $locationName = $this->getFullLocationName($val);
+                $locationName = $this->getLocationNameByCode($val);
             }
 
             $properties[] = [
@@ -325,9 +552,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $deliveries[] = [
                     'id'          => $dId,
                     'name'        => $srv->getNameWithParent(),
-                    'description' => $srv->getDescription(),
+                    'description' => (string)$srv->getDescription(),
                     'price'       => $calc->isSuccess() ? $calc->getPrice() : 0,
-                    'period'      => $calc->isSuccess() ? $calc->getPeriodDescription() : '',
+                    'period'      => $calc->isSuccess() ? (string)$calc->getPeriodDescription() : '',
                 ];
             }
         }
@@ -340,11 +567,14 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $paySystems[] = [
                     'id'          => (int)$ps['ID'],
                     'name'        => $ps['NAME'],
-                    'description' => $ps['DESCRIPTION'] ?? '',
+                    'description' => (string)($ps['DESCRIPTION'] ?? ''),
                 ];
             }
             break;
         }
+
+        DiscountCouponsManager::init();
+        $appliedCoupons = array_keys(DiscountCouponsManager::get(true, [], true, true));
 
         return [
             'personTypes'         => array_values($this->getPersonTypes($siteId)),
@@ -357,6 +587,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             'paySystems'          => $paySystems,
             'selectedPaySystemId' => $selectedPaySystemId,
             'items'               => $items,
+            'appliedCoupons'      => $appliedCoupons,
             'totals'              => [
                 'basketBase'    => $order->getBasket()->getBasePrice(),
                 'basketPrice'   => $order->getBasket()->getPrice(),
@@ -365,6 +596,52 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 'orderPrice'    => $order->getPrice(),
             ],
         ];
+    }
+
+    private function getLocationNameByCode(string $code): string
+    {
+        $row = LocationTable::getList([
+            'filter' => ['=CODE' => $code, '=NAME.LANGUAGE_ID' => LANGUAGE_ID],
+            'select' => ['CITY_NAME' => 'NAME.NAME', 'PARENT_NAME' => 'PARENT.NAME.NAME'],
+            'limit'  => 1,
+        ])->fetch();
+
+        if (!$row) {
+            return '';
+        }
+
+        $label = (string)$row['CITY_NAME'];
+        if (!empty($row['PARENT_NAME']) && $row['PARENT_NAME'] !== $label) {
+            $label .= ' (' . $row['PARENT_NAME'] . ')';
+        }
+        return $label;
+    }
+
+    private function getUserProfileDefaults(): array
+    {
+        global $USER;
+        if (!$USER || !$USER->IsAuthorized()) {
+            return [];
+        }
+
+        $userRow = \CUser::GetByID((int)$USER->GetID())->Fetch();
+        if (!$userRow) {
+            return [];
+        }
+
+        $fio = trim(implode(' ', array_filter([
+            $userRow['LAST_NAME'] ?? '',
+            $userRow['NAME'] ?? '',
+            $userRow['SECOND_NAME'] ?? '',
+        ])));
+
+        return array_filter([
+            'FIO'     => $fio,
+            'EMAIL'   => (string)($userRow['EMAIL'] ?? ''),
+            'PHONE'   => (string)($userRow['PERSONAL_PHONE'] ?: $userRow['PERSONAL_MOBILE'] ?: ''),
+            'ADDRESS' => (string)($userRow['PERSONAL_STREET'] ?? ''),
+            'ZIP'     => (string)($userRow['PERSONAL_ZIP'] ?? ''),
+        ]);
     }
 
     private function getCurrentBasket(): Basket
@@ -393,39 +670,5 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     {
         $types = $this->getPersonTypes(Context::getCurrent()->getSite());
         return !empty($types) ? (int)array_key_first($types) : 1;
-    }
-
-    private function getAuthorizedUserProps(): array
-    {
-        global $USER;
-        if (!$USER || !$USER->IsAuthorized()) {
-            return [];
-        }
-        $user = \CUser::GetByID((int)$USER->GetID())->Fetch();
-        if (!$user) {
-            return [];
-        }
-        return [
-            'FIO'     => trim(($user['LAST_NAME'] ?? '') . ' ' . ($user['NAME'] ?? '') . ' ' . ($user['SECOND_NAME'] ?? '')),
-            'EMAIL'   => (string)($user['EMAIL'] ?? ''),
-            'PHONE'   => (string)($user['PERSONAL_PHONE'] ?: $user['PERSONAL_MOBILE'] ?? ''),
-            'ADDRESS' => (string)($user['PERSONAL_STREET'] ?? ''),
-        ];
-    }
-
-    private function getFullLocationName(string $code): string
-    {
-        if ($code === '') {
-            return '';
-        }
-        $res = LocationTable::getPathToNodeByCode($code, [
-            'filter' => ['=NAME.LANGUAGE_ID' => LANGUAGE_ID],
-            'select' => ['LNAME' => 'NAME.NAME'],
-        ]);
-        $parts = [];
-        while ($row = $res->fetch()) {
-            $parts[] = $row['LNAME'];
-        }
-        return implode(', ', array_reverse($parts));
     }
 }
