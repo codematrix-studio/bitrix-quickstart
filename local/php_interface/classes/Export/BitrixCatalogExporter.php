@@ -24,6 +24,7 @@ class BitrixCatalogExporter
     protected array $products = [];
     protected array $sections = [];
     protected array $additionalData = [];
+    protected array $configuredAdditionalData = [];
     protected int $generatedAt = 0;
     protected bool $forceUpdate = false;
 
@@ -75,6 +76,7 @@ class BitrixCatalogExporter
         $this->additionalData = is_array($config['additionalData'] ?? null)
             ? $config['additionalData']
             : [];
+        $this->configuredAdditionalData = $this->additionalData;
 
         $this->cacheTtl = (int) ($config['cacheTtl'] ?? 86400);
         if ($this->cacheTtl < 0) {
@@ -100,6 +102,7 @@ class BitrixCatalogExporter
     public function loadAdditionalData(array $additionalData = []): void
     {
         $this->additionalData = $additionalData;
+        $this->configuredAdditionalData = $additionalData;
         $this->forceUpdate = true;
     }
 
@@ -367,7 +370,9 @@ class BitrixCatalogExporter
             'iblockId' => $this->iblockId,
             'sectionIds' => $this->sectionIds,
             'productIds' => $this->productIds,
-            'additionalData' => $this->additionalData,
+            // Dynamic data populated by prepareAdditionalData() is cached
+            // with the payload, but must not change the stable input signature.
+            'additionalData' => $this->configuredAdditionalData,
             'baseUrl' => $this->urls->getBaseUrl(),
             'query' => [
                 'order' => $params['order'] ?? null,
