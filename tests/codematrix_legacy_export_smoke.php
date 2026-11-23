@@ -516,8 +516,11 @@ exportExpect($baseShowDataRejected, 'Base XmlExport must explicitly reject an un
 
 class ExportLegacyCustomYml extends \CodeMatrix\Legacy\Seo\YmlExport
 {
+    public static int $additionalDataCalls = 0;
+
     public function loadAdditionalData(array $additionalData = []): void
     {
+        self::$additionalDataCalls++;
         $this->additionalData = ['loadedByLegacyHook' => true];
     }
 
@@ -541,6 +544,21 @@ $legacyHookExport->loadData();
 exportExpect(
     ($legacyHookExport->getAdditionalData()['loadedByLegacyHook'] ?? false) === true,
     'Legacy subclasses overriding loadAdditionalData() must retain the refresh hook.'
+);
+
+$cachedLegacyHookExport = new ExportLegacyCustomYml(12, [
+    'serverUrl' => 'https://shop.example.org',
+    'storageDir' => '/bitrix/catalog_export/hook',
+    'cacheKey' => 'legacy-hook-test',
+]);
+$cachedLegacyHookExport->loadData();
+exportExpect(
+    ExportLegacyCustomYml::$additionalDataCalls === 1,
+    'Legacy additional-data hook must not run again when its cached payload is valid.'
+);
+exportExpect(
+    ($cachedLegacyHookExport->getAdditionalData()['loadedByLegacyHook'] ?? false) === true,
+    'Dynamic additional data must be restored from the cache on a cache hit.'
 );
 
 $unsafeStorageRejected = false;
