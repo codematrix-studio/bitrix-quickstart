@@ -99,6 +99,7 @@ class BasketManager
         }
 
         $this->assertResult($item->setFields(['QUANTITY' => $quantity]), 'изменить количество товара');
+        $this->refreshBasket();
         $this->saveBasket();
     }
 
