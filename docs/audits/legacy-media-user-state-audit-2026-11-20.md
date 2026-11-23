@@ -222,7 +222,7 @@
 
 - `composer.json` объявляет PSR-4 namespace `Wizard\\` → `php_interface/classes/Wizard`.
 - Фактически используемый при обычном запуске PHP static loader подключается из `autoload_real.php` и берёт карту из `autoload_static.php`. В этой карте namespace `Wizard\\` отсутствует. Он отсутствует и в fallback `autoload_psr4.php`.
-- Следовательно, checked-in Composer autoloader не соответствует manifest: классы `Wizard\\...` не будут автоматически найдены через этот сгенерированный loader, пока не выполнен корректный `composer dump-autoload` и не зафиксированы актуальные generated-файлы. Наличие каталога само по себе не исправляет расхождение.
+- Явный префикс `Wizard\\` отсутствует в generated maps, однако manifest также задаёт корневой PSR-4 fallback `""` → `php_interface/classes/`. В сгенерированном loader этот fallback присутствует как `fallbackDirsPsr4`, поэтому классы в `php_interface/classes/Wizard/` могут разрешаться через корневой namespace. Само отсутствие отдельной записи `Wizard\\` не доказывает runtime-дефект.
 - Для `Helper\\` mapping в manifest и generated static loader совпадает; это не исправляет отдельную ошибку наследования `AddToFavoritesHandler` от неверного namespace базового класса.
 
-**Решение:** после проверки требуемых namespace обновлять generated autoload только воспроизводимой командой Composer, сверять manifest и generated maps в CI; не редактировать generated-файлы вручную.
+**Решение:** зафиксировать отличие как структурное расхождение manifest/generated maps, но не классифицировать его как подтверждённую поломку автозагрузки. При следующем обновлении зависимостей пересоздать generated autoload воспроизводимой командой Composer и сверить результат в CI; не редактировать generated-файлы вручную.
