@@ -743,3 +743,6 @@
 
 
 **Уточнение PSR-4 и Favorite/Follow:** отсутствие явного `Wizard\\` префикса в generated map не доказывает поломку, поскольку корневой PSR-4 mapping покрывает namespace fallback. В `FavoritesManager` и `FollowService` подтверждено использование `unserialize()` для клиентских cookie без ограничения классов; это небезопасная десериализация, но эксплуатация зависит от gadget chain и достижимости. Также выявлены namespace-ошибка при создании `InvalidArgumentException` в `FollowService` и преждевременный `Response::flush()` из helper-сервисов. Детали и безопасные варианты исправления — в [аудите media/user-state](legacy-media-user-state-audit-2026-11-20.md).
+
+
+**Дополнение по Media/Cloud:** `CropImage` пропускает нулевые размеры и не проверяет результат `getimagesize()`, а также не ограничивает ресурсы/пути; внешняя точка вызова не найдена, поэтому exploit path не подтверждён. `CYandexDiskCloud` — незавершённый прототип: операции с bucket/files/multipart оставлены TODO, регистрация и внешние вызовы не найдены. Не переносить как готовые решения. Подробности — в [аудите media/user-state](legacy-media-user-state-audit-2026-11-20.md).
