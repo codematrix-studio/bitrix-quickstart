@@ -105,6 +105,11 @@ final class JsonFileCache
             throw new InvalidArgumentException('Время жизни кеша не может быть отрицательным.');
         }
 
+        // A zero TTL disables cache reuse, even within the filemtime() second.
+        if ($ttl === 0) {
+            return false;
+        }
+
         $file = $this->filePath($key);
         if (!is_file($file)) {
             return false;
