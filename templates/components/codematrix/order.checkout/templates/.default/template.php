@@ -47,7 +47,16 @@ if (!empty($arResult['IS_EMPTY'])) {
             </div>
 
             <!-- Контейнер для HTML-формы или виджета платёжного шлюза -->
-            <div v-if="createdOrder.payment.html" ref="paymentHtmlContainer" class="cm-payment-gateway-html"></div>
+            <iframe
+                v-if="createdOrder.payment.html"
+                class="cm-payment-gateway-html"
+                :srcdoc="createdOrder.payment.html"
+                :sandbox="autoRedirectPayment
+                    ? 'allow-forms allow-scripts allow-popups allow-top-navigation'
+                    : 'allow-forms allow-scripts'"
+                referrerpolicy="no-referrer"
+                title="Переход к оплате"
+            ></iframe>
         </div>
 
         <div class="cm-success-links">
@@ -267,7 +276,7 @@ if (!empty($arResult['IS_EMPTY'])) {
 
 <script>
 BX.ready(function () {
-    const { createApp, ref, reactive, nextTick } = BX.Vue3;
+    const { createApp, ref, reactive } = BX.Vue3;
     const initialState = <?= Json::encode($arResult['INITIAL_STATE']) ?>;
     const signedParameters = '<?= CUtil::JSEscape($arResult['SIGNED_PARAMS']) ?>';
     const dadataEnabled = <?= $arResult['DADATA_ENABLED'] ? 'true' : 'false' ?>;
@@ -280,7 +289,6 @@ BX.ready(function () {
             const submitting = ref(false);
             const createdOrder = ref(null);
             const redirectingToGateway = ref(false);
-            const paymentHtmlContainer = ref(null);
             const fieldErrors = ref({});
             const generalErrors = ref([]);
 
@@ -481,7 +489,7 @@ BX.ready(function () {
                 activeDadataField.value = '';
             };
 
-            const handlePaymentAfterCreate = async (orderData) => {
+            const handlePaymentAfterCreate = (orderData) => {
                 const payment = orderData.payment;
                 if (!payment || payment.isCash) {
                     return;
@@ -490,30 +498,6 @@ BX.ready(function () {
                 if (payment.paymentUrl && autoRedirectPayment) {
                     redirectingToGateway.value = true;
                     window.location.href = payment.paymentUrl;
-                    return;
-                }
-
-                if (payment.html) {
-                    await nextTick();
-                    if (paymentHtmlContainer.value) {
-                        paymentHtmlContainer.value.innerHTML = payment.html;
-
-                        // Выполняем встроенные скрипты платёжного шлюза (например, авто-сабмит формы или виджет ЮKassa/Т-Банка)
-                        const scripts = paymentHtmlContainer.value.querySelectorAll('script');
-                        scripts.forEach((oldScript) => {
-                            const newScript = document.createElement('script');
-                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                            newScript.textContent = oldScript.textContent;
-                            oldScript.parentNode.replaceChild(newScript, oldScript);
-                        });
-
-                        // Если внутри формы шлюза есть форма без авто-отправки, отправляем её автоматически
-                        const gatewayForm = paymentHtmlContainer.value.querySelector('form');
-                        if (gatewayForm && autoRedirectPayment) {
-                            redirectingToGateway.value = true;
-                            gatewayForm.submit();
-                        }
-                    }
                 }
             };
 
@@ -557,7 +541,6 @@ BX.ready(function () {
                 submitting,
                 createdOrder,
                 redirectingToGateway,
-                paymentHtmlContainer,
                 fieldErrors,
                 generalErrors,
                 locationQuery,
