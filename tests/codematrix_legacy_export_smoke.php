@@ -185,6 +185,37 @@ exportExpect(
 );
 
 
+// References must target categories that are actually emitted, not merely keys
+// present in the input array with malformed section data.
+$invalidSectionReferencesXml = $renderer->render(
+    [
+        5 => ['name' => 'Корневой раздел'],
+        6 => ['name' => 'Дочерний раздел', 'parentId' => 99],
+        99 => null,
+    ],
+    [
+        13 => [
+            'ID' => 13,
+            'ACTIVE' => 'Y',
+            'CATALOG_AVAILABLE' => 'Y',
+            'NAME' => 'Товар с некорректным разделом',
+            'IBLOCK_SECTION_ID' => 99,
+        ],
+    ]
+);
+exportExpect(
+    !str_contains($invalidSectionReferencesXml, 'parentId="99"'),
+    'YML must not reference a parent category whose section entry is skipped.'
+);
+exportExpect(
+    !str_contains($invalidSectionReferencesXml, '<categoryId>99</categoryId>'),
+    'YML offers must not reference a category whose section entry is skipped.'
+);
+exportExpect(
+    str_contains($invalidSectionReferencesXml, '<category id="6">Дочерний раздел</category>'),
+    'Valid categories must still be exported when their parent entry is invalid.'
+);
+
 $externalUrlRejected = false;
 try {
     $renderer->render([], [
