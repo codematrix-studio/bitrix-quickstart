@@ -132,6 +132,15 @@ final class YmlCatalogRenderer
             '<categories>',
         ];
 
+        // Build the exact set of categories that will be emitted. A key in
+        // $sections is not sufficient: malformed entries are skipped below.
+        $exportedSectionIds = [];
+        foreach ($sections as $sectionId => $section) {
+            if (is_array($section) && isset($section['name'])) {
+                $exportedSectionIds[$sectionId] = true;
+            }
+        }
+
         foreach ($sections as $sectionId => $section) {
             if (!is_array($section) || !isset($section['name'])) {
                 continue;
@@ -139,7 +148,7 @@ final class YmlCatalogRenderer
 
             $parentId = $section['parentId'] ?? null;
             $hasExportedParent = (is_int($parentId) || (is_string($parentId) && ctype_digit($parentId)))
-                && array_key_exists((int) $parentId, $sections);
+                && array_key_exists((int) $parentId, $exportedSectionIds);
 
             yield '<category id="' . XmlEscaper::attribute($sectionId) . '"'
                 . ($hasExportedParent
@@ -187,7 +196,7 @@ final class YmlCatalogRenderer
 
             $sectionId = $product['IBLOCK_SECTION_ID'] ?? null;
             if ((is_int($sectionId) || (is_string($sectionId) && ctype_digit($sectionId)))
-                && array_key_exists((int) $sectionId, $sections)
+                && array_key_exists((int) $sectionId, $exportedSectionIds)
             ) {
                 yield '<categoryId>' . XmlEscaper::text((int) $sectionId) . '</categoryId>';
             }
