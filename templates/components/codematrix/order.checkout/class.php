@@ -26,6 +26,7 @@ use Bitrix\Sale\OrderUserProperties;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\Internals\UserPropsTable;
 use Bitrix\Sale\PaySystem;
+use Bitrix\Sale\Services\Base\RestrictionManager;
 
 class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Controllerable, Errorable
 {
@@ -84,6 +85,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             'DADATA_API_KEY',
             'AUTO_INIT_PAYMENT',
             'AUTO_REDIRECT_PAYMENT',
+            'SAVE_USER_PROFILE',
         ];
     }
 
@@ -107,6 +109,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $this->arResult['PATH_TO_PERSONAL'] = (string)($this->arParams['PATH_TO_PERSONAL'] ?? '/personal/orders/');
         $this->arResult['DADATA_ENABLED'] = trim((string)($this->arParams['DADATA_API_KEY'] ?? '')) !== '';
         $this->arResult['AUTO_REDIRECT_PAYMENT'] = ($this->arParams['AUTO_REDIRECT_PAYMENT'] ?? 'Y') === 'Y';
+        $this->arResult['SAVE_USER_PROFILE_ENABLED'] = ($this->arParams['SAVE_USER_PROFILE'] ?? 'Y') === 'Y';
+        global $USER;
+        $this->arResult['USER_AUTHORIZED'] = $USER && $USER->IsAuthorized();
 
         $initialProperties = $this->getUserProfileDefaults();
         $this->arResult['INITIAL_STATE'] = $this->buildOrderState([
@@ -353,6 +358,32 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
+        // Финальная сумма оплаты должна совпадать с итоговой суммой заказа.
+        foreach ($order->getPaymentCollection() as $payment) {
+            if ($payment->isInner()) {
+                continue;
+            }
+            $sumResult = $payment->setField('SUM', $order->getPrice());
+            if (!$sumResult->isSuccess()) {
+                foreach ($sumResult->getErrors() as $error) {
+                    $this->errorCollection->setError($error);
+                }
+                return null;
+            }
+
+            $paySystemId = (int)$payment->getPaymentSystemId();
+            if ($paySystemId > 0) {
+                $availablePaySystems = PaySystem\Manager::getListWithRestrictions(
+                    $payment,
+                    RestrictionManager::MODE_CLIENT
+                );
+                if (!isset($availablePaySystems[$paySystemId])) {
+                    $this->errorCollection->setError(new Error('Выбранный способ оплаты недоступен для этого заказа.'));
+                    return null;
+                }
+            }
+        }
+
         // Резервируем ключ до сохранения. При стандартной PHP session handler
         // параллельные AJAX-запросы одной сессии выполняются последовательно.
         $requests[$requestId] = [
@@ -380,6 +411,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             'updatedAt' => time(),
         ];
 
+        // Профиль сохраняется только после успешной записи заказа и явного согласия.
+        $savedProfileId = $this->saveBuyerProfileAfterOrder($order, $payload);
+
         if (count($requests) > 20) {
             uasort($requests, static function (array $a, array $b): int {
                 return (int)($a['updatedAt'] ?? 0) <=> (int)($b['updatedAt'] ?? 0);
@@ -397,12 +431,78 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             'accountNumber'    => $order->getField('ACCOUNT_NUMBER'),
             'payment'          => $paymentData,
             'alreadyProcessed' => false,
+            'savedProfileId' => $savedProfileId,
         ];
     }
 
     /**
      * Создаёт отпечаток пользовательских данных оформления без самого ключа запроса.
      */
+    /**
+     * Сохраняет разрешённые свойства заказа в профиль текущего покупателя.
+     */
+    private function saveBuyerProfileAfterOrder(Order $order, array $payload): int
+    {
+        global $USER;
+
+        if (($this->arParams['SAVE_USER_PROFILE'] ?? 'Y') !== 'Y'
+            || ($payload['saveProfile'] ?? false) !== true
+            || !$USER
+            || !$USER->IsAuthorized()
+        ) {
+            return 0;
+        }
+
+        $userId = (int)$USER->GetID();
+        $personTypeId = (int)$order->getPersonTypeId();
+        if ($userId <= 0 || $personTypeId <= 0) {
+            return 0;
+        }
+
+        $profileData = [];
+        foreach ($order->getPropertyCollection() as $property) {
+            $propertyData = $property->getProperty();
+            if (($propertyData['ACTIVE'] ?? 'Y') !== 'Y'
+                || ($propertyData['USER_PROPS'] ?? 'N') !== 'Y'
+            ) {
+                continue;
+            }
+
+            $value = $property->getValue();
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $profileData[(int)$propertyData['ID']] = $value;
+        }
+
+        if ($profileData === []) {
+            return 0;
+        }
+
+        $profileId = (int)($payload['profileId'] ?? 0);
+        if ($profileId <= 0 || !OrderUserProperties::checkCorrect($profileId, $personTypeId, $userId)) {
+            $profileId = 0;
+        }
+
+        $profileName = trim((string)($payload['profileName'] ?? ''));
+        if ($profileName === '') {
+            $profileName = 'Профиль покупателя';
+        }
+        $profileName = mb_substr($profileName, 0, 255);
+
+        $errors = [];
+        $savedProfileId = \\CSaleOrderUserProps::DoSaveUserProfile(
+            $userId,
+            $profileId,
+            $profileName,
+            $personTypeId,
+            $profileData,
+            $errors
+        );
+
+        return $savedProfileId === false ? 0 : (int)$savedProfileId;
+    }
+
     private function getOrderRequestFingerprint(array $payload): string
     {
         unset($payload['requestId']);
@@ -621,11 +721,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         if ($paySystemId > 0 && isset($availablePaySystems[$paySystemId])) {
-            $payment->setFields([
-                'PAY_SYSTEM_ID'   => $paySystemId,
-                'PAY_SYSTEM_NAME' => $availablePaySystems[$paySystemId]['NAME'],
-                'SUM'             => $order->getPrice(),
-            ]);
+            $service = PaySystem\Manager::getObjectById($paySystemId);
+            if ($service) {
+                $payment->setPaySystemService($service);
+                $payment->setField('SUM', $order->getPrice());
+            }
         }
 
         return $order;

@@ -37,6 +37,12 @@ $arComponentParameters = [
             'TYPE'    => 'CHECKBOX',
             'DEFAULT' => 'Y',
         ],
+        'SAVE_USER_PROFILE' => [
+            'PARENT'  => 'INTEGRATIONS',
+            'NAME'    => 'Разрешить покупателю сохранять данные в профиль (по отдельному согласию)',
+            'TYPE'    => 'CHECKBOX',
+            'DEFAULT' => 'Y',
+        ],
         'AUTO_REDIRECT_PAYMENT' => [
             'PARENT'  => 'INTEGRATIONS',
             'NAME'    => 'Автоматически перенаправлять на эквайринг (если шлюз возвращает ссылку или форму)',

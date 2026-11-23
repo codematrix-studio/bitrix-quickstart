@@ -87,6 +87,14 @@ if (!empty($arResult['IS_EMPTY'])) {
                     </option>
                 </select>
             </section>
+            <section class="cm-checkout__section" v-if="saveProfileEnabled && userAuthorized">
+                <label class="cm-checkbox">
+                    <input type="checkbox" v-model="form.saveProfile">
+                    Сохранить заполненные данные в профиль покупателя
+                </label>
+                <input v-if="form.saveProfile" type="text" v-model="form.profileName" maxlength="255" placeholder="Название профиля">
+                <p class="cm-muted">Профиль будет сохранён после успешного создания заказа.</p>
+            </section>
 
             <!-- 2. Данные покупателя -->
             <section class="cm-checkout__section">
@@ -282,6 +290,8 @@ BX.ready(function () {
     const signedParameters = '<?= CUtil::JSEscape($arResult['SIGNED_PARAMS']) ?>';
     const dadataEnabled = <?= $arResult['DADATA_ENABLED'] ? 'true' : 'false' ?>;
     const autoRedirectPayment = <?= $arResult['AUTO_REDIRECT_PAYMENT'] ? 'true' : 'false' ?>;
+    const saveProfileEnabled = <?= $arResult['SAVE_USER_PROFILE_ENABLED'] ? 'true' : 'false' ?>;
+    const userAuthorized = <?= $arResult['USER_AUTHORIZED'] ? 'true' : 'false' ?>;
 
     createApp({
         setup() {
@@ -310,7 +320,9 @@ BX.ready(function () {
                 comment: '',
                 coupon: '',
                 clearCoupon: false,
-                requestId: checkoutRequestId
+                requestId: checkoutRequestId,
+                saveProfile: false,
+                profileName: 'Профиль покупателя'
             });
 
             const isAddressProp = (code) => ['ADDRESS', 'COMPANY_ADR', 'LEGAL_ADDRESS'].includes(code);
@@ -548,6 +560,8 @@ BX.ready(function () {
                 locationQuery,
                 locationSuggestions,
                 dadataEnabled,
+                saveProfileEnabled,
+                userAuthorized,
                 activeDadataField,
                 dadataSuggestions,
                 isAddressProp,
