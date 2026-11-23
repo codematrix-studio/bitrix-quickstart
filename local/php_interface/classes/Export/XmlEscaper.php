@@ -34,23 +34,20 @@ final class XmlEscaper
             throw new InvalidArgumentException('Для XML-экранирования ожидается скалярное значение.');
         }
 
-        $value = (string) $value;
-        $utf8 = iconv('UTF-8', 'UTF-8//IGNORE', $value);
-
-        if ($utf8 === false) {
-            $utf8 = '';
-        }
+        // Normalize malformed UTF-8 before applying the XML 1.0 character filter.
+        // ENT_SUBSTITUTE replaces invalid byte sequences without discarding valid text.
+        $escaped = htmlspecialchars(
+            (string) $value,
+            ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
 
         $validXml = preg_replace(
             '/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u',
             '',
-            $utf8
+            $escaped
         );
 
-        if ($validXml === null) {
-            $validXml = '';
-        }
-
-        return htmlspecialchars($validXml, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return $validXml ?? '';
     }
 }
