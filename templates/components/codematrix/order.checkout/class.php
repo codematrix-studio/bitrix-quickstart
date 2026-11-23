@@ -492,7 +492,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         $errors = [];
         try {
-            $savedProfileId = \\CSaleOrderUserProps::DoSaveUserProfile(
+            $savedProfileId = \CSaleOrderUserProps::DoSaveUserProfile(
                 $userId,
                 $profileId,
                 $profileName,
@@ -500,7 +500,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $profileData,
                 $errors
             );
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             return 0;
         }
 
