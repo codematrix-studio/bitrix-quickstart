@@ -491,14 +491,18 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $profileName = mb_substr($profileName, 0, 255);
 
         $errors = [];
-        $savedProfileId = \\CSaleOrderUserProps::DoSaveUserProfile(
-            $userId,
-            $profileId,
-            $profileName,
-            $personTypeId,
-            $profileData,
-            $errors
-        );
+        try {
+            $savedProfileId = \\CSaleOrderUserProps::DoSaveUserProfile(
+                $userId,
+                $profileId,
+                $profileName,
+                $personTypeId,
+                $profileData,
+                $errors
+            );
+        } catch (\\Throwable $exception) {
+            return 0;
+        }
 
         return $savedProfileId === false ? 0 : (int)$savedProfileId;
     }
@@ -566,7 +570,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
-        $service = PaySystem\Manager::getObjectById($paySystemId);
+        $service = $targetPayment->getPaySystem();
         if (!$service) {
             return null;
         }
@@ -712,7 +716,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         $paymentCollection = $order->getPaymentCollection();
         $payment = $paymentCollection->createItem();
-        $availablePaySystems = PaySystem\Manager::getListWithRestrictions($payment);
+        $availablePaySystems = PaySystem\Manager::getListWithRestrictions($payment, RestrictionManager::MODE_CLIENT);
 
         $paySystemId = (int)($payload['paySystemId'] ?? 0);
         if (!isset($availablePaySystems[$paySystemId]) && !empty($availablePaySystems)) {
@@ -802,7 +806,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $selectedPaySystemId = 0;
         foreach ($order->getPaymentCollection() as $payment) {
             $selectedPaySystemId = (int)$payment->getPaymentSystemId();
-            foreach (PaySystem\Manager::getListWithRestrictions($payment) as $ps) {
+            foreach (PaySystem\Manager::getListWithRestrictions($payment, RestrictionManager::MODE_CLIENT) as $ps) {
                 $paySystems[] = [
                     'id'          => (int)$ps['ID'],
                     'name'        => $ps['NAME'],
