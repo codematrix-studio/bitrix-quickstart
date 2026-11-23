@@ -739,4 +739,4 @@
 **Ограничение:** статический поиск по Git не исключает динамические include, внешнюю конфигурацию, БД-настройки и production-код вне репозитория. Composer также содержит `disable-tls: true` и `secure-http: false`; это отмечено как отдельный риск supply chain, требующий проверки lock-файла и фактических версий зависимостей.
 
 
-**Дополнение по Composer autoload:** в `local/composer.json` объявлен namespace `Wizard\\`, но он отсутствует в отслеживаемых `vendor/composer/autoload_static.php` и `autoload_psr4.php`; активный static loader использует именно static map. Generated autoload не синхронизирован с manifest. См. [дополнение к аудиту media и helper-классов](legacy-media-user-state-audit-2026-11-20.md).
+**Дополнение по Composer autoload:** явный префикс `Wizard\\` из `local/composer.json` отсутствует в generated maps, но корневой PSR-4 fallback присутствует и покрывает тот же каталог. Это структурное расхождение, не подтверждённая поломка автозагрузки. См. [дополнение к аудиту media и helper-классов](legacy-media-user-state-audit-2026-11-20.md).
