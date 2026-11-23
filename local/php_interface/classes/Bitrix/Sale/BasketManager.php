@@ -75,6 +75,7 @@ class BasketManager
         }
 
         $this->assertResult($item->setFields($fields), 'изменить позицию корзины');
+        $this->refreshBasket();
         $this->saveBasket();
 
         if (!is_callable([$item, 'getId'])) {
@@ -212,7 +213,7 @@ class BasketManager
             throw new RuntimeException('Не удалось загрузить корзину покупателя.');
         }
 
-        foreach (['getBasketItems', 'getQuantityList', 'getExistsItem', 'createItem', 'getItemById', 'save', 'getPrice'] as $method) {
+        foreach (['getBasketItems', 'getQuantityList', 'getExistsItem', 'createItem', 'getItemById', 'refresh', 'save', 'getPrice'] as $method) {
             if (!is_callable([$basket, $method])) {
                 throw new RuntimeException(sprintf('Объект корзины не поддерживает метод %s().', $method));
             }
@@ -295,6 +296,12 @@ class BasketManager
         if (!class_exists(\Bitrix\Main\Loader::class) || !\Bitrix\Main\Loader::includeModule($moduleId)) {
             throw new RuntimeException(sprintf('Не удалось подключить модуль Битрикс %s.', $moduleId));
         }
+    }
+
+    /** Пересчитывает товарные данные провайдером до сохранения корзины. */
+    private function refreshBasket(): void
+    {
+        $this->assertResult($this->basket()->refresh(), 'пересчитать данные корзины');
     }
 
     private function saveBasket(): void
