@@ -292,11 +292,10 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 global $USER;
                 $currentUserId = ($USER && $USER->IsAuthorized())
                     ? (int)$USER->GetID()
-                    : (int)\\CSaleUser::GetAnonymousUserID();
+                    : (int)\CSaleUser::GetAnonymousUserID();
 
                 if ($existingOrder
                     && (int)$existingOrder->getField('USER_ID') === $currentUserId
-                    && (int)$existingOrder->getField('FUSER_ID') === Fuser::getId()
                 ) {
                     return [
                         'orderId'         => $existingOrder->getId(),
@@ -417,7 +416,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             }
             unset($item);
 
-            if (array_keys($value) !== range(0, count($value) - 1)) {
+            if ($value !== [] && array_keys($value) !== range(0, count($value) - 1)) {
                 ksort($value);
             }
         };
@@ -434,7 +433,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         global $USER;
         $userId = ($USER && $USER->IsAuthorized())
             ? (int)$USER->GetID()
-            : (int)\\CSaleUser::GetAnonymousUserID();
+            : (int)\CSaleUser::GetAnonymousUserID();
 
         return hash('sha256', implode(':', [
             Context::getCurrent()->getSite(),
