@@ -200,6 +200,17 @@ namespace {
 
     $assert($installer->DoUninstall(), 'Repeated uninstall should remain successful.');
 
+    $failingInstaller = new class extends vendor_advancedmodule {
+        public function InstallFiles()
+        {
+            return false;
+        }
+    };
+    $assert(!$failingInstaller->DoInstall(), 'A later install-stage failure should fail installation.');
+    $assert(!IsModuleInstalled('vendor.advancedmodule'), 'A successful rollback should unregister the module.');
+    $assert(CAgent::$agents === [], 'A later install-stage failure must roll back the agent.');
+    $assert(count(CAgent::$removed) === 2, 'Rollback must remove the agent registered by the failed installation.');
+
     CAgent::$failNextAdd = true;
     $failed = false;
     try {
