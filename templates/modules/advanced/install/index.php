@@ -324,24 +324,24 @@ class vendor_advancedmodule extends CModule
             foreach ($uninstallSteps as $step => $methods) {
                 $attemptedSteps[] = $step;
                 if (!$this->{$methods['remove']}()) {
-                    throw new \\RuntimeException(sprintf('Не удалось выполнить этап %s удаления модуля.', $methods['remove']));
+                    throw new \RuntimeException(sprintf('Не удалось выполнить этап %s удаления модуля.', $methods['remove']));
                 }
             }
 
             // Удаление данных выполняется последним: универсального обратного действия нет.
             if (!$this->UnInstallDB()) {
-                throw new \\RuntimeException('Не удалось удалить структуру данных модуля.');
+                throw new \RuntimeException('Не удалось удалить структуру данных модуля.');
             }
 
             try {
                 Option::delete($this->MODULE_ID, ['name' => self::INSTALLATION_INCOMPLETE_OPTION]);
-            } catch (\\Throwable $optionException) {
+            } catch (\Throwable $optionException) {
                 error_log(sprintf('Не удалось удалить служебную отметку модуля %s (%s).', $this->MODULE_ID, get_class($optionException)));
             }
 
             UnRegisterModule($this->MODULE_ID);
             return true;
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $restorationSuccessful = $this->restoreUninstallation($attemptedSteps, $uninstallSteps);
             $message = sprintf('Удаление модуля %s прервано: %s', $this->MODULE_ID, $exception->getMessage());
 
@@ -381,7 +381,7 @@ class vendor_advancedmodule extends CModule
                     $restorationSuccessful = false;
                     error_log(sprintf('Не удалось восстановить ресурс методом %s для модуля %s.', $method, $this->MODULE_ID));
                 }
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $restorationSuccessful = false;
                 error_log(sprintf('Ошибка восстановления ресурса методом %s для модуля %s (%s).', $method, $this->MODULE_ID, get_class($exception)));
             }
