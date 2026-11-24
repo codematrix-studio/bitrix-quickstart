@@ -800,6 +800,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
+        if ((string)$order->getField('CANCELED') === 'Y') {
+            $this->errorCollection->setError(new Error('Оплата отменённого заказа недоступна. Проверьте его статус в личном кабинете.'));
+            return null;
+        }
+
         $hasUnpaidExternalPayment = false;
         foreach ($order->getPaymentCollection() as $payment) {
             if (!$payment->isInner() && !$payment->isPaid()) {
