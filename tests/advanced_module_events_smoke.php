@@ -61,6 +61,8 @@ namespace Bitrix\Main {
             $this->registered[] = func_get_args();
         }
 
+        public bool $failUnregister = false;
+
         public function unRegisterEventHandler(
             string $fromModuleId,
             string $eventType,
@@ -70,6 +72,9 @@ namespace Bitrix\Main {
             string $toPath = '',
             array $toMethodArg = []
         ): void {
+            if ($this->failUnregister) {
+                throw new \\RuntimeException('Тестовая ошибка снятия обработчика.');
+            }
             $this->unregistered[] = func_get_args();
         }
     }
@@ -241,6 +246,22 @@ namespace {
         ],
         'Unregister must use the same identity tuple as registration, excluding sort.'
     );
+
+    // Ошибка снятия события после удаления файлов и агента должна восстановить ресурсы.
+    $assert($installer->DoInstall(), 'Install before uninstall recovery test should succeed.');
+    $manager->failUnregister = true;
+    $assert(!$installer->DoUninstall(), 'Uninstall should fail when event unregistration throws.');
+    $assert(IsModuleInstalled('vendor.advancedmodule'), 'A failed uninstall must keep the module registered.');
+    $assert(count($manager->registered) === 3, 'A failed uninstall must restore the event handler.');
+    $restoredAgent = \\CAgent::GetList(['ID' => 'ASC'], [
+        '=NAME' => \\Vendor\\AdvancedModule\\Agent\\ExampleAgent::class . '();',
+        'MODULE_ID' => 'vendor.advancedmodule',
+        'USER_ID' => false,
+    ])->Fetch();
+    $assert($restoredAgent !== [], 'A failed uninstall must restore the removed agent.');
+    $manager->failUnregister = false;
+    $assert($installer->DoUninstall(), 'Uninstall should succeed after the failure is resolved.');
+    $assert(!IsModuleInstalled('vendor.advancedmodule'), 'Successful retry should unregister the module.');
 
     echo "Advanced module lifecycle/events smoke test: OK\n";
 }
