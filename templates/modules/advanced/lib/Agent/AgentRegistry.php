@@ -70,8 +70,27 @@ final class AgentRegistry
     /**
      * Удаляет только системный агент с точным именем и ID этого модуля.
      */
+    /**
+     * Снимает регистрацию агента и проверяет результат по точным идентификаторам.
+     *
+     * @throws \RuntimeException Если агент остался в реестре после удаления.
+     */
     public static function unregister(): void
     {
-        \CAgent::RemoveAgent(self::agentName(), self::MODULE_ID, false);
-    }
+        $agentName = self::agentName();
+
+        \CAgent::RemoveAgent($agentName, self::MODULE_ID, false);
+
+        $remainingAgent = \CAgent::GetList(
+            ['ID' => 'ASC'],
+            [
+                '=NAME' => $agentName,
+                'MODULE_ID' => self::MODULE_ID,
+                'USER_ID' => false,
+            ]
+        )->Fetch();
+
+        if ($remainingAgent) {
+            throw new \RuntimeException('Bitrix не удалил системный агент модуля.');
+        }
 }
