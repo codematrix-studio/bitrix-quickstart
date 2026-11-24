@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-declare(strict_types=1);
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -27,7 +25,7 @@ if (!empty($arResult['IS_EMPTY'])) {
     <!-- Экран успешного оформления и оплаты -->
     <div v-if="createdOrder" class="cm-checkout__success">
         <h2>Заказ №{{ createdOrder.accountNumber }} успешно оформлен!</h2>
-        <p>Номер заказа в системе: <strong>{{ createdOrder.orderId }}</strong>. Подробности отправлены на ваш E-mail.</p>
+        <p>Номер заказа в системе: <strong>{{ createdOrder.orderId }}</strong>.</p>
 
         <!-- Блок онлайн-оплаты -->
         <div v-if="createdOrder.payment && !createdOrder.payment.isCash" class="cm-payment-box">
