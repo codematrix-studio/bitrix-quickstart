@@ -255,6 +255,7 @@ if (!empty($arResult['IS_EMPTY'])) {
                     Применён промокод: <strong>{{ state.appliedCoupons.join(', ') }}</strong>
                     <button type="button" class="cm-link-btn" @click="clearCoupon">Сбросить</button>
                 </div>
+                <p v-if="state.couponMessage" class="cm-error">{{ state.couponMessage }}</p>
 
                 <!-- Итоги -->
                 <div class="cm-summary__totals">
