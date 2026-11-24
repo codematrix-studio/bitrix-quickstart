@@ -2,6 +2,9 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Application;
+use Vendor\AdvancedModule\Install\Migration\MigrationRegistry;
+use Vendor\AdvancedModule\Install\Migration\MigrationRunner;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -62,6 +65,8 @@ class vendor_advancedmodule extends CModule
      */
     public function InstallDB()
     {
+        MigrationRunner::run(Application::getConnection(), MigrationRegistry::all());
+
         return true;
     }
 
@@ -72,6 +77,8 @@ class vendor_advancedmodule extends CModule
      */
     public function UnInstallDB()
     {
+        // По умолчанию сохраняем ledger и пользовательские данные.
+        // Полное удаление таблиц должно быть отдельной явно подтверждаемой операцией.
         return true;
     }
 
