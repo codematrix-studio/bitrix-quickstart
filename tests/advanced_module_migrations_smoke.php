@@ -107,9 +107,9 @@ namespace {
         public array $tables = [];
         public bool $locked = false;
         public bool $lockResult = true;
-        public bool $ledgerCreatedWhileLocked = false;
         public int $lockCalls = 0;
         public int $unlockCalls = 0;
+        public bool $ledgerCheckedWhileLocked = false;
         private ?array $transactionSnapshot = null;
 
         public function getType(): string
@@ -137,15 +137,15 @@ namespace {
 
         public function isTableExists(string $tableName): bool
         {
+            if ($tableName === 'b_vendor_advancedmodule_migrations' && $this->locked) {
+                $this->ledgerCheckedWhileLocked = true;
+            }
+
             return isset($this->tables[$tableName]);
         }
 
         public function createTable(string $tableName, array $fields, array $primary = [], array $autoincrement = []): void
         {
-            if ($tableName === 'b_vendor_advancedmodule_migrations') {
-                $this->ledgerCreatedWhileLocked = $this->locked;
-            }
-
             if (!isset($this->tables[$tableName])) {
                 $this->tables[$tableName] = [
                     'fields' => array_fill_keys(array_keys($fields), true),
@@ -310,6 +310,14 @@ namespace {
         }
     }
 
+    final class PostgreSqlConnection extends \Bitrix\Main\DB\PgsqlConnection
+    {
+        public function getType(): string
+        {
+            return 'pgsql';
+        }
+    }
+
     define('B_PROLOG_INCLUDED', true);
     $GLOBALS['USER'] = new class {
         public function IsAdmin(): bool
@@ -366,7 +374,7 @@ namespace {
     $assert($db->isTableExists('b_vendor_advancedmodule_migrations'), 'Runner should create the ledger.');
     $assert(count($db->tables['b_vendor_advancedmodule_migrations']['rows']) === 1, 'Ledger should record successful migration.');
     $assert($db->unlockCalls === 1 && !$db->locked, 'Runner must release its lock.');
-    $assert($db->ledgerCreatedWhileLocked, 'Runner must create the ledger only after acquiring the lock.');
+    $assert($db->ledgerCheckedWhileLocked, 'Runner must create/check the ledger only after acquiring the named lock.');
 
     $again = MigrationRunner::run($db, [new SuccessfulMigration()]);
     $assert($again === [], 'A second run must skip an applied migration.');
@@ -444,6 +452,14 @@ namespace {
         $noLockFailed = true;
     }
     $assert($noLockFailed, 'Runner must reject a base Connection whose lock() implementation is a no-op.');
+
+    $postgresFailed = false;
+    try {
+        MigrationRunner::run(new PostgreSqlConnection(), []);
+    } catch (RuntimeException $exception) {
+        $postgresFailed = true;
+    }
+    $assert($postgresFailed, 'Runner v1 must reject PostgreSQL until Bitrix documents and tests its named-lock support.');
 
     $integrationDb = new FakeConnection();
     \Bitrix\Main\Application::$connection = $integrationDb;
