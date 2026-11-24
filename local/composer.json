@@ -45,6 +45,7 @@
             "@test:d7-quick-order-input",
             "@test:d7-ajax",
             "@test:module-installer",
+            "@test:advanced-module-events",
             "@test:product-list",
             "@test:seo-analytics",
             "@test:d7-basket-handler",
@@ -84,6 +85,7 @@
         "test:autoload-composer": "php ../tests/autoload_composer_smoke.php",
         "test:d7-ajax": "php ../tests/d7_ajax_component_smoke.php",
         "test:module-installer": "php ../tests/module_installer_lifecycle_smoke.php",
-        "test:video-url-parser": "php ../tests/video_url_parser_smoke.php"
+        "test:video-url-parser": "php ../tests/video_url_parser_smoke.php",
+        "test:advanced-module-events": "php ../tests/advanced_module_events_smoke.php"
     }
 }
