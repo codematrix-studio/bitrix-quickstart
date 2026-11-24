@@ -199,7 +199,7 @@ if (!empty($arResult['IS_EMPTY'])) {
                             <span class="cm-price">{{ del.price > 0 ? formatPrice(del.price) : 'Бесплатно' }}</span>
                         </div>
                         <small v-if="del.period" class="cm-period">Срок доставки: {{ del.period }}</small>
-                        <p v-if="del.description" v-html="del.description"></p>
+                        <p v-if="del.description">{{ del.description }}</p>
                     </div>
                 </label>
             </section>
@@ -216,7 +216,7 @@ if (!empty($arResult['IS_EMPTY'])) {
                     <input type="radio" :value="ps.id" v-model="form.paySystemId" @change="recalculate">
                     <div class="cm-card-radio__body">
                         <strong>{{ ps.name }}</strong>
-                        <p v-if="ps.description" v-html="ps.description"></p>
+                        <p v-if="ps.description">{{ ps.description }}</p>
                     </div>
                 </label>
             </section>
