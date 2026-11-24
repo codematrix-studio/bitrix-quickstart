@@ -92,6 +92,8 @@ namespace {
     use Vendor\AdvancedModule\Install\Migration\MigrationInterface;
     use Vendor\AdvancedModule\Install\Migration\MigrationRunner;
 
+    require_once __DIR__ . '/../templates/modules/advanced/install/migrations/MigrationInterface.php';
+
     class FakeConnection extends Connection
     {
         public array $tables = [];
