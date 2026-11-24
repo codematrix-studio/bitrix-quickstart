@@ -107,6 +107,7 @@ namespace {
         public array $tables = [];
         public bool $locked = false;
         public bool $lockResult = true;
+        public bool $ledgerCreatedWhileLocked = false;
         public int $lockCalls = 0;
         public int $unlockCalls = 0;
         private ?array $transactionSnapshot = null;
@@ -141,6 +142,10 @@ namespace {
 
         public function createTable(string $tableName, array $fields, array $primary = [], array $autoincrement = []): void
         {
+            if ($tableName === 'b_vendor_advancedmodule_migrations') {
+                $this->ledgerCreatedWhileLocked = $this->locked;
+            }
+
             if (!isset($this->tables[$tableName])) {
                 $this->tables[$tableName] = [
                     'fields' => array_fill_keys(array_keys($fields), true),
@@ -361,6 +366,7 @@ namespace {
     $assert($db->isTableExists('b_vendor_advancedmodule_migrations'), 'Runner should create the ledger.');
     $assert(count($db->tables['b_vendor_advancedmodule_migrations']['rows']) === 1, 'Ledger should record successful migration.');
     $assert($db->unlockCalls === 1 && !$db->locked, 'Runner must release its lock.');
+    $assert($db->ledgerCreatedWhileLocked, 'Runner must create the ledger only after acquiring the lock.');
 
     $again = MigrationRunner::run($db, [new SuccessfulMigration()]);
     $assert($again === [], 'A second run must skip an applied migration.');
@@ -399,6 +405,7 @@ namespace {
         $lockFailed = true;
     }
     $assert($lockFailed && $lockDb->unlockCalls === 0, 'Runner must not execute without acquiring the lock.');
+    $assert(!$lockDb->isTableExists('b_vendor_advancedmodule_migrations'), 'Runner must not create the ledger when lock acquisition fails.');
 
     $unknownDb = new FakeConnection();
     MigrationRunner::run($unknownDb, []);

@@ -35,7 +35,6 @@ final class MigrationRunner
     {
         self::assertSupportedDatabase($connection);
         self::validateRegistry($migrations);
-        self::ensureLedger($connection);
 
         if (!$connection->lock(self::LOCK_NAME, 10)) {
             throw new RuntimeException('Не удалось получить блокировку запуска миграций.');
@@ -44,6 +43,10 @@ final class MigrationRunner
         $failure = null;
 
         try {
+            // Создание ledger тоже должно выполняться под блокировкой:
+            // иначе параллельные первые запуски могут одновременно создать таблицу.
+            self::ensureLedger($connection);
+
             $known = [];
             foreach ($migrations as $migration) {
                 $known[$migration->getId()] = [
