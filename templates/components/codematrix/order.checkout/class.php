@@ -12,6 +12,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale\Basket;
@@ -82,7 +83,6 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     {
         return [
             'DEFAULT_LOCATION',
-            'DADATA_API_KEY',
             'AUTO_INIT_PAYMENT',
             'AUTO_REDIRECT_PAYMENT',
             'SAVE_USER_PROFILE',
@@ -107,7 +107,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $this->arResult['IS_EMPTY'] = false;
         $this->arResult['SIGNED_PARAMS'] = $this->getSignedParameters();
         $this->arResult['PATH_TO_PERSONAL'] = (string)($this->arParams['PATH_TO_PERSONAL'] ?? '/personal/orders/');
-        $this->arResult['DADATA_ENABLED'] = trim((string)($this->arParams['DADATA_API_KEY'] ?? '')) !== '';
+        $this->arResult['DADATA_ENABLED'] = trim((string)Option::get('main', 'codematrix_order_checkout_dadata_api_key', '')) !== '';
         $this->arResult['AUTO_REDIRECT_PAYMENT'] = ($this->arParams['AUTO_REDIRECT_PAYMENT'] ?? 'Y') === 'Y';
         $this->arResult['SAVE_USER_PROFILE_ENABLED'] = ($this->arParams['SAVE_USER_PROFILE'] ?? 'Y') === 'Y';
         global $USER;
@@ -186,7 +186,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     {
         Loader::includeModule('sale');
 
-        $apiKey = trim((string)($this->arParams['DADATA_API_KEY'] ?? ''));
+        $apiKey = trim((string)Option::get('main', 'codematrix_order_checkout_dadata_api_key', ''));
         $query = trim($query);
 
         if ($apiKey === '' || mb_strlen($query) < 2) {
