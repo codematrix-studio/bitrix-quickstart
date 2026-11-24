@@ -99,6 +99,36 @@ PR с последними изменениями:
 
 Такой runner не заменяет Marketplace updater. Если модуль будет распространяться через SiteUpdate, updater должен учитывать ограничения его отдельного контракта.
 
+
+## 5.1. События и агенты: подтверждённые контракты API
+
+### Постоянные обработчики событий
+
+Для обработчиков собственного модуля Bitrix рекомендует постоянную регистрацию через `EventManager::getInstance()->registerEventHandler()` (или `registerEventHandlerCompatible()` для старых событий с аргументами по ссылке).
+
+- Регистрация сохраняется в БД и должна выполняться один раз при установке.
+- Удаление выполняется через `unRegisterEventHandler()` с теми же идентификаторами отправляющего модуля, события, модуля-обработчика, класса и метода.
+- Современные события передают объект `Bitrix\\Main\\Event`; совместимые обработчики получают аргументы в legacy-формате.
+- `addEventHandler()` — временная подписка на текущий запрос, не замена install-регистрации.
+
+Важно: снятие регистрации модуля само по себе не удаляет постоянные обработчики событий. Это обязанность `UnInstallEvents()` (или соответствующего install/uninstall этапа).
+
+### Агенты
+
+Для периодических задач Bitrix использует `CAgent::AddAgent()` и `CAgent::RemoveAgent()`.
+
+- Регистрацию агента нужно выполнять после подключения ядра, обычно в install-этапе.
+- Код агента должен быть доступен через установленный модуль и его `include.php`.
+- Повторная регистрация должна учитывать точную строку вызова/объект Callback и не создавать дубликаты.
+- При снятии регистрации модуля `ModuleManager::unRegisterModule()` автоматически удаляет все агенты с соответствующим `MODULE_ID`. Поэтому дополнительный общий вызов `RemoveModuleAgents()` в шаблоне обычно не нужен.
+- Если удаление модуля завершилось ошибкой до снятия регистрации, агенты остаются зарегистрированными; повторный uninstall должен корректно завершить очистку.
+
+Источники:
+- [EventManager::registerEventHandler](https://docs.1c-bitrix.ru/pages/api-reference/main/event-manager/register-event-handler.html)
+- [События Bitrix Framework](https://docs.1c-bitrix.ru/pages/framework/events.html)
+- [Агенты и фоновые задачи](https://docs.1c-bitrix.ru/pages/framework/background-jobs.html)
+- [ModuleManager::unRegisterModule](https://docs.1c-bitrix.ru/pages/api-reference/main/module-manager/un-register-module.html)
+
 ## 6. Рекомендуемое развитие шаблонов
 
 Не перегружать `basic`. Оставить его минимальным install/uninstall каркасом.
