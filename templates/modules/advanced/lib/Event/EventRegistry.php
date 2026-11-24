@@ -43,7 +43,7 @@ final class EventRegistry
         $eventManager = EventManager::getInstance();
 
         foreach (self::handlers() as $handler) {
-            $eventManager->registerEventHandler(
+            $eventManager->registerEventHandlerCompatible(
                 $handler['from'],
                 $handler['event'],
                 $handler['to'],
