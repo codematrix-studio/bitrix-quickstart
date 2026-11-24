@@ -1067,7 +1067,20 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
         foreach ($basket as $basketItem) {
             $item = $shipmentItemCollection->createItem($basketItem);
-            $item->setQuantity($basketItem->getQuantity());
+            if (!$item) {
+                $this->errorCollection->setError(new Error(
+                    'Не удалось добавить товар в состав отгрузки. Обновите корзину и повторите попытку.'
+                ));
+                return $order;
+            }
+
+            $quantityResult = $item->setQuantity($basketItem->getQuantity());
+            if (!$quantityResult->isSuccess()) {
+                foreach ($quantityResult->getErrors() as $error) {
+                    $this->errorCollection->setError($error);
+                }
+                return $order;
+            }
         }
 
         $availableDeliveries = Delivery\Services\Manager::getRestrictedObjectsList($shipment);
