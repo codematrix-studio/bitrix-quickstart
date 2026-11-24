@@ -143,15 +143,21 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         DiscountCouponsManager::init();
         $coupon = trim((string)($payload['coupon'] ?? ''));
+        $couponAdded = true;
         if ($coupon !== '') {
             // В форме предусмотрен один промокод: новый заменяет ранее применённый.
             DiscountCouponsManager::clear(true);
-            DiscountCouponsManager::add($coupon);
+            $couponAdded = DiscountCouponsManager::add($coupon);
         } elseif (isset($payload['clearCoupon']) && $payload['clearCoupon'] === true) {
             DiscountCouponsManager::clear(true);
         }
 
-        return $this->buildOrderState($payload);
+        $state = $this->buildOrderState($payload);
+        if ($coupon !== '' && !$couponAdded && $state !== []) {
+            $state['couponMessage'] = 'Не удалось добавить промокод. Проверьте правильность введённого кода.';
+        }
+
+        return $state;
     }
 
     public function searchLocationsAction($query = ''): array
@@ -1364,7 +1370,33 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             break;
         }
 
-        $appliedCoupons = array_keys(DiscountCouponsManager::get(true, [], true, true));
+        $couponData = DiscountCouponsManager::get(true, [], true, true);
+        $appliedCoupons = [];
+        $couponMessage = '';
+
+        if (is_array($couponData)) {
+            foreach ($couponData as $couponCode => $couponInfo) {
+                $status = (int)($couponInfo['STATUS'] ?? 0);
+                if ($status === DiscountCouponsManager::STATUS_APPLYED) {
+                    $appliedCoupons[] = (string)$couponCode;
+                    continue;
+                }
+
+                if ($status === DiscountCouponsManager::STATUS_FREEZE
+                    || $status === DiscountCouponsManager::STATUS_NOT_FOUND
+                ) {
+                    $reasons = $couponInfo['CHECK_CODE_TEXT'] ?? [];
+                    $couponMessage = is_array($reasons)
+                        ? implode(', ', array_filter(array_map('strval', $reasons)))
+                        : (is_scalar($reasons) ? (string)$reasons : '');
+                    if ($couponMessage === '') {
+                        $couponMessage = 'Промокод недействителен или недоступен для этого заказа.';
+                    }
+                } elseif ($status === DiscountCouponsManager::STATUS_NOT_APPLYED) {
+                    $couponMessage = 'Промокод не подошёл к товарам или условиям текущего заказа.';
+                }
+            }
+        }
 
         return [
             'personTypes'         => array_values($this->getPersonTypes($siteId)),
@@ -1380,6 +1412,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             'selectedPaySystemId' => $selectedPaySystemId,
             'items'               => $items,
             'appliedCoupons'      => $appliedCoupons,
+            'couponMessage'       => $couponMessage,
             'totals'              => [
                 'basketBase'    => $order->getBasket()->getBasePrice(),
                 'basketPrice'   => $order->getBasket()->getPrice(),
