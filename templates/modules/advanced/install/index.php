@@ -100,6 +100,24 @@ class vendor_advancedmodule extends CModule
     }
 
     /**
+     * Регистрирует фоновый агент модуля.
+     */
+    public function InstallAgents()
+    {
+        \Vendor\AdvancedModule\Agent\AgentRegistry::register();
+        return true;
+    }
+
+    /**
+     * Снимает регистрацию фонового агента модуля.
+     */
+    public function UnInstallAgents()
+    {
+        \Vendor\AdvancedModule\Agent\AgentRegistry::unregister();
+        return true;
+    }
+
+    /**
      * Устанавливает файлы, принадлежащие модулю.
      *
      * По умолчанию файлы сайта не копируются.
@@ -167,6 +185,11 @@ class vendor_advancedmodule extends CModule
             $attemptedSteps[] = 'events';
             if (!$this->InstallEvents()) {
                 throw new \RuntimeException('Не удалось зарегистрировать обработчики событий модуля.');
+            }
+
+            $attemptedSteps[] = 'agents';
+            if (!$this->InstallAgents()) {
+                throw new \RuntimeException('Не удалось зарегистрировать фоновые агенты модуля.');
             }
 
             $attemptedSteps[] = 'files';
@@ -263,6 +286,10 @@ class vendor_advancedmodule extends CModule
                 throw new \RuntimeException('Не удалось удалить файлы модуля.');
             }
 
+            if (!$this->UnInstallAgents()) {
+                throw new \RuntimeException('Не удалось удалить фоновые агенты модуля.');
+            }
+
             if (!$this->UnInstallEvents()) {
                 throw new \RuntimeException('Не удалось удалить обработчики событий модуля.');
             }
@@ -333,6 +360,7 @@ class vendor_advancedmodule extends CModule
         $rollbackMethods = [
             'database' => 'UnInstallDB',
             'events' => 'UnInstallEvents',
+            'agents' => 'UnInstallAgents',
             'files' => 'UnInstallFiles',
         ];
 

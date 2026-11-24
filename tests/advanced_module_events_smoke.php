@@ -76,6 +76,74 @@ namespace Bitrix\Main {
 }
 
 namespace {
+    final class AdvancedAgentResult
+    {
+        private array $row;
+
+        public function __construct(array $row)
+        {
+            $this->row = $row;
+        }
+
+        public function Fetch(): array
+        {
+            return $this->row;
+        }
+    }
+
+    final class CAgent
+    {
+        private static array $agents = [];
+
+        public static function GetList(array $order, array $filter): AdvancedAgentResult
+        {
+            foreach (self::$agents as $agent) {
+                if (
+                    ($filter['=NAME'] ?? null) === $agent['NAME']
+                    && ($filter['MODULE_ID'] ?? null) === $agent['MODULE_ID']
+                    && ($filter['USER_ID'] ?? null) === $agent['USER_ID']
+                ) {
+                    return new AdvancedAgentResult($agent);
+                }
+            }
+
+            return new AdvancedAgentResult([]);
+        }
+
+        public static function AddAgent(
+            string $name,
+            string $module,
+            string $period = 'N',
+            int $interval = 86400,
+            string $datecheck = '',
+            string $active = 'Y',
+            string $nextExec = '',
+            int $sort = 100,
+            $userId = false,
+            bool $existError = true
+        ): int {
+            self::$agents[] = [
+                'NAME' => $name,
+                'MODULE_ID' => $module,
+                'USER_ID' => $userId,
+            ];
+
+            return count(self::$agents);
+        }
+
+        public static function RemoveAgent(string $name, string $module = '', $userId = false): void
+        {
+            self::$agents = array_values(array_filter(
+                self::$agents,
+                static fn (array $agent): bool => !(
+                    $agent['NAME'] === $name
+                    && $agent['MODULE_ID'] === $module
+                    && $agent['USER_ID'] === $userId
+                )
+            ));
+        }
+    }
+
     define('B_PROLOG_INCLUDED', true);
 
     $GLOBALS['installedModules'] = [];
@@ -117,6 +185,8 @@ namespace {
         unset($GLOBALS['installedModules'][$moduleId]);
     }
 
+    require_once __DIR__ . '/../templates/modules/advanced/lib/Agent/ExampleAgent.php';
+    require_once __DIR__ . '/../templates/modules/advanced/lib/Agent/AgentRegistry.php';
     require_once __DIR__ . '/../templates/modules/advanced/lib/Event/EventRegistry.php';
     require_once __DIR__ . '/../templates/modules/advanced/install/index.php';
 
