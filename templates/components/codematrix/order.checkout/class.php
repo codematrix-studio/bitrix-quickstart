@@ -269,12 +269,20 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     'address' => (string)($addressData['unrestricted_value'] ?? $addressData['value'] ?? ''),
                 ];
             } else {
-                $kladrId = (string)(
-                    ($data['settlement_kladr_id'] ?? '')
-                    ?: ($data['city_kladr_id'] ?? '')
-                    ?: ($data['region_kladr_id'] ?? '')
-                );
-                $cityName = (string)(($data['settlement'] ?? '') ?: ($data['city'] ?? ''));
+                $settlementKladrId = is_scalar($data['settlement_kladr_id'] ?? null)
+                    ? (string)$data['settlement_kladr_id']
+                    : '';
+                $cityKladrId = is_scalar($data['city_kladr_id'] ?? null)
+                    ? (string)$data['city_kladr_id']
+                    : '';
+                $regionKladrId = is_scalar($data['region_kladr_id'] ?? null)
+                    ? (string)$data['region_kladr_id']
+                    : '';
+                $kladrId = $settlementKladrId ?: ($cityKladrId ?: $regionKladrId);
+
+                $settlementName = is_scalar($data['settlement'] ?? null) ? (string)$data['settlement'] : '';
+                $cityValue = is_scalar($data['city'] ?? null) ? (string)$data['city'] : '';
+                $cityName = $settlementName ?: $cityValue;
                 $items[] = [
                     'value'        => is_scalar($suggestion['value'] ?? null) ? (string)$suggestion['value'] : '',
                     'postalCode'   => is_scalar($data['postal_code'] ?? null) ? (string)$data['postal_code'] : '',
@@ -764,7 +772,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         return $scheme === ''
             && !str_starts_with($url, '//')
-            && !str_starts_with($url, '\\\\');
+            && strpos($url, '\\\\') === false;
     }
 
     private function resolveBitrixLocationByKladr(string $kladrId): string
