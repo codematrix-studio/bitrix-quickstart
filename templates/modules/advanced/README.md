@@ -10,7 +10,7 @@
 - Методы `InstallFiles()`, `InstallAgents()` и `InstallEvents()` должны быть идемпотентными, поскольку используются для компенсационного восстановления. `UnInstallDB()` должен самостоятельно обеспечивать безопасное выполнение: автоматического отката пользовательских данных или down-миграций нет.
 - `include.php` — автозагрузка классов модуля.
 - `lib/Event/EventRegistry.php` — единый список постоянных подписок EventManager.
-- `lib/Event/ExampleEventHandler.php` — пример D7-обработчика с аргументом `Bitrix\\Main\\Event`.
+- `lib/Event/ExampleEventHandler.php` — пример обработчика классического события `OnAfterUserAdd` с массивом полей по ссылке.
 - `lib/Agent/ExampleAgent.php` и `lib/Agent/AgentRegistry.php` — пример фонового агента и его реестр.
 - `install/migrations/` — явный реестр, контракт и runner внутренних миграций; первая миграция создаёт пример таблицы.
 
