@@ -51,37 +51,17 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
     public function configureActions(): array
     {
+        $postFilters = [
+            new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
+            new ActionFilter\Csrf(),
+        ];
+
         return [
-            'recalculate' => [
-                'prefilters' => [
-                    new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-                    new ActionFilter\Csrf(),
-                ],
-            ],
-            'searchLocations' => [
-                'prefilters' => [
-                    new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-                    new ActionFilter\Csrf(),
-                ],
-            ],
-            'suggestDadata' => [
-                'prefilters' => [
-                    new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-                    new ActionFilter\Csrf(),
-                ],
-            ],
-            'createOrder' => [
-                'prefilters' => [
-                    new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-                    new ActionFilter\Csrf(),
-                ],
-            'retryPayment' => [
-                'prefilters' => [
-                    new ActionFilter\\HttpMethod([ActionFilter\\HttpMethod::METHOD_POST]),
-                    new ActionFilter\\Csrf(),
-                ],
-            ],
-            ],
+            'recalculate' => ['prefilters' => $postFilters],
+            'searchLocations' => ['prefilters' => $postFilters],
+            'suggestDadata' => ['prefilters' => $postFilters],
+            'createOrder' => ['prefilters' => $postFilters],
+            'retryPayment' => ['prefilters' => $postFilters],
         ];
     }
 
