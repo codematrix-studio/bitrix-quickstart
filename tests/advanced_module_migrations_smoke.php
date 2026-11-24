@@ -426,6 +426,18 @@ namespace {
     }
     $assert($unknownFailed, 'Runner must reject unknown IDs in the ledger.');
 
+    $duplicateDb = new FakeConnection();
+    MigrationRunner::run($duplicateDb, []);
+    $duplicateDb->seedLedger('202611240099_duplicate_test', str_repeat('a', 64));
+    $duplicateDb->seedLedger('202611240099_duplicate_test', str_repeat('b', 64));
+    $duplicateFailed = false;
+    try {
+        MigrationRunner::run($duplicateDb, []);
+    } catch (RuntimeException $exception) {
+        $duplicateFailed = true;
+    }
+    $assert($duplicateFailed, 'Runner must reject duplicate migration IDs in a malformed ledger.');
+
     $checksumDb = new FakeConnection();
     MigrationRunner::run($checksumDb, []);
     $checksumDb->seedLedger('202611240002_successful_test', str_repeat('f', 64));
