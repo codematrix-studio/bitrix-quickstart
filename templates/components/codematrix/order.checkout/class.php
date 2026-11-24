@@ -988,12 +988,35 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         $order = Order::create($siteId, $userId);
-        $order->setPersonTypeId($personTypeId);
-        $order->setField('CURRENCY', 'RUB');
-        $order->setField('USER_DESCRIPTION', trim((string)($payload['comment'] ?? '')));
+
+        $personTypeResult = $order->setPersonTypeId($personTypeId);
+        if (!$personTypeResult->isSuccess()) {
+            foreach ($personTypeResult->getErrors() as $error) {
+                $this->errorCollection->setError($error);
+            }
+            return $order;
+        }
+
+        foreach ([
+            $order->setField('CURRENCY', 'RUB'),
+            $order->setField('USER_DESCRIPTION', trim((string)($payload['comment'] ?? ''))),
+        ] as $fieldResult) {
+            if (!$fieldResult->isSuccess()) {
+                foreach ($fieldResult->getErrors() as $error) {
+                    $this->errorCollection->setError($error);
+                }
+                return $order;
+            }
+        }
 
         $basket = $this->getCurrentBasket();
-        $order->setBasket($basket);
+        $basketResult = $order->setBasket($basket);
+        if (!$basketResult->isSuccess()) {
+            foreach ($basketResult->getErrors() as $error) {
+                $this->errorCollection->setError($error);
+            }
+            return $order;
+        }
 
         $propValues = is_array($payload['properties'] ?? null) ? $payload['properties'] : [];
         $defaultLocation = (string)($this->arParams['DEFAULT_LOCATION'] ?? '0000073738');
@@ -1012,15 +1035,30 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $propertyId = (int)$propData['ID'];
 
             if (array_key_exists($propertyId, $profileValues)) {
-                $property->setValue($profileValues[$propertyId]);
+                $valueResult = $property->setValue($profileValues[$propertyId]);
+                if (!$valueResult->isSuccess()) {
+                    foreach ($valueResult->getErrors() as $error) {
+                        $this->errorCollection->setError($error);
+                    }
+                    return $order;
+                }
             }
 
             if (array_key_exists($code, $propValues)) {
                 // Пустое значение тоже является явным вводом покупателя:
                 // оно должно очищать значение из профиля, а не оставлять его.
-                $property->setValue($propValues[$code]);
+                $valueResult = $property->setValue($propValues[$code]);
             } elseif ($propData['IS_LOCATION'] === 'Y' && $property->getValue() === null) {
-                $property->setValue($defaultLocation);
+                $valueResult = $property->setValue($defaultLocation);
+            } else {
+                $valueResult = null;
+            }
+
+            if ($valueResult && !$valueResult->isSuccess()) {
+                foreach ($valueResult->getErrors() as $error) {
+                    $this->errorCollection->setError($error);
+                }
+                return $order;
             }
         }
 
