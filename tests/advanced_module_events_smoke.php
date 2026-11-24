@@ -73,7 +73,7 @@ namespace Bitrix\Main {
             array $toMethodArg = []
         ): void {
             if ($this->failUnregister) {
-                throw new \\RuntimeException('Тестовая ошибка снятия обработчика.');
+                throw new \RuntimeException('Тестовая ошибка снятия обработчика.');
             }
             $this->unregistered[] = func_get_args();
         }
@@ -253,8 +253,8 @@ namespace {
     $assert(!$installer->DoUninstall(), 'Uninstall should fail when event unregistration throws.');
     $assert(IsModuleInstalled('vendor.advancedmodule'), 'A failed uninstall must keep the module registered.');
     $assert(count($manager->registered) === 3, 'A failed uninstall must restore the event handler.');
-    $restoredAgent = \\CAgent::GetList(['ID' => 'ASC'], [
-        '=NAME' => \\Vendor\\AdvancedModule\\Agent\\ExampleAgent::class . '();',
+    $restoredAgent = \CAgent::GetList(['ID' => 'ASC'], [
+        '=NAME' => \Vendor\AdvancedModule\Agent\\ExampleAgent::class . '();',
         'MODULE_ID' => 'vendor.advancedmodule',
         'USER_ID' => false,
     ])->Fetch();
