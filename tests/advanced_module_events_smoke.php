@@ -254,7 +254,7 @@ namespace {
     $assert(IsModuleInstalled('vendor.advancedmodule'), 'A failed uninstall must keep the module registered.');
     $assert(count($manager->registered) === 3, 'A failed uninstall must restore the event handler.');
     $restoredAgent = \CAgent::GetList(['ID' => 'ASC'], [
-        '=NAME' => \Vendor\AdvancedModule\Agent\\ExampleAgent::class . '();',
+        '=NAME' => \Vendor\AdvancedModule\Agent\ExampleAgent::class . '();',
         'MODULE_ID' => 'vendor.advancedmodule',
         'USER_ID' => false,
     ])->Fetch();
