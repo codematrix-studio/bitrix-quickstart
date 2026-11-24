@@ -81,6 +81,7 @@ class FakeSaleBasket
     private array $items = [];
     private int $nextId = 1;
     public bool $saveSuccess = true;
+    public int $refreshCalls = 0;
 
     public function getExistsItem(string $module, int $productId): ?FakeSaleBasketItem
     {
@@ -129,6 +130,12 @@ class FakeSaleBasket
         ));
     }
 
+    public function refresh(): FakeSaleResult
+    {
+        $this->refreshCalls++;
+        return new FakeSaleResult();
+    }
+
     public function save(): FakeSaleResult
     {
         return $this->saveSuccess
@@ -169,6 +176,7 @@ basketManagerExpect(
 basketManagerExpect($firstId === $secondCallId, 'Повторное добавление товара должно увеличивать существующую позицию.');
 basketManagerExpect($firstId !== $secondId, 'Разные товары должны занимать разные позиции.');
 basketManagerExpect(count($loaderCalls) === 1, 'Корзина должна загружаться один раз в пределах экземпляра менеджера.');
+basketManagerExpect($basket->refreshCalls === 3, 'Добавление и изменение позиции должны пересчитывать данные провайдера до сохранения.');
 basketManagerExpect($loaderCalls[0] === [42, 's1'], 'Загрузчик должен получить FUSER и ID текущего сайта.');
 basketManagerExpect($manager->getItemsCount() === 2, 'Должно учитываться количество позиций, а не товаров.');
 basketManagerExpect($manager->getGoodsCount() === 6.0, 'Количество товаров должно суммироваться по позициям.');
@@ -176,6 +184,7 @@ basketManagerExpect($manager->getPrice() === 60.0, 'Стоимость долж�
 
 $manager->setQuantity($firstId, 4);
 basketManagerExpect($manager->getGoodsCount() === 5.0, 'setQuantity() должен устанавливать, а не прибавлять количество.');
+basketManagerExpect($basket->refreshCalls === 4, 'Изменение количества должно пересчитывать данные провайдера до сохранения.');
 
 $manager->remove($secondId);
 basketManagerExpect($manager->getItemsCount() === 1, 'remove() должен удалять позицию по ID позиции корзины.');

@@ -130,7 +130,13 @@ class vendor_module extends CModule
     {
         global $APPLICATION;
 
+        if (!$this->checkAdminAccess()) {
+            return false;
+        }
+
         $attemptedSteps = [];
+        $registeredByThisAttempt = false;
+
         try {
             $moduleIsInstalled = IsModuleInstalled($this->MODULE_ID);
             $installationIsIncomplete = Option::get(
@@ -147,6 +153,7 @@ class vendor_module extends CModule
 
             if (!$moduleIsInstalled) {
                 RegisterModule($this->MODULE_ID);
+                $registeredByThisAttempt = true;
             }
 
             Option::set($this->MODULE_ID, self::INSTALLATION_INCOMPLETE_OPTION, 'Y');
@@ -186,7 +193,7 @@ class vendor_module extends CModule
 
             $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
 
-            if (!$registrationRemoved && $rollbackSuccessful) {
+            if ($registeredByThisAttempt && !$registrationRemoved && $rollbackSuccessful) {
                 try {
                     UnRegisterModule($this->MODULE_ID);
                     $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
@@ -219,8 +226,12 @@ class vendor_module extends CModule
                 $exception->getMessage()
             );
 
-            if (!$rollbackSuccessful || !$registrationRemoved) {
+            if (!$rollbackSuccessful) {
                 $message .= ' Откат выполнен не полностью; модуль оставлен зарегистрированным для повторного восстановления или удаления.';
+            } elseif ($registeredByThisAttempt && !$registrationRemoved) {
+                $message .= ' Не удалось снять регистрацию после отката; модуль оставлен зарегистрированным.';
+            } elseif (!$registeredByThisAttempt) {
+                $message .= ' Существующая регистрация модуля сохранена; устраните причину ошибки и повторите восстановление.';
             }
 
             if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {
@@ -245,6 +256,10 @@ class vendor_module extends CModule
     public function DoUninstall(): bool
     {
         global $APPLICATION;
+
+        if (!$this->checkAdminAccess()) {
+            return false;
+        }
 
         try {
             if (!$this->UnInstallFiles()) {
@@ -280,6 +295,29 @@ class vendor_module extends CModule
 
             return false;
         }
+    }
+
+    /**
+     * Проверяет, что установку или удаление запускает администратор.
+     *
+     * @return bool Разрешён ли доступ к операциям жизненного цикла модуля.
+     */
+    private function checkAdminAccess(): bool
+    {
+        global $USER, $APPLICATION;
+
+        if (is_object($USER) && method_exists($USER, 'IsAdmin') && $USER->IsAdmin()) {
+            return true;
+        }
+
+        $message = Loc::getMessage('VENDOR_MODULE_ACCESS_DENIED')
+            ?: 'Устанавливать и удалять модуль может только администратор.';
+
+        if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {
+            $APPLICATION->ThrowException($message);
+        }
+
+        return false;
     }
 
     /**

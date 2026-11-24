@@ -58,6 +58,11 @@ class BasketHandlerBasket
     private array $items = [];
     private int $nextId = 1;
 
+    public function refresh(): BasketHandlerResult
+    {
+        return new BasketHandlerResult();
+    }
+
     public function getExistsItem(string $module, int $productId): ?BasketHandlerItem
     {
         foreach ($this->items as $item) {
