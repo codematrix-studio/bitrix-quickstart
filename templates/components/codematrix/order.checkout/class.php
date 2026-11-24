@@ -1097,6 +1097,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             foreach ($finalResult->getErrors() as $error) {
                 $this->errorCollection->setError($error);
             }
+
+            // Не возвращаем состояние формы с потенциально устаревшими итогами.
+            return [];
         }
 
         // Если ограничения доставки изменились после пересчёта скидок,
@@ -1106,37 +1109,61 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 continue;
             }
 
-            $availableDeliveries = Delivery\Services\Manager::getRestrictedObjectsList($shipment);
+            $availableDeliveries = Delivery\\Services\\Manager::getRestrictedObjectsList($shipment);
             $selectedDeliveryId = (int)$shipment->getDeliveryId();
-            if (!isset($availableDeliveries[$selectedDeliveryId]) && $availableDeliveries !== []) {
+            if (!isset($availableDeliveries[$selectedDeliveryId])) {
+                if ($availableDeliveries === []) {
+                    $this->errorCollection->setError(new Error(
+                        'Для текущей суммы заказа не найден доступный способ доставки.'
+                    ));
+                    return [];
+                }
+
                 $firstDelivery = reset($availableDeliveries);
                 $fallbackDeliveryId = (int)$firstDelivery->getId();
                 $shipment->setDeliveryService($firstDelivery);
 
                 try {
-                    $deliveryResult = Delivery\Services\Manager::calculateDeliveryPrice(
+                    $deliveryResult = Delivery\\Services\\Manager::calculateDeliveryPrice(
                         $shipment,
                         $fallbackDeliveryId,
                         $shipment->getExtraServices()
                     );
-                } catch (\Throwable $exception) {
-                    $deliveryResult = null;
+                } catch (\\Throwable $exception) {
+                    $this->errorCollection->setError(new Error(
+                        'Не удалось рассчитать доступную службу доставки. Повторите пересчёт заказа.'
+                    ));
+                    return [];
                 }
 
-                if ($deliveryResult && $deliveryResult->isSuccess()) {
-                    $priceResult = $shipment->setBasePriceDelivery($deliveryResult->getPrice());
-                    if (!$priceResult->isSuccess()) {
-                        foreach ($priceResult->getErrors() as $error) {
+                if (!$deliveryResult || !$deliveryResult->isSuccess()) {
+                    if ($deliveryResult) {
+                        foreach ($deliveryResult->getErrors() as $error) {
                             $this->errorCollection->setError($error);
                         }
-                    } else {
-                        $finalResult = $order->doFinalAction(true);
-                        if (!$finalResult->isSuccess()) {
-                            foreach ($finalResult->getErrors() as $error) {
-                                $this->errorCollection->setError($error);
-                            }
-                        }
                     }
+                    if ($this->errorCollection->isEmpty()) {
+                        $this->errorCollection->setError(new Error(
+                            'Не удалось рассчитать стоимость доступной службы доставки.'
+                        ));
+                    }
+                    return [];
+                }
+
+                $priceResult = $shipment->setBasePriceDelivery($deliveryResult->getPrice());
+                if (!$priceResult->isSuccess()) {
+                    foreach ($priceResult->getErrors() as $error) {
+                        $this->errorCollection->setError($error);
+                    }
+                    return [];
+                }
+
+                $finalResult = $order->doFinalAction(true);
+                if (!$finalResult->isSuccess()) {
+                    foreach ($finalResult->getErrors() as $error) {
+                        $this->errorCollection->setError($error);
+                    }
+                    return [];
                 }
             }
             break;
