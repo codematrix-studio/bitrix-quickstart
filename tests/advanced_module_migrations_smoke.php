@@ -252,7 +252,7 @@ namespace {
         {
             self::$runs++;
             $connection->createTable('b_test_partial_migration', [
-                'ID' => new \\Bitrix\\Main\\ORM\\Fields\\IntegerField('ID'),
+                'ID' => new \Bitrix\Main\ORM\Fields\IntegerField('ID'),
             ], ['ID'], ['ID']);
 
             if (self::$failFirstRun) {
