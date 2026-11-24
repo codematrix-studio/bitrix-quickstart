@@ -12,6 +12,41 @@ namespace Bitrix\Main\Localization {
     }
 }
 
+namespace Bitrix\Main {
+    final class EventManager
+    {
+        private static ?self $instance = null;
+
+        public static function getInstance(): self
+        {
+            return self::$instance ??= new self();
+        }
+
+        public function registerEventHandler(
+            string $fromModuleId,
+            string $eventType,
+            string $toModuleId,
+            string $toClass,
+            string $toMethod,
+            int $sort = 100,
+            string $toPath = '',
+            array $toMethodArg = []
+        ): void {
+        }
+
+        public function unRegisterEventHandler(
+            string $fromModuleId,
+            string $eventType,
+            string $toModuleId,
+            string $toClass,
+            string $toMethod,
+            string $toPath = '',
+            array $toMethodArg = []
+        ): void {
+        }
+    }
+}
+
 namespace Bitrix\Main\Config {
     final class Option
     {
