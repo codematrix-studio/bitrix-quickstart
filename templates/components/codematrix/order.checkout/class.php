@@ -104,6 +104,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return;
         }
 
+        if ($this->getPersonTypes(Context::getCurrent()->getSite()) === []) {
+            ShowError('Для текущего сайта не настроены активные типы плательщиков. Проверьте настройки интернет-магазина.');
+            return;
+        }
+
         $this->arResult['IS_EMPTY'] = false;
         $this->arResult['SIGNED_PARAMS'] = $this->getSignedParameters();
         $this->arResult['PATH_TO_PERSONAL'] = (string)($this->arParams['PATH_TO_PERSONAL'] ?? '/personal/orders/');
@@ -947,6 +952,6 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     private function getDefaultPersonTypeId(): int
     {
         $types = $this->getPersonTypes(Context::getCurrent()->getSite());
-        return !empty($types) ? (int)array_key_first($types) : 1;
+        return $types !== [] ? (int)array_key_first($types) : 0;
     }
 }
