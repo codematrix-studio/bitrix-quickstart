@@ -728,8 +728,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     }
                 }
             }
-        } catch (\Throwable $e) {
-            $resultData['error'] = $e->getMessage();
+        } catch (\\Throwable $exception) {
+            $resultData['error'] = 'Не удалось подготовить форму оплаты. Заказ сохранён, обратитесь к администратору магазина.';
         }
 
         return $resultData;
