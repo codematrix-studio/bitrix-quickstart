@@ -787,7 +787,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             if (!$service) {
                 return [
                     'paySystemId' => $paySystemId,
-                    'paySystemName' => $paySystemName,
+                    'paySystemName' => '',
                     'isCash' => false,
                     'paymentUrl' => '',
                     'html' => '',
@@ -810,7 +810,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         $resultData = [
             'paySystemId'   => $paySystemId,
-            'paySystemName' => $targetPayment->getPaymentSystemName(),
+            'paySystemName' => $paySystemName,
             'isCash'        => $isCash,
             'paymentUrl'    => '',
             'html'          => '',
