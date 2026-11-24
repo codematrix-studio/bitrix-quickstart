@@ -92,6 +92,7 @@ namespace {
         public static array $agents = [];
         public static array $removed = [];
         public static bool $failNextAdd = false;
+        public static bool $failNextRemove = false;
 
         public static function GetList(array $order, array $filter): AgentResult
         {
@@ -140,6 +141,10 @@ namespace {
         public static function RemoveAgent(string $name, string $module = '', $userId = false): void
         {
             self::$removed[] = [$name, $module, $userId];
+            if (self::$failNextRemove) {
+                self::$failNextRemove = false;
+                return;
+            }
             self::$agents = array_values(array_filter(
                 self::$agents,
                 static function (array $agent) use ($name, $module, $userId): bool {
@@ -244,6 +249,17 @@ namespace {
     $assert(CAgent::$agents === [], 'Uninstall should leave no registered agent.');
 
     $assert($installer->DoUninstall(), 'Repeated uninstall should remain successful.');
+
+    // Если RemoveAgent не удалил запись, установщик должен остановить удаление.
+    $assert($installer->DoInstall(), 'Reinstall before agent removal failure test should succeed.');
+    CAgent::$failNextRemove = true;
+    $assert(!$installer->DoUninstall(), 'Uninstall should fail when the agent remains registered.');
+    $assert(IsModuleInstalled('vendor.advancedmodule'), 'A failed agent removal must keep the module registered.');
+    $assert(count(CAgent::$agents) === 1, 'The failed removal test must leave the agent registered.');
+    $assert($installer->DoUninstall(), 'Uninstall should succeed after the agent removal problem is resolved.');
+    $assert(CAgent::$agents === [], 'Successful retry must remove the agent.');
+
+
 
     $removedBeforeRollback = count(CAgent::$removed);
     $failingInstaller = new class extends vendor_advancedmodule {
