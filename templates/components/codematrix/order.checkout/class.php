@@ -460,7 +460,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 return null;
             }
 
-            $availablePaySystems = PaySystem\\Manager::getListWithRestrictions(
+            $availablePaySystems = PaySystem\Manager::getListWithRestrictions(
                 $payment,
                 RestrictionManager::MODE_CLIENT
             );
