@@ -269,5 +269,26 @@ namespace {
     $assert($manager->active === [], 'Successful retry should remove the active event handler.');
     $assert(!IsModuleInstalled('vendor.advancedmodule'), 'Successful retry should unregister the module.');
 
+    // Ошибка восстановления ранее зарегистрированного модуля не должна снимать его регистрацию.
+    RegisterModule('vendor.advancedmodule');
+    \Bitrix\Main\Config\Option::set('vendor.advancedmodule', 'INSTALLATION_INCOMPLETE', 'Y');
+    $failingRecoveryInstaller = new class extends vendor_advancedmodule {
+        public function InstallDB()
+        {
+            return false;
+        }
+
+        public function UnInstallDB()
+        {
+            return true;
+        }
+    };
+    $assert(!$failingRecoveryInstaller->DoInstall(), 'A failed recovery attempt should return false.');
+    $assert(IsModuleInstalled('vendor.advancedmodule'), 'A failed recovery must preserve pre-existing module registration.');
+    $assert(
+        \Bitrix\Main\Config\Option::get('vendor.advancedmodule', 'INSTALLATION_INCOMPLETE', 'N') === 'Y',
+        'A failed recovery must keep the incomplete-installation marker for the next retry.'
+    );
+
     echo "Advanced module lifecycle/events smoke test: OK\n";
 }
