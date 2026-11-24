@@ -763,7 +763,10 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
      */
     private function isSafePaymentUrl(string $url): bool
     {
-        if ($url === '' || preg_match('/[\\x00-\\x20\\x7F]/', $url)) {
+        if ($url === ''
+            || preg_match('/[\\x00-\\x20\\x7F]/', $url)
+            || strpos($url, '\\') !== false
+        ) {
             return false;
         }
 
@@ -780,8 +783,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         return $scheme === ''
-            && !str_starts_with($url, '//')
-            && strpos($url, '\\') === false;
+            && !str_starts_with($url, '//');
     }
 
     private function resolveBitrixLocationByKladr(string $kladrId): string
