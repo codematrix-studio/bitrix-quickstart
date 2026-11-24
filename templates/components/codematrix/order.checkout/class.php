@@ -772,7 +772,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         return $scheme === ''
             && !str_starts_with($url, '//')
-            && strpos($url, '\\\\') === false;
+            && strpos($url, '\\') === false;
     }
 
     private function resolveBitrixLocationByKladr(string $kladrId): string
