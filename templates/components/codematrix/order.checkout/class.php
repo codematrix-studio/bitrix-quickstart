@@ -1137,11 +1137,6 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                             }
                         }
                     }
-                    if (!$finalResult->isSuccess()) {
-                        foreach ($finalResult->getErrors() as $error) {
-                            $this->errorCollection->setError($error);
-                        }
-                    }
                 }
             }
             break;
