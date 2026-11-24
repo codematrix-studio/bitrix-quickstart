@@ -969,13 +969,23 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         if ($deliveryId > 0 && isset($availableDeliveries[$deliveryId])) {
-            $shipment->setFields([
-                'DELIVERY_ID'   => $deliveryId,
-                'DELIVERY_NAME' => $availableDeliveries[$deliveryId]->getNameWithParent(),
-            ]);
-            $calcResult = $shipment->calculateDelivery();
+            $shipment->setDeliveryService($availableDeliveries[$deliveryId]);
+            $calcResult = Delivery\Services\Manager::calculateDeliveryPrice(
+                $shipment,
+                $deliveryId,
+                $shipment->getExtraServices()
+            );
             if ($calcResult->isSuccess()) {
-                $shipment->setBasePriceDelivery($calcResult->getPrice());
+                $priceResult = $shipment->setBasePriceDelivery($calcResult->getPrice());
+                if (!$priceResult->isSuccess()) {
+                    foreach ($priceResult->getErrors() as $error) {
+                        $this->errorCollection->setError($error);
+                    }
+                }
+            } else {
+                foreach ($calcResult->getErrors() as $error) {
+                    $this->errorCollection->setError($error);
+                }
             }
         }
 
@@ -1074,9 +1084,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         if ($shipment) {
             foreach (Delivery\Services\Manager::getRestrictedObjectsList($shipment) as $srv) {
                 $dId = (int)$srv->getId();
-                $cloneShipment = clone $shipment;
-                $cloneShipment->setField('DELIVERY_ID', $dId);
-                $calc = $cloneShipment->calculateDelivery();
+                $calc = Delivery\Services\Manager::calculateDeliveryPrice(
+                    $shipment,
+                    $dId,
+                    $shipment->getExtraServices()
+                );
                 if (!$calc->isSuccess()) {
                     continue;
                 }
