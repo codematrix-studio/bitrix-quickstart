@@ -776,119 +776,135 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
      */
     private function initiateOrderPayment(Order $order): ?array
     {
-        /** @var Payment|null $targetPayment */
-        $targetPayment = null;
-        foreach ($order->getPaymentCollection() as $payment) {
-            if (!$payment->isInner() && !$payment->isPaid()) {
-                $targetPayment = $payment;
-                break;
-            }
-        }
-
-        if (!$targetPayment) {
-            return [
-                'paySystemId' => 0,
-                'paySystemName' => '',
-                'isCash' => false,
-                'paymentUrl' => '',
-                'html' => '',
-                'error' => 'Заказ сохранён, но не удалось определить платёж для оплаты. Обратитесь к администратору магазина.',
-            ];
-        }
-
-        $paySystemId = (int)$targetPayment->getPaymentSystemId();
-        if ($paySystemId <= 0) {
-            return [
-                'paySystemId' => 0,
-                'paySystemName' => '',
-                'isCash' => false,
-                'paymentUrl' => '',
-                'html' => '',
-                'error' => 'Заказ сохранён, но для него не назначена платёжная система. Обратитесь к администратору магазина.',
-            ];
-        }
-
+    {
         try {
-            $service = $targetPayment->getPaySystem();
-            if (!$service) {
+            /** @var Payment|null $targetPayment */
+            $targetPayment = null;
+            foreach ($order->getPaymentCollection() as $payment) {
+                if (!$payment->isInner() && !$payment->isPaid()) {
+                    $targetPayment = $payment;
+                    break;
+                }
+            }
+    
+            if (!$targetPayment) {
+                return [
+                    'paySystemId' => 0,
+                    'paySystemName' => '',
+                    'isCash' => false,
+                    'paymentUrl' => '',
+                    'html' => '',
+                    'error' => 'Заказ сохранён, но не удалось определить платёж для оплаты. Обратитесь к администратору магазина.',
+                ];
+            }
+    
+            $paySystemId = (int)$targetPayment->getPaymentSystemId();
+            if ($paySystemId <= 0) {
+                return [
+                    'paySystemId' => 0,
+                    'paySystemName' => '',
+                    'isCash' => false,
+                    'paymentUrl' => '',
+                    'html' => '',
+                    'error' => 'Заказ сохранён, но для него не назначена платёжная система. Обратитесь к администратору магазина.',
+                ];
+            }
+    
+            try {
+                $service = $targetPayment->getPaySystem();
+                if (!$service) {
+                    return [
+                        'paySystemId' => $paySystemId,
+                        'paySystemName' => '',
+                        'isCash' => false,
+                        'paymentUrl' => '',
+                        'html' => '',
+                        'error' => 'Заказ сохранён, но платёжный обработчик недоступен. Обратитесь к администратору магазина.',
+                    ];
+                }
+    
+                $isCash = $service->isCash();
+                $paySystemName = $targetPayment->getPaymentSystemName();
+            } catch (\Throwable $exception) {
                 return [
                     'paySystemId' => $paySystemId,
                     'paySystemName' => '',
                     'isCash' => false,
                     'paymentUrl' => '',
                     'html' => '',
-                    'error' => 'Заказ сохранён, но платёжный обработчик недоступен. Обратитесь к администратору магазина.',
+                    'error' => 'Заказ сохранён, но не удалось проверить платёжный обработчик. Обратитесь к администратору магазина.',
                 ];
             }
-
-            $isCash = $service->isCash();
-            $paySystemName = $targetPayment->getPaymentSystemName();
-        } catch (\Throwable $exception) {
+    
+            $resultData = [
+                'paySystemId'   => $paySystemId,
+                'paySystemName' => $paySystemName,
+                'isCash'        => $isCash,
+                'paymentUrl'    => '',
+                'html'          => '',
+                'error'         => '',
+            ];
+    
+            if ($isCash) {
+                return $resultData;
+            }
+    
+            try {
+                $request = Context::getCurrent()->getRequest();
+                $initResult = $service->initiatePay($targetPayment, $request, PaySystem\BaseServiceHandler::STRING);
+    
+                if (!$initResult->isSuccess()) {
+                    // Не передаём покупателю внутренние сообщения платёжного обработчика.
+                    $resultData['error'] = 'Платёжный обработчик не смог начать оплату. Заказ сохранён; повторите попытку из личного кабинета или обратитесь к администратору.';
+    
+                    return $resultData;
+                }
+    
+                if (method_exists($initResult, 'getPaymentUrl')) {
+                    $paymentUrl = trim((string)$initResult->getPaymentUrl());
+                    if ($paymentUrl !== '') {
+                        if ($this->isSafePaymentUrl($paymentUrl)) {
+                            $resultData['paymentUrl'] = $paymentUrl;
+                        } else {
+                            $resultData['error'] = 'Платёжный обработчик вернул некорректную ссылку.';
+                        }
+                    }
+                }
+    
+                $templateHtml = (string)$initResult->getTemplate();
+                if ($templateHtml !== '') {
+                    $resultData['html'] = $templateHtml;
+    
+                    // Если шлюз вернул HTML с авто-редиректом или прямую ссылку в атрибуте action/href
+                    if ($resultData['paymentUrl'] === '' && preg_match('/(?:window\.location(?:\.href)?\s*=\s*|location\.replace\()["\'](https?:\/\/[^"\']+)["\']/i', $templateHtml, $m)) {
+                        if ($this->isSafePaymentUrl($m[1])) {
+                            $resultData['paymentUrl'] = $m[1];
+                        }
+                    }
+                }
+                if ($resultData['paymentUrl'] === '' && $resultData['html'] === '' && $resultData['error'] === '') {
+                    $resultData['error'] = 'Платёжный обработчик не вернул ссылку или форму для оплаты.';
+                }
+            } catch (\Throwable $exception) {
+                $resultData['error'] = 'Не удалось подготовить форму оплаты. Заказ сохранён, обратитесь к администратору магазина.';
+            }
+    
+            return $resultData;
+    
+        } catch (\\Throwable $exception) {
+            // Заказ уже сохранён: сбой любого этапа инициализации оплаты не должен
+            // превращаться в необработанную ошибку AJAX и скрывать номер заказа.
             return [
-                'paySystemId' => $paySystemId,
+                'paySystemId' => 0,
                 'paySystemName' => '',
                 'isCash' => false,
                 'paymentUrl' => '',
                 'html' => '',
-                'error' => 'Заказ сохранён, но не удалось проверить платёжный обработчик. Обратитесь к администратору магазина.',
+                'error' => 'Заказ сохранён, но не удалось подготовить оплату. Проверьте заказ в личном кабинете или обратитесь к администратору магазина.',
             ];
         }
-
-        $resultData = [
-            'paySystemId'   => $paySystemId,
-            'paySystemName' => $paySystemName,
-            'isCash'        => $isCash,
-            'paymentUrl'    => '',
-            'html'          => '',
-            'error'         => '',
-        ];
-
-        if ($isCash) {
-            return $resultData;
-        }
-
-        try {
-            $request = Context::getCurrent()->getRequest();
-            $initResult = $service->initiatePay($targetPayment, $request, PaySystem\BaseServiceHandler::STRING);
-
-            if (!$initResult->isSuccess()) {
-                // Не передаём покупателю внутренние сообщения платёжного обработчика.
-                $resultData['error'] = 'Платёжный обработчик не смог начать оплату. Заказ сохранён; повторите попытку из личного кабинета или обратитесь к администратору.';
-
-                return $resultData;
-            }
-
-            if (method_exists($initResult, 'getPaymentUrl')) {
-                $paymentUrl = trim((string)$initResult->getPaymentUrl());
-                if ($paymentUrl !== '') {
-                    if ($this->isSafePaymentUrl($paymentUrl)) {
-                        $resultData['paymentUrl'] = $paymentUrl;
-                    } else {
-                        $resultData['error'] = 'Платёжный обработчик вернул некорректную ссылку.';
-                    }
-                }
-            }
-
-            $templateHtml = (string)$initResult->getTemplate();
-            if ($templateHtml !== '') {
-                $resultData['html'] = $templateHtml;
-
-                // Если шлюз вернул HTML с авто-редиректом или прямую ссылку в атрибуте action/href
-                if ($resultData['paymentUrl'] === '' && preg_match('/(?:window\.location(?:\.href)?\s*=\s*|location\.replace\()["\'](https?:\/\/[^"\']+)["\']/i', $templateHtml, $m)) {
-                    if ($this->isSafePaymentUrl($m[1])) {
-                        $resultData['paymentUrl'] = $m[1];
-                    }
-                }
-            }
-            if ($resultData['paymentUrl'] === '' && $resultData['html'] === '' && $resultData['error'] === '') {
-                $resultData['error'] = 'Платёжный обработчик не вернул ссылку или форму для оплаты.';
-            }
-        } catch (\Throwable $exception) {
-            $resultData['error'] = 'Не удалось подготовить форму оплаты. Заказ сохранён, обратитесь к администратору магазина.';
-        }
-
-        return $resultData;
     }
+
 
     /**
      * Проверяет ссылку, возвращённую платёжным обработчиком.
