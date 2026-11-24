@@ -715,7 +715,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $profileName = mb_substr($profileName, 0, 255);
 
             $errors = [];
-            $savedProfileId = \\CSaleOrderUserProps::DoSaveUserProfile(
+            $savedProfileId = \CSaleOrderUserProps::DoSaveUserProfile(
                 $userId,
                 $profileId,
                 $profileName,
@@ -725,7 +725,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             );
 
             return $savedProfileId === false ? 0 : (int)$savedProfileId;
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             // Сбой необязательного профиля не должен отменять успешное оформление заказа.
             return 0;
         }
