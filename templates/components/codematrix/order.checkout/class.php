@@ -744,6 +744,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     }
                 }
             }
+            if ($resultData['paymentUrl'] === '' && $resultData['html'] === '' && $resultData['error'] === '') {
+                $resultData['error'] = 'Платёжный обработчик не вернул ссылку или форму для оплаты.';
+            }
         } catch (\Throwable $exception) {
             $resultData['error'] = 'Не удалось подготовить форму оплаты. Заказ сохранён, обратитесь к администратору магазина.';
         }
