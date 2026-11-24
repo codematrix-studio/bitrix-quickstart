@@ -345,18 +345,48 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         // если ограничения изменились между пересчётом и созданием заказа.
         $requestedDeliveryId = (int)($payload['deliveryId'] ?? 0);
         if ($requestedDeliveryId > 0) {
+            $deliveryFound = false;
             foreach ($order->getShipmentCollection() as $shipment) {
                 if ($shipment->isSystem()) {
                     continue;
                 }
 
+                $deliveryFound = true;
                 if ((int)$shipment->getDeliveryId() !== $requestedDeliveryId) {
                     $this->errorCollection->setError(new Error(
                         'Выбранная служба доставки больше недоступна. Обновите расчёт заказа и выберите доставку повторно.'
                     ));
                     return null;
                 }
+
+                $deliveryCalculation = $shipment->calculateDelivery();
+                if (!$deliveryCalculation->isSuccess()) {
+                    foreach ($deliveryCalculation->getErrors() as $error) {
+                        $this->errorCollection->setError($error);
+                    }
+                    if ($this->errorCollection->isEmpty()) {
+                        $this->errorCollection->setError(new Error(
+                            'Не удалось рассчитать стоимость выбранной доставки. Выберите другой способ доставки.'
+                        ));
+                    }
+                    return null;
+                }
+
+                $priceResult = $shipment->setBasePriceDelivery($deliveryCalculation->getPrice(), true);
+                if (!$priceResult->isSuccess()) {
+                    foreach ($priceResult->getErrors() as $error) {
+                        $this->errorCollection->setError($error);
+                    }
+                    return null;
+                }
                 break;
+            }
+
+            if (!$deliveryFound) {
+                $this->errorCollection->setError(new Error(
+                    'Не удалось назначить выбранную службу доставки. Обновите расчёт заказа.'
+                ));
+                return null;
             }
         }
 
@@ -844,13 +874,16 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $cloneShipment = clone $shipment;
                 $cloneShipment->setField('DELIVERY_ID', $dId);
                 $calc = $cloneShipment->calculateDelivery();
+                if (!$calc->isSuccess()) {
+                    continue;
+                }
 
                 $deliveries[] = [
                     'id'          => $dId,
                     'name'        => $srv->getNameWithParent(),
                     'description' => (string)$srv->getDescription(),
-                    'price'       => $calc->isSuccess() ? $calc->getPrice() : 0,
-                    'period'      => $calc->isSuccess() ? (string)$calc->getPeriodDescription() : '',
+                    'price'       => $calc->getPrice(),
+                    'period'      => (string)$calc->getPeriodDescription(),
                 ];
             }
         }
