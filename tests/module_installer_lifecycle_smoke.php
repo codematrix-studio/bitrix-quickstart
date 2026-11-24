@@ -29,7 +29,7 @@ namespace Bitrix\Main\Config {
         {
             if (self::$failNextSet) {
                 self::$failNextSet = false;
-                throw new \\RuntimeException('Ошибка записи настройки модуля.');
+                throw new \RuntimeException('Ошибка записи настройки модуля.');
             }
 
             self::$options[$moduleId][$name] = $value;
@@ -402,25 +402,25 @@ namespace {
     // Ошибка восстановления не должна снимать регистрацию ранее установленного модуля.
     $GLOBALS['installedModules'] = ['vendor.module' => true];
     $GLOBALS['lifecycleLog'] = [];
-    \\Bitrix\\Main\\Config\\Option::set('vendor.module', 'INSTALLATION_INCOMPLETE', 'Y');
+    \Bitrix\\Main\\Config\\Option::set('vendor.module', 'INSTALLATION_INCOMPLETE', 'Y');
     $installer = new FailingEventsInstaller();
     $assert(!$installer->DoInstall(), 'Ошибка восстановления ранее установленного модуля должна вернуть false.');
     $assert(IsModuleInstalled('vendor.module'), 'При успешном откате восстановления существующая регистрация должна сохраниться.');
     $assert(
-        \\Bitrix\\Main\\Config\\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
+        \Bitrix\\Main\\Config\\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
         'После неудачного восстановления должна сохраниться отметка незавершённой установки.'
     );
 
     // Сбой записи служебной отметки до начала этапов также не должен снимать существующую регистрацию.
     $GLOBALS['installedModules'] = ['vendor.module' => true];
     $GLOBALS['lifecycleLog'] = [];
-    \\Bitrix\\Main\\Config\\Option::set('vendor.module', 'INSTALLATION_INCOMPLETE', 'Y');
-    \\Bitrix\\Main\\Config\\Option::$failNextSet = true;
+    \Bitrix\\Main\\Config\\Option::set('vendor.module', 'INSTALLATION_INCOMPLETE', 'Y');
+    \Bitrix\\Main\\Config\\Option::$failNextSet = true;
     $installer = new SuccessfulModuleInstaller();
     $assert(!$installer->DoInstall(), 'Сбой записи отметки восстановления должен прервать установку.');
     $assert(IsModuleInstalled('vendor.module'), 'Сбой записи настройки не должен снимать существующую регистрацию.');
     $assert(
-        \\Bitrix\\Main\\Config\\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
+        \Bitrix\\Main\\Config\\Option::get('vendor.module', 'INSTALLATION_INCOMPLETE') === 'Y',
         'Сбой записи не должен удалять ранее существовавшую отметку восстановления.'
     );
     $assert($GLOBALS['lifecycleLog'] === [], 'При сбое записи отметки этапы установки не должны запускаться.');
