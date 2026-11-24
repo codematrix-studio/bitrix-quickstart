@@ -42,7 +42,7 @@ final class Version202611240001CreateExampleTable implements MigrationInterface
         $fields = array_keys($connection->getTableFields($tableName));
         foreach (['ID', 'NAME'] as $requiredField) {
             if (!in_array($requiredField, $fields, true)) {
-                throw new \\RuntimeException(sprintf(
+                throw new \RuntimeException(sprintf(
                     'Таблица примера "%s" не содержит обязательную колонку "%s".',
                     $tableName,
                     $requiredField
