@@ -283,7 +283,7 @@ if (!empty($arResult['IS_EMPTY'])) {
 <script>
 BX.ready(function () {
     const { createApp, ref, reactive } = BX.Vue3;
-    const initialState = <?= Json::encode($arResult['INITIAL_STATE']) ?>;
+    const initialState = <?= Json::encode($arResult['INITIAL_STATE'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
     const checkoutRequestId = '<?= bin2hex(random_bytes(16)) ?>';
     const signedParameters = '<?= CUtil::JSEscape($arResult['SIGNED_PARAMS']) ?>';
     const dadataEnabled = <?= $arResult['DADATA_ENABLED'] ? 'true' : 'false' ?>;
