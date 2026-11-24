@@ -441,9 +441,6 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     }
 
     /**
-     * Создаёт отпечаток пользовательских данных оформления без самого ключа запроса.
-     */
-    /**
      * Сохраняет разрешённые свойства заказа в профиль текущего покупателя.
      */
     private function saveBuyerProfileAfterOrder(Order $order, array $payload): int
