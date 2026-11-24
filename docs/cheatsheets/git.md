@@ -157,10 +157,10 @@ git config --global core.editor "code --wait"
 /node_modules/
 /.env
 /.env.*
-!/ .env.example
+!.env.example
 .idea/
 .DS_Store
 Thumbs.db
 ```
 
-Строка с исключением должна быть записана без пробела после `!`: `!.env.example`. Файлы, уже добавленные в Git, правилами `.gitignore` автоматически не перестают отслеживаться.
+Файлы, уже добавленные в Git, правилами `.gitignore` автоматически не перестают отслеживаться.
