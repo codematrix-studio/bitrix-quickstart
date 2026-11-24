@@ -84,7 +84,7 @@ namespace {
     use Vendor\AdvancedModule\Install\Migration\MigrationInterface;
     use Vendor\AdvancedModule\Install\Migration\MigrationRunner;
 
-    final class FakeConnection extends Connection
+    class FakeConnection extends Connection
     {
         public array $tables = [];
         public bool $locked = false;
