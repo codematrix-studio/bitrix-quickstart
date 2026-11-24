@@ -133,8 +133,10 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
     public function recalculateAction(array $payload = []): array
     {
-        Loader::includeModule('sale');
-        Loader::includeModule('catalog');
+        if (!Loader::includeModule('sale') || !Loader::includeModule('catalog')) {
+            $this->errorCollection->setError(new Error('Модули интернет-магазина (sale, catalog) не установлены.'));
+            return [];
+        }
 
         $coupon = trim((string)($payload['coupon'] ?? ''));
         if ($coupon !== '') {
@@ -150,7 +152,10 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
     public function searchLocationsAction(string $query = ''): array
     {
-        Loader::includeModule('sale');
+        if (!Loader::includeModule('sale')) {
+            return ['items' => []];
+        }
+
         $query = trim($query);
         if (mb_strlen($query) < 2 || mb_strlen($query) > 120) {
             return ['items' => []];
@@ -189,7 +194,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
     public function suggestDadataAction(string $type = 'address', string $query = ''): array
     {
-        Loader::includeModule('sale');
+        if (!Loader::includeModule('sale')) {
+            return ['items' => []];
+        }
 
         $apiKey = trim((string)Option::get('main', 'codematrix_order_checkout_dadata_api_key', ''));
         $query = trim($query);
@@ -267,8 +274,10 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
     public function createOrderAction(array $payload = []): ?array
     {
-        Loader::includeModule('sale');
-        Loader::includeModule('catalog');
+        if (!Loader::includeModule('sale') || !Loader::includeModule('catalog')) {
+            $this->errorCollection->setError(new Error('Модули интернет-магазина (sale, catalog) не установлены.'));
+            return null;
+        }
 
         $requestId = (string)($payload['requestId'] ?? '');
         if (!preg_match('/^[a-f0-9]{32}$/i', $requestId)) {
