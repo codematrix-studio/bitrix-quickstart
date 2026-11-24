@@ -49,11 +49,5 @@ $arComponentParameters = [
             'TYPE'    => 'CHECKBOX',
             'DEFAULT' => 'Y',
         ],
-        'DADATA_API_KEY' => [
-            'PARENT'  => 'INTEGRATIONS',
-            'NAME'    => 'API-ключ DaData (оставьте пустым, чтобы отключить подсказки)',
-            'TYPE'    => 'STRING',
-            'DEFAULT' => '',
-        ],
     ],
 ];
