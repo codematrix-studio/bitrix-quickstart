@@ -169,6 +169,8 @@ class vendor_advancedmodule extends CModule
         }
 
         $attemptedSteps = [];
+        $isSchemaUpdateAttempt = false;
+
         try {
             $moduleIsInstalled = IsModuleInstalled($this->MODULE_ID);
             $installationIsIncomplete = Option::get(
@@ -180,9 +182,11 @@ class vendor_advancedmodule extends CModule
             // Исправную установку не трогаем. Повторный запуск этапов нужен
             // только для восстановления, явно отмеченного предыдущим запуском.
             if ($moduleIsInstalled && !$installationIsIncomplete) {
-                // При повторном вызове обновляем только схему: runtime-регистрации
-                // и файлы исправной установки повторно не трогаем.
-                $attemptedSteps[] = 'database';
+                // Это обновление уже установленного модуля, а не новая установка.
+                // При ошибке миграции нельзя запускать uninstall-этапы и снимать
+                // регистрацию существующего модуля.
+                $isSchemaUpdateAttempt = true;
+
                 if (!$this->InstallDB()) {
                     throw new \RuntimeException('Не удалось применить ожидающие миграции модуля.');
                 }
@@ -232,20 +236,26 @@ class vendor_advancedmodule extends CModule
 
             return true;
         } catch (\Throwable $exception) {
-            $rollbackSuccessful = $this->rollbackInstallation($attemptedSteps);
+            if ($isSchemaUpdateAttempt) {
+                // MigrationRunner отвечает за транзакционный откат конкретной
+                // миграции. Существующая установка и её данные остаются на месте.
+                $rollbackSuccessful = false;
+                $registrationRemoved = false;
+            } else {
+                $rollbackSuccessful = $this->rollbackInstallation($attemptedSteps);
+                $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
 
-            $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
-
-            if (!$registrationRemoved && $rollbackSuccessful) {
-                try {
-                    UnRegisterModule($this->MODULE_ID);
-                    $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
-                } catch (\Throwable $unregisterException) {
-                    error_log(sprintf(
-                        'Не удалось снять регистрацию модуля %s после отката (%s).',
-                        $this->MODULE_ID,
-                        get_class($unregisterException)
-                    ));
+                if (!$registrationRemoved && $rollbackSuccessful) {
+                    try {
+                        UnRegisterModule($this->MODULE_ID);
+                        $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
+                    } catch (\\Throwable $unregisterException) {
+                        error_log(sprintf(
+                            'Не удалось снять регистрацию модуля %s после отката (%s).',
+                            $this->MODULE_ID,
+                            get_class($unregisterException)
+                        ));
+                    }
                 }
             }
 
@@ -269,7 +279,9 @@ class vendor_advancedmodule extends CModule
                 $exception->getMessage()
             );
 
-            if (!$rollbackSuccessful || !$registrationRemoved) {
+            if ($isSchemaUpdateAttempt) {
+                $message .= ' Существующая регистрация и данные модуля сохранены. Устраните причину ошибки и повторите запуск обновления.';
+            } elseif (!$rollbackSuccessful || !$registrationRemoved) {
                 $message .= ' Откат выполнен не полностью; модуль оставлен зарегистрированным для повторного восстановления или удаления.';
             }
 
