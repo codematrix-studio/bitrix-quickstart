@@ -709,15 +709,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             if (method_exists($initResult, 'getPaymentUrl')) {
                 $paymentUrl = trim((string)$initResult->getPaymentUrl());
                 if ($paymentUrl !== '') {
-                    $urlParts = parse_url($paymentUrl);
-                    $scheme = is_array($urlParts) ? strtolower((string)($urlParts['scheme'] ?? '')) : '';
-                    $hasHttpScheme = in_array($scheme, ['http', 'https'], true)
-                        && !empty($urlParts['host']);
-                    $isRelativeUrl = $scheme === ''
-                        && !str_starts_with($paymentUrl, '//')
-                        && !str_starts_with($paymentUrl, '\\');
-
-                    if ($hasHttpScheme || $isRelativeUrl) {
+                    if ($this->isSafePaymentUrl($paymentUrl)) {
                         $resultData['paymentUrl'] = $paymentUrl;
                     } else {
                         $resultData['error'] = 'Платёжный обработчик вернул некорректную ссылку.';
@@ -731,7 +723,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
                 // Если шлюз вернул HTML с авто-редиректом или прямую ссылку в атрибуте action/href
                 if ($resultData['paymentUrl'] === '' && preg_match('/(?:window\.location(?:\.href)?\s*=\s*|location\.replace\()["\'](https?:\/\/[^"\']+)["\']/i', $templateHtml, $m)) {
-                    $resultData['paymentUrl'] = $m[1];
+                    if ($this->isSafePaymentUrl($m[1])) {
+                        $resultData['paymentUrl'] = $m[1];
+                    }
                 }
             }
         } catch (\Throwable $e) {
@@ -739,6 +733,32 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         return $resultData;
+    }
+
+    /**
+     * Проверяет ссылку, возвращённую платёжным обработчиком.
+     */
+    private function isSafePaymentUrl(string $url): bool
+    {
+        if ($url === '' || preg_match('/[\\x00-\\x20\\x7F]/', $url)) {
+            return false;
+        }
+
+        $parts = parse_url($url);
+        if (!is_array($parts)) {
+            return false;
+        }
+
+        $scheme = strtolower((string)($parts['scheme'] ?? ''));
+        if (in_array($scheme, ['http', 'https'], true)) {
+            return !empty($parts['host'])
+                && !isset($parts['user'])
+                && !isset($parts['pass']);
+        }
+
+        return $scheme === ''
+            && !str_starts_with($url, '//')
+            && !str_starts_with($url, '\\\\');
     }
 
     private function resolveBitrixLocationByKladr(string $kladrId): string
