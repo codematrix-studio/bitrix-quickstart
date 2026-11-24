@@ -1002,13 +1002,16 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $availablePaySystems = PaySystem\Manager::getListWithRestrictions($payment, RestrictionManager::MODE_CLIENT);
 
         $paySystemId = (int)($payload['paySystemId'] ?? 0);
-        if (!isset($availablePaySystems[$paySystemId]) && !empty($availablePaySystems)) {
-            $firstPaySystem = reset($availablePaySystems);
-            $paySystemId = (int)$firstPaySystem['ID'];
-        }
-
-        if ($paySystemId > 0 && isset($availablePaySystems[$paySystemId])) {
+        if ($paySystemId > 0) {
+            // Сначала сохраняем явно выбранный сервис. Его ограничения
+            // проверяются после doFinalAction(), когда сумма уже окончательная.
             $service = PaySystem\Manager::getObjectById($paySystemId);
+            if ($service) {
+                $payment->setPaySystemService($service);
+            }
+        } elseif (!empty($availablePaySystems)) {
+            $firstPaySystem = reset($availablePaySystems);
+            $service = PaySystem\Manager::getObjectById((int)$firstPaySystem['ID']);
             if ($service) {
                 $payment->setPaySystemService($service);
             }
