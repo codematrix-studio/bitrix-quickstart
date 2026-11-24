@@ -1109,7 +1109,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 continue;
             }
 
-            $availableDeliveries = Delivery\\Services\\Manager::getRestrictedObjectsList($shipment);
+            $availableDeliveries = Delivery\Services\Manager::getRestrictedObjectsList($shipment);
             $selectedDeliveryId = (int)$shipment->getDeliveryId();
             if (!isset($availableDeliveries[$selectedDeliveryId])) {
                 if ($availableDeliveries === []) {
@@ -1124,12 +1124,12 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $shipment->setDeliveryService($firstDelivery);
 
                 try {
-                    $deliveryResult = Delivery\\Services\\Manager::calculateDeliveryPrice(
+                    $deliveryResult = Delivery\Services\Manager::calculateDeliveryPrice(
                         $shipment,
                         $fallbackDeliveryId,
                         $shipment->getExtraServices()
                     );
-                } catch (\\Throwable $exception) {
+                } catch (\Throwable $exception) {
                     $this->errorCollection->setError(new Error(
                         'Не удалось рассчитать доступную службу доставки. Повторите пересчёт заказа.'
                     ));
