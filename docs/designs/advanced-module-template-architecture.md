@@ -193,6 +193,27 @@ Destructive migrations требуют отдельного описания ри
 
 До подтверждения этих пунктов не закладывать предположения в публичный шаблон.
 
+## 10.1. Проверка DB API Битрикс (2026-11-24)
+
+Проверено по официальному справочнику BitrixFramework:
+
+- Соединение получать через `Bitrix\\Main\\Application::getConnection()`; вручную создавать объект `Connection` нельзя.
+- Для прямого SQL и операций со структурой БД использовать `Bitrix\\Main\\DB\\Connection`. Для сущностей, описанных ORM-классами, использовать `DataManager`.
+- Для запросов доступны `query()`, `queryExecute()`, `queryScalar()`; значения и имена SQL подготавливать через `getSqlHelper()`.
+- `startTransaction()`, `commitTransaction()` и `rollbackTransaction()` доступны с Bitrix 14.0.0. Вложенная транзакция использует SAVEPOINT. Это не означает, что DDL любой поддерживаемой СУБД можно откатить.
+- `Connection::lock()` и `unlock()` — именованные блокировки, но поведение зависит от конкретной реализации соединения: базовая реализация ничего не блокирует и возвращает `true`; MySQL использует `GET_LOCK`; PostgreSQL вызывает `bx_get_lock` / `bx_release_lock`. В PostgreSQL имя блокировки сводится к CRC32, поэтому возможны коллизии имён.
+
+### Решения для первого migration runner
+
+1. Получать соединение только через `Application::getConnection()`; передавать один и тот же объект соединения runner, ledger и миграциям.
+2. Не считать `lock() === true` достаточной гарантией. Сначала определить поддерживаемые типы соединений и реализовать явные lock adapters. Для первого рабочего варианта безопаснее заявить MySQL и использовать `Connection::lock()/unlock()` только на проверенной реализации; неизвестный тип БД должен завершать запуск понятной ошибкой, а не продолжать без блокировки.
+3. PostgreSQL не включать в заявленную матрицу до отдельной проверки наличия и жизненного цикла функций `bx_get_lock` / `bx_release_lock` на чистой установке, а также поведения при потере соединения. CRC32-коллизии должны быть отмечены как ограничение.
+4. Не оборачивать все миграции в одну автоматическую транзакцию. Миграция явно определяет допустимость транзакции; DDL и частично выполненные операции требуют идемпотентного сценария продолжения/восстановления.
+5. Запись в ledger создавать только после успешного завершения миграции. Если процесс оборвался после изменения схемы, но до записи ledger, повторный запуск должен безопасно распознать уже выполненную часть либо остановиться с диагностикой; считать такую ситуацию автоматически откатываемой нельзя.
+6. Runner должен удерживать именованную блокировку на всём цикле «прочитать ledger → выполнить миграции → записать ledger» и освобождать её в `finally`. Если освобождение не удалось, ошибка должна попасть в диагностику, но не подменять исходную ошибку миграции.
+
+Минимальная матрица первого релиза migration runner: MySQL на проверенной версии Bitrix. Поддержка PostgreSQL — отдельная задача после подтверждения инфраструктурных функций и интеграционных тестов. Это ограничение относится к конкурентному запуску runner, а не является утверждением о невозможности работы остального шаблона на PostgreSQL.
+
 ## 11. Официальные источники
 
 - [Архитектура модулей](https://docs.1c-bitrix.ru/pages/modules/architecture.html)
@@ -202,4 +223,4 @@ Destructive migrations требуют отдельного описания ри
 - [Фоновые задачи и агенты](https://docs.1c-bitrix.ru/pages/framework/background-jobs.html)
 - [CAgent API](https://docs.1c-bitrix.ru/api/classes/CAgent.html)
 - [ModuleManager::unRegisterModule](https://docs.1c-bitrix.ru/pages/api-reference/main/module-manager/un-register-module.html)
-- [SiteUpdate: обновление модулей](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=101&LESSON_ID=3218&LESSON_PATH=8781.4793.3218)
+- [SiteUpdate: обновление модулей](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=101&LESSON_ID=3218&LESSON_PATH=8781.4793.3218)\n- [Connection — соединение с БД](https://docs.1c-bitrix.ru/pages/api-reference/main/db/connection/index.html)\n- [Транзакции](https://docs.1c-bitrix.ru/pages/database/transactions.html)\n- [Connection::lock](https://docs.1c-bitrix.ru/pages/api-reference/main/db/connection/lock.html)\n- [Connection::unlock](https://docs.1c-bitrix.ru/pages/api-reference/main/db/connection/unlock.html)
