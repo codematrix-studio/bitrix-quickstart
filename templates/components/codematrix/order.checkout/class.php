@@ -445,10 +445,30 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         // Финальная сумма оплаты должна совпадать с итоговой суммой заказа.
+        $externalPaymentFound = false;
         foreach ($order->getPaymentCollection() as $payment) {
             if ($payment->isInner()) {
                 continue;
             }
+
+            $externalPaymentFound = true;
+            $paySystemId = (int)$payment->getPaymentSystemId();
+            if ($paySystemId <= 0) {
+                $this->errorCollection->setError(new Error(
+                    'Для сайта не настроен доступный способ оплаты. Обратитесь к администратору магазина.'
+                ));
+                return null;
+            }
+
+            $availablePaySystems = PaySystem\\Manager::getListWithRestrictions(
+                $payment,
+                RestrictionManager::MODE_CLIENT
+            );
+            if (!isset($availablePaySystems[$paySystemId])) {
+                $this->errorCollection->setError(new Error('Выбранный способ оплаты недоступен для этого заказа.'));
+                return null;
+            }
+
             $sumResult = $payment->setField('SUM', $order->getPrice());
             if (!$sumResult->isSuccess()) {
                 foreach ($sumResult->getErrors() as $error) {
@@ -456,18 +476,13 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 }
                 return null;
             }
+        }
 
-            $paySystemId = (int)$payment->getPaymentSystemId();
-            if ($paySystemId > 0) {
-                $availablePaySystems = PaySystem\Manager::getListWithRestrictions(
-                    $payment,
-                    RestrictionManager::MODE_CLIENT
-                );
-                if (!isset($availablePaySystems[$paySystemId])) {
-                    $this->errorCollection->setError(new Error('Выбранный способ оплаты недоступен для этого заказа.'));
-                    return null;
-                }
-            }
+        if (!$externalPaymentFound) {
+            $this->errorCollection->setError(new Error(
+                'Не удалось создать платёж для заказа. Проверьте настройки способов оплаты.'
+            ));
+            return null;
         }
 
         // Резервируем ключ до сохранения. При стандартной PHP session handler
