@@ -312,7 +312,7 @@ class vendor_advancedmodule extends CModule
             return false;
         }
 
-        $attemptedSteps = [];
+        $completedSteps = [];
         $uninstallSteps = [
             'files' => ['remove' => 'UnInstallFiles', 'restore' => 'InstallFiles'],
             'agents' => ['remove' => 'UnInstallAgents', 'restore' => 'InstallAgents'],
@@ -320,7 +320,7 @@ class vendor_advancedmodule extends CModule
         ];
 
         try {
-            // Этап записывается до вызова: метод может завершиться ошибкой после частичного удаления.
+            // Восстанавливаем только полностью завершённые этапы; сбойный этап должен сам обеспечивать атомарность.
             foreach ($uninstallSteps as $step => $methods) {
                 $attemptedSteps[] = $step;
                 if (!$this->{$methods['remove']}()) {
@@ -342,7 +342,7 @@ class vendor_advancedmodule extends CModule
             UnRegisterModule($this->MODULE_ID);
             return true;
         } catch (\Throwable $exception) {
-            $restorationSuccessful = $this->restoreUninstallation($attemptedSteps, $uninstallSteps);
+            $restorationSuccessful = $this->restoreUninstallation($completedSteps, $uninstallSteps);
             $message = sprintf('Удаление модуля %s прервано: %s', $this->MODULE_ID, $exception->getMessage());
 
             if (!$restorationSuccessful) {
@@ -361,7 +361,7 @@ class vendor_advancedmodule extends CModule
     /**
      * Восстанавливает ресурсы, затронутые неудачным удалением модуля.
      *
-     * @param list<string> $attemptedSteps Этапы удаления в порядке выполнения.
+     * @param list<string> $attemptedSteps Успешно завершённые этапы удаления в порядке выполнения.
      * @param array<string, array{remove: string, restore: string}> $uninstallSteps Карта удаления и восстановления.
      *
      * @return bool Успешность восстановления всех затронутых ресурсов.
