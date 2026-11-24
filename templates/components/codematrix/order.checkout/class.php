@@ -767,7 +767,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
-        if (!is_scalar($orderId) || !is_numeric((string)$orderId)) {
+        if (!is_scalar($orderId) || filter_var($orderId, FILTER_VALIDATE_INT) === false) {
             $this->errorCollection->setError(new Error('Некорректный номер заказа.'));
             return null;
         }
@@ -792,10 +792,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             ? (int)$USER->GetID()
             : (int)\CSaleUser::GetAnonymousUserID();
 
-        if ($currentFuserId <= 0
-            || $orderFuserId !== $currentFuserId
-            || $orderUserId !== $currentUserId
-        ) {
+        $isAuthorized = $USER && $USER->IsAuthorized();
+        $ownsOrder = $orderUserId === $currentUserId
+            && ($isAuthorized || ($currentFuserId > 0 && $orderFuserId === $currentFuserId));
+
+        if (!$ownsOrder) {
             $this->errorCollection->setError(new Error('Нет доступа к оплате этого заказа.'));
             return null;
         }
