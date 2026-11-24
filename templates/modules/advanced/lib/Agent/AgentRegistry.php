@@ -68,9 +68,6 @@ final class AgentRegistry
     }
 
     /**
-     * Удаляет только системный агент с точным именем и ID этого модуля.
-     */
-    /**
      * Снимает регистрацию агента и проверяет результат по точным идентификаторам.
      *
      * @throws \RuntimeException Если агент остался в реестре после удаления.
@@ -92,5 +89,5 @@ final class AgentRegistry
 
         if ($remainingAgent) {
             throw new \RuntimeException('Bitrix не удалил системный агент модуля.');
-        }
+        }    }
 }
