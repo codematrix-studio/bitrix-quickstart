@@ -109,9 +109,6 @@ composer test
 Отдельно можно запустить `composer test:compatibility`, `composer test:forms`, `composer test:iblock`, `composer test:helper`, `composer test:base` и `composer test:markup`. GitHub Actions проверяет синтаксис и тесты на PHP 8.1–8.5. Интеграционные проверки на установленном ядре Битрикс выполняются отдельно.
 
 
-## Шпаргалки разработчика
-
-Краткие справочники по повседневным инструментам: [Git, Bash, npm и GitHub](docs/cheatsheets/README.md).
 
 ## Заготовки компонентов и модулей
 
