@@ -954,7 +954,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $property->setValue($profileValues[$propertyId]);
             }
 
-            if (array_key_exists($code, $propValues) && $propValues[$code] !== '') {
+            if (array_key_exists($code, $propValues)) {
+                // Пустое значение тоже является явным вводом покупателя:
+                // оно должно очищать значение из профиля, а не оставлять его.
                 $property->setValue($propValues[$code]);
             } elseif ($propData['IS_LOCATION'] === 'Y' && $property->getValue() === null) {
                 $property->setValue($defaultLocation);
