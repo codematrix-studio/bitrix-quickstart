@@ -204,3 +204,16 @@ Destructive migrations требуют отдельного описания ри
 - [CAgent API](https://docs.1c-bitrix.ru/api/classes/CAgent.html)
 - [ModuleManager::unRegisterModule](https://docs.1c-bitrix.ru/pages/api-reference/main/module-manager/un-register-module.html)
 - [SiteUpdate: обновление модулей](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=101&LESSON_ID=3218&LESSON_PATH=8781.4793.3218)
+
+
+## 12. Уточнения по реализации DB API
+
+Проверено по актуальному официальному справочнику BitrixFramework:
+
+- Соединение получаетcя через Application::getConnection(). Для прямого SQL и структуры БД используется Bitrix Main DB Connection; для ORM-сущностей — DataManager.
+- Connection::createTable() использует CREATE TABLE IF NOT EXISTS. Это позволяет повторно запускать создание отсутствующей таблицы, но не изменяет структуру уже существующей таблицы. После createTable() миграция должна отдельно проверять ожидаемую схему.
+- Именованные блокировки реализованы в MysqliConnection через GET_LOCK/RELEASE_LOCK и в PgsqlConnection через bx_get_lock/bx_release_lock. PostgreSQL должен иметь эти функции. Имя блокировки в PgsqlConnection преобразуется в CRC32, поэтому возможны коллизии имён.
+- Базовая реализация Connection::lock() может вернуть true без фактической блокировки. Поэтому одного успешного результата lock() недостаточно для произвольного драйвера: runner ограничивает драйверы mysql и pgsql и прекращает работу для остальных.
+- Методы startTransaction(), commitTransaction() и rollbackTransaction() доступны с Bitrix 14.0.0; наличие транзакционного API не означает, что DDL можно откатить на любой СУБД.
+
+Первая версия runner поддерживает MySQL и PostgreSQL при наличии штатной реализации именованной блокировки. Интеграционная проверка на реальных версиях ядра и обеих СУБД остаётся обязательной; автономные заглушки подтверждают только логику runner.
