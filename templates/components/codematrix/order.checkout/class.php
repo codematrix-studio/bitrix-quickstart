@@ -372,7 +372,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     return null;
                 }
 
-                $priceResult = $shipment->setBasePriceDelivery($deliveryCalculation->getPrice(), true);
+                $priceResult = $shipment->setBasePriceDelivery($deliveryCalculation->getPrice());
                 if (!$priceResult->isSuccess()) {
                     foreach ($priceResult->getErrors() as $error) {
                         $this->errorCollection->setError($error);
@@ -821,7 +821,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             ]);
             $calcResult = $shipment->calculateDelivery();
             if ($calcResult->isSuccess()) {
-                $shipment->setBasePriceDelivery($calcResult->getPrice(), true);
+                $shipment->setBasePriceDelivery($calcResult->getPrice());
             }
         }
 
