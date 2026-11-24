@@ -760,17 +760,38 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         if (!$targetPayment) {
-            return null;
+            return [
+                'paySystemId' => 0,
+                'paySystemName' => '',
+                'isCash' => false,
+                'paymentUrl' => '',
+                'html' => '',
+                'error' => 'Заказ сохранён, но не удалось определить платёж для оплаты. Обратитесь к администратору магазина.',
+            ];
         }
 
         $paySystemId = (int)$targetPayment->getPaymentSystemId();
         if ($paySystemId <= 0) {
-            return null;
+            return [
+                'paySystemId' => 0,
+                'paySystemName' => '',
+                'isCash' => false,
+                'paymentUrl' => '',
+                'html' => '',
+                'error' => 'Заказ сохранён, но для него не назначена платёжная система. Обратитесь к администратору магазина.',
+            ];
         }
 
         $service = $targetPayment->getPaySystem();
         if (!$service) {
-            return null;
+            return [
+                'paySystemId' => $paySystemId,
+                'paySystemName' => $targetPayment->getPaymentSystemName(),
+                'isCash' => false,
+                'paymentUrl' => '',
+                'html' => '',
+                'error' => 'Заказ сохранён, но платёжный обработчик недоступен. Обратитесь к администратору магазина.',
+            ];
         }
 
         $isCash = $service->isCash();
@@ -792,10 +813,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $initResult = $service->initiatePay($targetPayment, $request, PaySystem\BaseServiceHandler::STRING);
 
             if (!$initResult->isSuccess()) {
-                $errorMessages = $initResult->getErrorMessages();
-                $resultData['error'] = $errorMessages !== []
-                    ? implode('; ', $errorMessages)
-                    : 'Платёжный обработчик не смог начать оплату.';
+                // Не передаём покупателю внутренние сообщения платёжного обработчика.
+                $resultData['error'] = 'Платёжный обработчик не смог начать оплату. Заказ сохранён; повторите попытку из личного кабинета или обратитесь к администратору.';
 
                 return $resultData;
             }
