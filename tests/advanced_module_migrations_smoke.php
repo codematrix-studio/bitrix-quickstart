@@ -447,5 +447,29 @@ namespace {
     $assert($integrationDb->isTableExists('b_vendor_advancedmodule_migrations'), 'Uninstall must preserve migration ledger by default.');
     $assert($integrationDb->isTableExists('b_vendor_advancedmodule_example'), 'Uninstall must preserve application data by default.');
 
+    // A failed schema update must never uninstall an already installed module.
+    $GLOBALS['installedModules']['vendor.advancedmodule'] = true;
+    $failingUpdateInstaller = new class extends vendor_advancedmodule {
+        public static int $uninstallDbCalls = 0;
+
+        public function InstallDB()
+        {
+            throw new RuntimeException('Expected schema update failure.');
+        }
+
+        public function UnInstallDB()
+        {
+            self::$uninstallDbCalls++;
+            return true;
+        }
+    };
+
+    $assert(!$failingUpdateInstaller->DoInstall(), 'A failed schema update must report failure.');
+    $assert(IsModuleInstalled('vendor.advancedmodule'), 'A failed schema update must preserve module registration.');
+    $assert(
+        $failingUpdateInstaller::$uninstallDbCalls === 0,
+        'A failed schema update must not call UnInstallDB() on existing data.'
+    );
+
     echo "Advanced module migrations smoke test: OK\n";
 }
