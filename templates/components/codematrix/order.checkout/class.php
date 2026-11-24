@@ -500,6 +500,24 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
+        // Повторно проверяем ограничения доставки уже после пересчёта скидок и налогов.
+        if ($requestedDeliveryId > 0) {
+            foreach ($order->getShipmentCollection() as $shipment) {
+                if ($shipment->isSystem()) {
+                    continue;
+                }
+
+                $availableDeliveries = Delivery\Services\Manager::getRestrictedObjectsList($shipment);
+                if (!isset($availableDeliveries[$requestedDeliveryId])) {
+                    $this->errorCollection->setError(new Error(
+                        'Выбранная служба доставки недоступна для итоговой суммы заказа. Выберите доставку повторно.'
+                    ));
+                    return null;
+                }
+                break;
+            }
+        }
+
         // Финальная сумма оплаты должна совпадать с итоговой суммой заказа.
         $externalPaymentFound = false;
         foreach ($order->getPaymentCollection() as $payment) {
@@ -974,13 +992,17 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         $availableDeliveries = Delivery\Services\Manager::getRestrictedObjectsList($shipment);
         $deliveryId = (int)($payload['deliveryId'] ?? 0);
-        if (!isset($availableDeliveries[$deliveryId]) && !empty($availableDeliveries)) {
-            $firstDelivery = reset($availableDeliveries);
-            $deliveryId = (int)$firstDelivery->getId();
+        $deliveryService = $deliveryId > 0
+            ? Delivery\Services\Manager::getObjectById($deliveryId)
+            : null;
+
+        if (!$deliveryService && !empty($availableDeliveries)) {
+            $deliveryService = reset($availableDeliveries);
+            $deliveryId = (int)$deliveryService->getId();
         }
 
-        if ($deliveryId > 0 && isset($availableDeliveries[$deliveryId])) {
-            $shipment->setDeliveryService($availableDeliveries[$deliveryId]);
+        if ($deliveryService) {
+            $shipment->setDeliveryService($deliveryService);
             try {
                 $calcResult = Delivery\Services\Manager::calculateDeliveryPrice(
                     $shipment,
@@ -1031,6 +1053,43 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             foreach ($finalResult->getErrors() as $error) {
                 $this->errorCollection->setError($error);
             }
+        }
+
+        // Если ограничения доставки изменились после пересчёта скидок,
+        // выбираем первый доступный вариант и повторно пересчитываем заказ.
+        foreach ($order->getShipmentCollection() as $shipment) {
+            if ($shipment->isSystem()) {
+                continue;
+            }
+
+            $availableDeliveries = Delivery\Services\Manager::getRestrictedObjectsList($shipment);
+            $selectedDeliveryId = (int)$shipment->getDeliveryId();
+            if (!isset($availableDeliveries[$selectedDeliveryId]) && $availableDeliveries !== []) {
+                $firstDelivery = reset($availableDeliveries);
+                $fallbackDeliveryId = (int)$firstDelivery->getId();
+                $shipment->setDeliveryService($firstDelivery);
+
+                try {
+                    $deliveryResult = Delivery\Services\Manager::calculateDeliveryPrice(
+                        $shipment,
+                        $fallbackDeliveryId,
+                        $shipment->getExtraServices()
+                    );
+                } catch (\Throwable $exception) {
+                    $deliveryResult = null;
+                }
+
+                if ($deliveryResult && $deliveryResult->isSuccess()) {
+                    $shipment->setBasePriceDelivery($deliveryResult->getPrice());
+                    $finalResult = $order->doFinalAction(true);
+                    if (!$finalResult->isSuccess()) {
+                        foreach ($finalResult->getErrors() as $error) {
+                            $this->errorCollection->setError($error);
+                        }
+                    }
+                }
+            }
+            break;
         }
 
         foreach ($order->getPaymentCollection() as $payment) {
