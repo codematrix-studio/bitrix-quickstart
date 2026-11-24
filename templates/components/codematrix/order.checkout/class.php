@@ -796,7 +796,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             }
 
             $isCash = $service->isCash();
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             return [
                 'paySystemId' => $paySystemId,
                 'paySystemName' => '',
