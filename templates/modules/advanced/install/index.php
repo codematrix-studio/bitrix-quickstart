@@ -249,7 +249,7 @@ class vendor_advancedmodule extends CModule
                     try {
                         UnRegisterModule($this->MODULE_ID);
                         $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
-                    } catch (\\Throwable $unregisterException) {
+                    } catch (\Throwable $unregisterException) {
                         error_log(sprintf(
                             'Не удалось снять регистрацию модуля %s после отката (%s).',
                             $this->MODULE_ID,
