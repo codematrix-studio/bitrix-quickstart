@@ -516,6 +516,15 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
+        // Купон мог стать недействительным после пересчёта формы.
+        $couponVerifyResult = DiscountCouponsManager::verifyApplied();
+        if (!$couponVerifyResult->isSuccess()) {
+            foreach ($couponVerifyResult->getErrors() as $error) {
+                $this->errorCollection->setError($error);
+            }
+            return null;
+        }
+
         // Повторно проверяем ограничения доставки уже после пересчёта скидок и налогов.
         if ($requestedDeliveryId > 0) {
             foreach ($order->getShipmentCollection() as $shipment) {
