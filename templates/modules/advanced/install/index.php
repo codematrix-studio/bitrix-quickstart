@@ -312,44 +312,82 @@ class vendor_advancedmodule extends CModule
             return false;
         }
 
+        $completedSteps = [];
+        $uninstallSteps = [
+            'files' => ['remove' => 'UnInstallFiles', 'restore' => 'InstallFiles'],
+            'agents' => ['remove' => 'UnInstallAgents', 'restore' => 'InstallAgents'],
+            'events' => ['remove' => 'UnInstallEvents', 'restore' => 'InstallEvents'],
+        ];
+
         try {
-            if (!$this->UnInstallFiles()) {
-                throw new \RuntimeException('Не удалось удалить файлы модуля.');
+            // Восстанавливаем только полностью завершённые этапы; сбойный этап должен сам обеспечивать атомарность.
+            foreach ($uninstallSteps as $step => $methods) {
+                if (!$this->{$methods['remove']}()) {
+                    throw new \RuntimeException(sprintf('Не удалось выполнить этап %s удаления модуля.', $methods['remove']));
+                }
+                $completedSteps[] = $step;
             }
 
-            if (!$this->UnInstallAgents()) {
-                throw new \RuntimeException('Не удалось удалить фоновые агенты модуля.');
-            }
-
-            if (!$this->UnInstallEvents()) {
-                throw new \RuntimeException('Не удалось удалить обработчики событий модуля.');
-            }
-
+            // Удаление данных выполняется последним: универсального обратного действия нет.
             if (!$this->UnInstallDB()) {
                 throw new \RuntimeException('Не удалось удалить структуру данных модуля.');
             }
 
-            Option::delete($this->MODULE_ID, [
-                'name' => self::INSTALLATION_INCOMPLETE_OPTION,
-            ]);
-            UnRegisterModule($this->MODULE_ID);
+            try {
+                Option::delete($this->MODULE_ID, ['name' => self::INSTALLATION_INCOMPLETE_OPTION]);
+            } catch (\Throwable $optionException) {
+                error_log(sprintf('Не удалось удалить служебную отметку модуля %s (%s).', $this->MODULE_ID, get_class($optionException)));
+            }
 
+            UnRegisterModule($this->MODULE_ID);
             return true;
         } catch (\Throwable $exception) {
-            $message = sprintf(
-                'Удаление модуля %s прервано: %s',
-                $this->MODULE_ID,
-                $exception->getMessage()
-            );
+            $restorationSuccessful = $this->restoreUninstallation($completedSteps, $uninstallSteps);
+            $message = sprintf('Удаление модуля %s прервано: %s', $this->MODULE_ID, $exception->getMessage());
+
+            if (!$restorationSuccessful) {
+                $message .= ' Восстановление части ресурсов также завершилось с ошибкой; проверьте регистрацию обработчиков, агентов и файлов вручную.';
+            }
 
             if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {
                 $APPLICATION->ThrowException($message);
             }
 
             error_log($message);
-
             return false;
         }
+    }
+
+    /**
+     * Восстанавливает ресурсы, затронутые неудачным удалением модуля.
+     *
+     * @param list<string> $completedSteps Успешно завершённые этапы удаления в порядке выполнения.
+     * @param array<string, array{remove: string, restore: string}> $uninstallSteps Карта удаления и восстановления.
+     *
+     * @return bool Успешность восстановления всех затронутых ресурсов.
+     */
+    private function restoreUninstallation(array $completedSteps, array $uninstallSteps): bool
+    {
+        $restorationSuccessful = true;
+
+        foreach (array_reverse($completedSteps) as $step) {
+            $method = $uninstallSteps[$step]['restore'] ?? null;
+            if ($method === null) {
+                continue;
+            }
+
+            try {
+                if (!$this->{$method}()) {
+                    $restorationSuccessful = false;
+                    error_log(sprintf('Не удалось восстановить ресурс методом %s для модуля %s.', $method, $this->MODULE_ID));
+                }
+            } catch (\Throwable $exception) {
+                $restorationSuccessful = false;
+                error_log(sprintf('Ошибка восстановления ресурса методом %s для модуля %s (%s).', $method, $this->MODULE_ID, get_class($exception)));
+            }
+        }
+
+        return $restorationSuccessful;
     }
 
     /**
@@ -381,11 +419,11 @@ class vendor_advancedmodule extends CModule
      * Этап включается в список до вызова установщика, чтобы откатить и частично
      * выполненную операцию, вернувшую false или выбросившую исключение.
      *
-     * @param list<string> $attemptedSteps Начатые этапы в порядке выполнения.
+     * @param list<string> $completedSteps Начатые этапы в порядке выполнения.
      *
      * @return bool Успешность отката всех начатых этапов.
      */
-    private function rollbackInstallation(array $attemptedSteps): bool
+    private function rollbackInstallation(array $completedSteps): bool
     {
         $rollbackSuccessful = true;
         $rollbackMethods = [
@@ -395,7 +433,7 @@ class vendor_advancedmodule extends CModule
             'files' => 'UnInstallFiles',
         ];
 
-        foreach (array_reverse($attemptedSteps) as $step) {
+        foreach (array_reverse($completedSteps) as $step) {
             $method = $rollbackMethods[$step] ?? null;
 
             if ($method === null) {
