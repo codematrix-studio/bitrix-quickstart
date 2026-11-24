@@ -89,5 +89,6 @@ final class AgentRegistry
 
         if ($remainingAgent) {
             throw new \RuntimeException('Bitrix не удалил системный агент модуля.');
-        }    }
+        }
+    }
 }
