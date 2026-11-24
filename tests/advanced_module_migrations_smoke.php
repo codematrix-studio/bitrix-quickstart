@@ -438,6 +438,9 @@ namespace {
 
     $assert($installer->DoInstall(), 'Installer should run migrations through InstallDB().');
     $assert($integrationDb->isTableExists('b_vendor_advancedmodule_example'), 'InstallDB should apply the example migration.');
+    $assert($installer->DoInstall(), 'A repeated install should check for newly shipped migrations.');
+    $assert($integrationDb->lockCalls === 2, 'Repeated install should run the migration runner again.');
+    $assert(count($integrationDb->tables['b_vendor_advancedmodule_migrations']['rows']) === 1, 'Repeated install must not duplicate ledger entries.');
     $assert($installer->DoUninstall(), 'Uninstall should complete.');
     $assert($integrationDb->isTableExists('b_vendor_advancedmodule_migrations'), 'Uninstall must preserve migration ledger by default.');
     $assert($integrationDb->isTableExists('b_vendor_advancedmodule_example'), 'Uninstall must preserve application data by default.');
