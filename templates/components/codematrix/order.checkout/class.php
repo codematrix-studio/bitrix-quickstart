@@ -327,11 +327,16 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         $order = $this->createVirtualOrder($payload);
 
-        $propValues = $payload['properties'] ?? [];
         foreach ($order->getPropertyCollection() as $property) {
             $propData = $property->getProperty();
             $code = (string)$propData['CODE'];
-            $val = trim((string)($propValues[$code] ?? ''));
+            $value = $property->getValue();
+
+            // Проверяем итоговое значение свойства после применения профиля покупателя.
+            if (is_array($value)) {
+                $value = implode(', ', array_map('strval', $value));
+            }
+            $val = trim((string)($value ?? ''));
 
             if ($propData['REQUIRED'] === 'Y' && $val === '') {
                 $this->errorCollection->setError(
