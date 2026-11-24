@@ -134,6 +134,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
     public function recalculateAction(array $payload = []): array
     {
+        $payload = $this->normalizePayload($payload);
+
         if (!Loader::includeModule('sale') || !Loader::includeModule('catalog')) {
             $this->errorCollection->setError(new Error('Модули интернет-магазина (sale, catalog) не установлены.'));
             return [];
@@ -297,6 +299,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
     public function createOrderAction(array $payload = []): ?array
     {
+        $payload = $this->normalizePayload($payload);
+
         if (!Loader::includeModule('sale') || !Loader::includeModule('catalog')) {
             $this->errorCollection->setError(new Error('Модули интернет-магазина (sale, catalog) не установлены.'));
             return null;
@@ -352,6 +356,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 unset($requests[$requestId]);
             } elseif (($entry['status'] ?? '') === 'processing') {
                 $this->errorCollection->setError(new Error('Заказ с этим запросом уже обрабатывается. Подождите и обновите страницу.'));
+                return null;
+            } elseif (($entry['status'] ?? '') === 'unknown') {
+                $this->errorCollection->setError(new Error('Не удалось однозначно определить результат предыдущей попытки. Проверьте список заказов перед повторной отправкой.'));
                 return null;
             } else {
                 unset($requests[$requestId]);
@@ -520,7 +527,22 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             'updatedAt' => time(),
         ];
 
-        $saveResult = $order->save();
+        try {
+            $saveResult = $order->save();
+        } catch (\\Throwable $exception) {
+            // После исключения нельзя достоверно знать, успела ли БД сохранить заказ.
+            // Блокируем повторную отправку с тем же ключом, чтобы не создать дубль.
+            $requests[$requestId] = [
+                'fingerprint' => $fingerprint,
+                'status' => 'unknown',
+                'orderId' => 0,
+                'updatedAt' => time(),
+            ];
+            $this->errorCollection->setError(new Error(
+                'Не удалось подтвердить результат сохранения заказа. Проверьте список заказов перед повторной отправкой.'
+            ));
+            return null;
+        }
 
         if (!$saveResult->isSuccess()) {
             unset($requests[$requestId]);
@@ -804,6 +826,59 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         return !empty($ext['LOCATION_CODE']) ? (string)$ext['LOCATION_CODE'] : '';
     }
 
+    /**
+     * Нормализует данные AJAX до обращения к свойствам заказа и API Sale.
+     * Массивы допустимы только как плоские наборы значений свойств.
+     */
+    private function normalizePayload(array $payload): array
+    {
+        foreach (['personTypeId', 'deliveryId', 'paySystemId', 'profileId'] as $field) {
+            $value = $payload[$field] ?? 0;
+            $payload[$field] = is_scalar($value) && is_numeric($value) ? (int)$value : 0;
+        }
+
+        foreach (['coupon', 'comment', 'profileName', 'requestId'] as $field) {
+            $value = $payload[$field] ?? '';
+            $payload[$field] = is_scalar($value) ? trim((string)$value) : '';
+        }
+
+        $payload['saveProfile'] = ($payload['saveProfile'] ?? false) === true;
+        $payload['clearCoupon'] = ($payload['clearCoupon'] ?? false) === true;
+
+        $properties = $payload['properties'] ?? [];
+        if (!is_array($properties)) {
+            $properties = [];
+        }
+
+        $normalizedProperties = [];
+        foreach ($properties as $code => $value) {
+            if (!is_string($code) && !is_int($code)) {
+                continue;
+            }
+
+            if (is_scalar($value) || $value === null) {
+                $normalizedProperties[$code] = $value;
+                continue;
+            }
+
+            if (!is_array($value)) {
+                continue;
+            }
+
+            $values = [];
+            foreach ($value as $item) {
+                if (is_scalar($item) || $item === null) {
+                    $values[] = $item;
+                }
+            }
+            $normalizedProperties[$code] = $values;
+        }
+
+        $payload['properties'] = $normalizedProperties;
+
+        return $payload;
+    }
+
     private function createVirtualOrder(array $payload): Order
     {
         global $USER;
@@ -826,7 +901,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $basket = $this->getCurrentBasket();
         $order->setBasket($basket);
 
-        $propValues = $payload['properties'] ?? [];
+        $propValues = is_array($payload['properties'] ?? null) ? $payload['properties'] : [];
         $defaultLocation = (string)($this->arParams['DEFAULT_LOCATION'] ?? '0000073738');
         $profileValues = [];
         $profileId = (int)($payload['profileId'] ?? 0);
@@ -940,7 +1015,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         foreach ($order->getPropertyCollection() as $property) {
             $p = $property->getProperty();
             $code = (string)$p['CODE'];
-            $val = (string)($payload['properties'][$code] ?? $property->getValue() ?? '');
+            $inputValue = $payload['properties'][$code] ?? $property->getValue() ?? '';
+            if (is_array($inputValue)) {
+                $inputValue = implode(', ', array_map('strval', $inputValue));
+            }
+            $val = is_scalar($inputValue) ? (string)$inputValue : '';
             $propValues[$code] = $val;
 
             if ($p['IS_LOCATION'] === 'Y' && $val !== '') {
