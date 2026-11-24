@@ -323,7 +323,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         // Храним только недавние ключи, чтобы сессия не разрасталась.
         $expirationTime = time() - 86400;
         foreach ($requests as $key => $entry) {
-            if ((int)($entry['updatedAt'] ?? 0) < $expirationTime) {
+            if (($entry['status'] ?? '') !== 'unknown'
+                && (int)($entry['updatedAt'] ?? 0) < $expirationTime
+            ) {
                 unset($requests[$key]);
             }
         }
@@ -529,7 +531,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         try {
             $saveResult = $order->save();
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             // После исключения нельзя достоверно знать, успела ли БД сохранить заказ.
             // Блокируем повторную отправку с тем же ключом, чтобы не создать дубль.
             $requests[$requestId] = [
@@ -564,10 +566,20 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $savedProfileId = $this->saveBuyerProfileAfterOrder($order, $payload);
 
         if (count($requests) > 20) {
-            uasort($requests, static function (array $a, array $b): int {
+            // Не удаляем записи с неопределённым результатом сохранения:
+            // иначе повторная отправка может создать дублирующий заказ.
+            $knownRequests = array_filter(
+                $requests,
+                static fn(array $entry): bool => ($entry['status'] ?? '') !== 'unknown'
+            );
+            uasort($knownRequests, static function (array $a, array $b): int {
                 return (int)($a['updatedAt'] ?? 0) <=> (int)($b['updatedAt'] ?? 0);
             });
-            $requests = array_slice($requests, -20, null, true);
+            $keepUnknown = array_filter(
+                $requests,
+                static fn(array $entry): bool => ($entry['status'] ?? '') === 'unknown'
+            );
+            $requests = $keepUnknown + array_slice($knownRequests, -20, null, true);
         }
 
         $paymentData = null;
