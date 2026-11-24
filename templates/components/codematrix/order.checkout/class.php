@@ -341,6 +341,43 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         $order = $this->createVirtualOrder($payload);
 
+        // Не подменяем выбранные покупателем способы доставки и оплаты,
+        // если ограничения изменились между пересчётом и созданием заказа.
+        $requestedDeliveryId = (int)($payload['deliveryId'] ?? 0);
+        if ($requestedDeliveryId > 0) {
+            foreach ($order->getShipmentCollection() as $shipment) {
+                if ($shipment->isSystem()) {
+                    continue;
+                }
+
+                if ((int)$shipment->getDeliveryId() !== $requestedDeliveryId) {
+                    $this->errorCollection->setError(new Error(
+                        'Выбранная служба доставки больше недоступна. Обновите расчёт заказа и выберите доставку повторно.'
+                    ));
+                    return null;
+                }
+                break;
+            }
+        }
+
+        $requestedPaySystemId = (int)($payload['paySystemId'] ?? 0);
+        if ($requestedPaySystemId > 0) {
+            $actualPaySystemId = 0;
+            foreach ($order->getPaymentCollection() as $payment) {
+                if (!$payment->isInner()) {
+                    $actualPaySystemId = (int)$payment->getPaymentSystemId();
+                    break;
+                }
+            }
+
+            if ($actualPaySystemId !== $requestedPaySystemId) {
+                $this->errorCollection->setError(new Error(
+                    'Выбранный способ оплаты больше недоступен. Обновите расчёт заказа и выберите оплату повторно.'
+                ));
+                return null;
+            }
+        }
+
         foreach ($order->getPropertyCollection() as $property) {
             $propData = $property->getProperty();
             $code = (string)$propData['CODE'];
