@@ -28,8 +28,9 @@ final class Version202611240001CreateExampleTable implements MigrationInterface
 
     public function up(Connection $connection): void
     {
+        $tableName = 'b_vendor_advancedmodule_example';
         $connection->createTable(
-            'b_vendor_advancedmodule_example',
+            $tableName,
             [
                 'ID' => new IntegerField('ID'),
                 'NAME' => new StringField('NAME', ['size' => 255]),
@@ -37,5 +38,16 @@ final class Version202611240001CreateExampleTable implements MigrationInterface
             ['ID'],
             ['ID']
         );
+
+        $fields = array_keys($connection->getTableFields($tableName));
+        foreach (['ID', 'NAME'] as $requiredField) {
+            if (!in_array($requiredField, $fields, true)) {
+                throw new \\RuntimeException(sprintf(
+                    'Таблица примера "%s" не содержит обязательную колонку "%s".',
+                    $tableName,
+                    $requiredField
+                ));
+            }
+        }
     }
 }
