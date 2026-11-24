@@ -1196,6 +1196,12 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             }
         }
 
+        // Не оставляем в форме службу, которая не прошла ограничения
+        // или для которой не удалось рассчитать стоимость.
+        if (!in_array($selectedDeliveryId, array_column($deliveries, 'id'), true)) {
+            $selectedDeliveryId = 0;
+        }
+
         $paySystems = [];
         $selectedPaySystemId = 0;
         foreach ($order->getPaymentCollection() as $payment) {
