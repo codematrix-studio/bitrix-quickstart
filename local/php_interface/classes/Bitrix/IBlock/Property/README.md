@@ -130,7 +130,7 @@ Composer autoload был подключён в `local/php_interface/init.php` �
 - `N` — Нет.
 
 Отсутствующее или неизвестное значение нормализуется в `N`. Это соответствует
-поведению исходного класса `Helper\UserProp\CUserTypeYesNo`.
+поведению исходного класса `CUserTypeYesNo` из [ASDAFF/usertype.yesno](https://github.com/ASDAFF/usertype.yesno).
 
 ### Ограничения
 
