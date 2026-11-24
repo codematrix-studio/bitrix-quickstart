@@ -406,7 +406,15 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     return null;
                 }
 
-                $deliveryCalculation = $shipment->calculateDelivery();
+                try {
+                    $deliveryCalculation = $shipment->calculateDelivery();
+                } catch (\Throwable $exception) {
+                    $this->errorCollection->setError(new Error(
+                        'Не удалось рассчитать выбранную доставку. Выберите другой способ доставки.'
+                    ));
+                    return null;
+                }
+
                 if (!$deliveryCalculation->isSuccess()) {
                     foreach ($deliveryCalculation->getErrors() as $error) {
                         $this->errorCollection->setError($error);
@@ -970,12 +978,17 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         if ($deliveryId > 0 && isset($availableDeliveries[$deliveryId])) {
             $shipment->setDeliveryService($availableDeliveries[$deliveryId]);
-            $calcResult = Delivery\Services\Manager::calculateDeliveryPrice(
-                $shipment,
-                $deliveryId,
-                $shipment->getExtraServices()
-            );
-            if ($calcResult->isSuccess()) {
+            try {
+                $calcResult = Delivery\Services\Manager::calculateDeliveryPrice(
+                    $shipment,
+                    $deliveryId,
+                    $shipment->getExtraServices()
+                );
+            } catch (\Throwable $exception) {
+                $calcResult = null;
+            }
+
+            if ($calcResult && $calcResult->isSuccess()) {
                 $shipment->setBasePriceDelivery($calcResult->getPrice());
             }
         }
@@ -1075,11 +1088,16 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         if ($shipment) {
             foreach (Delivery\Services\Manager::getRestrictedObjectsList($shipment) as $srv) {
                 $dId = (int)$srv->getId();
-                $calc = Delivery\Services\Manager::calculateDeliveryPrice(
-                    $shipment,
-                    $dId,
-                    $shipment->getExtraServices()
-                );
+                try {
+                    $calc = Delivery\Services\Manager::calculateDeliveryPrice(
+                        $shipment,
+                        $dId,
+                        $shipment->getExtraServices()
+                    );
+                } catch (\Throwable $exception) {
+                    continue;
+                }
+
                 if (!$calc->isSuccess()) {
                     continue;
                 }
