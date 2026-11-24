@@ -976,16 +976,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $shipment->getExtraServices()
             );
             if ($calcResult->isSuccess()) {
-                $priceResult = $shipment->setBasePriceDelivery($calcResult->getPrice());
-                if (!$priceResult->isSuccess()) {
-                    foreach ($priceResult->getErrors() as $error) {
-                        $this->errorCollection->setError($error);
-                    }
-                }
-            } else {
-                foreach ($calcResult->getErrors() as $error) {
-                    $this->errorCollection->setError($error);
-                }
+                $shipment->setBasePriceDelivery($calcResult->getPrice());
             }
         }
 
