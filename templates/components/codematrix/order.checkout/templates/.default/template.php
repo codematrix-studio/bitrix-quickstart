@@ -44,6 +44,16 @@ if (!empty($arResult['IS_EMPTY'])) {
                 Вы можете оплатить заказ из личного кабинета.
             </div>
 
+            <button
+                v-if="createdOrder.payment.error && !createdOrder.payment.paymentUrl && !createdOrder.payment.html"
+                type="button"
+                class="cm-btn cm-submit-btn"
+                :disabled="paymentRetrying"
+                @click="retryPayment"
+            >
+                {{ paymentRetrying ? 'Подготавливаем оплату…' : 'Повторить попытку оплаты' }}
+            </button>
+
             <div v-if="createdOrder.payment.paymentUrl" class="cm-payment-actions">
                 <a :href="createdOrder.payment.paymentUrl" class="cm-btn cm-submit-btn">
                     Перейти к оплате ({{ createdOrder.payment.paySystemName }})
@@ -303,6 +313,7 @@ BX.ready(function () {
             const state = ref(initialState);
             const loading = ref(false);
             const submitting = ref(false);
+            const paymentRetrying = ref(false);
             const createdOrder = ref(null);
             const redirectingToGateway = ref(false);
             const fieldErrors = ref({});
@@ -549,6 +560,30 @@ BX.ready(function () {
                 }
             };
 
+            const retryPayment = () => {
+                if (!createdOrder.value || !createdOrder.value.orderId || paymentRetrying.value) {
+                    return;
+                }
+
+                paymentRetrying.value = true;
+                BX.ajax.runComponentAction('codematrix:order.checkout', 'retryPayment', {
+                    mode: 'class',
+                    signedParameters: signedParameters,
+                    data: { orderId: createdOrder.value.orderId }
+                }).then((response) => {
+                    createdOrder.value.payment = response.data.payment;
+                    paymentRetrying.value = false;
+                    handlePaymentAfterCreate(createdOrder.value);
+                }, (response) => {
+                    const messages = (response.errors || []).map(error => error.message);
+                    createdOrder.value.payment = {
+                        ...(createdOrder.value.payment || {}),
+                        error: messages.join(' ') || 'Не удалось повторно подготовить оплату.'
+                    };
+                    paymentRetrying.value = false;
+                });
+            };
+
             const submitOrder = () => {
                 submitting.value = true;
                 fieldErrors.value = {};
@@ -587,6 +622,7 @@ BX.ready(function () {
                 form,
                 loading,
                 submitting,
+                paymentRetrying,
                 createdOrder,
                 redirectingToGateway,
                 fieldErrors,
@@ -612,6 +648,7 @@ BX.ready(function () {
                 selectDadataAddress,
                 selectDadataParty,
                 submitOrder,
+                retryPayment,
                 formatPrice
             };
         }
