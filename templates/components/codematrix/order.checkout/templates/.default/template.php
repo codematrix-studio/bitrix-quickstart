@@ -509,9 +509,9 @@ BX.ready(function () {
                     if (item.city) {
                         locationQuery.value = item.city;
                     }
-                    if (item.locationCode) {
-                        recalculate();
-                    }
+                    // Пересчитываем и при отсутствии сопоставления:
+                    // пустое значение должно очистить ранее выбранное местоположение.
+                    recalculate();
                 }
 
                 dadataSuggestions.value = [];
