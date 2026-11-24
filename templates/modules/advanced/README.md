@@ -45,6 +45,14 @@ SiteUpdate updater выполняется до копирования файло
 
 Официальные API: [Connection](https://docs.1c-bitrix.ru/pages/api-reference/main/db/connection/index.html), [createTable](https://docs.1c-bitrix.ru/pages/api-reference/main/db/connection/create-table.html), [lock](https://docs.1c-bitrix.ru/pages/api-reference/main/db/connection/lock.html), [транзакции](https://docs.1c-bitrix.ru/pages/database/transactions.html).
 
+## SiteUpdate / Marketplace updater
+
+Отдельный пример пакета обновления находится в `docs/examples/marketplace-updater/package/`; это не runtime-каталог модуля. В нём есть обязательные `install/version.php` и `description.ru`, а также один корневой `updater.php`.
+
+Updater проверяет `IsModuleInstalled()`, затем использует только штатный `$updater->CopyFiles()`. Он не обращается к классам текущей версии модуля: SiteUpdate выполняет updater до копирования файлов пакета. Повторный запуск приводит к тому же содержимому файлов. Внутренний MigrationRunner здесь не вызывается.
+
+Подробности и ограничения — в [примере пакета обновления](../../../docs/examples/marketplace-updater/README.md).
+
 ## Ограничения
 
 - Автономные smoke tests проверяют собственную логику на заглушках API, но не заменяют установку на реальном ядре.
