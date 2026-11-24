@@ -51,17 +51,17 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
     public function configureActions(): array
     {
-        $postFilters = [
+        $postFilters = static fn(): array => [
             new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
             new ActionFilter\Csrf(),
         ];
 
         return [
-            'recalculate' => ['prefilters' => $postFilters],
-            'searchLocations' => ['prefilters' => $postFilters],
-            'suggestDadata' => ['prefilters' => $postFilters],
-            'createOrder' => ['prefilters' => $postFilters],
-            'retryPayment' => ['prefilters' => $postFilters],
+            'recalculate' => ['prefilters' => $postFilters()],
+            'searchLocations' => ['prefilters' => $postFilters()],
+            'suggestDadata' => ['prefilters' => $postFilters()],
+            'createOrder' => ['prefilters' => $postFilters()],
+            'retryPayment' => ['prefilters' => $postFilters()],
         ];
     }
 
@@ -790,7 +790,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $orderUserId = (int)$order->getField('USER_ID');
         $currentUserId = ($USER && $USER->IsAuthorized())
             ? (int)$USER->GetID()
-            : (int)\\CSaleUser::GetAnonymousUserID();
+            : (int)\CSaleUser::GetAnonymousUserID();
 
         if ($currentFuserId <= 0
             || $orderFuserId !== $currentFuserId
