@@ -233,6 +233,35 @@ namespace {
         }
     }
 
+    final class PartiallyFailingMigration implements MigrationInterface
+    {
+        public static bool $failFirstRun = true;
+        public static int $runs = 0;
+
+        public function getId(): string
+        {
+            return '202611240005_partial_failure';
+        }
+
+        public function isTransactional(): bool
+        {
+            return false;
+        }
+
+        public function up(Connection $connection): void
+        {
+            self::$runs++;
+            $connection->createTable('b_test_partial_migration', [
+                'ID' => new \\Bitrix\\Main\\ORM\\Fields\\IntegerField('ID'),
+            ], ['ID'], ['ID']);
+
+            if (self::$failFirstRun) {
+                self::$failFirstRun = false;
+                throw new RuntimeException('Expected partial DDL failure.');
+            }
+        }
+    }
+
     final class UnknownMigration implements MigrationInterface
     {
         public function getId(): string
@@ -329,6 +358,20 @@ namespace {
     $assert(!$db->isTableExists('b_test_transactional_rollback'), 'Transactional migration must roll back its changes.');
     $assert(count($db->tables['b_vendor_advancedmodule_migrations']['rows']) === 1, 'Failed migration must not be recorded.');
 
+    $partialDb = new FakeConnection();
+    $partialFailed = false;
+    try {
+        MigrationRunner::run($partialDb, [new PartiallyFailingMigration()]);
+    } catch (RuntimeException $exception) {
+        $partialFailed = true;
+    }
+    $assert($partialFailed, 'A non-transactional partial failure must stop the runner.');
+    $assert($partialDb->isTableExists('b_test_partial_migration'), 'The test should demonstrate that DDL may remain after a partial failure.');
+    $assert(count($partialDb->tables['b_vendor_advancedmodule_migrations']['rows']) === 0, 'A partially failed migration must not be marked as applied.');
+    $partialApplied = MigrationRunner::run($partialDb, [new PartiallyFailingMigration()]);
+    $assert($partialApplied === ['202611240005_partial_failure'], 'An idempotent non-transactional migration should be retryable.');
+    $assert(PartiallyFailingMigration::$runs === 2, 'A partially failed migration should be retried exactly once.');
+
     $lockDb = new FakeConnection();
     $lockDb->lockResult = false;
     $lockFailed = false;
@@ -349,6 +392,17 @@ namespace {
         $unknownFailed = true;
     }
     $assert($unknownFailed, 'Runner must reject unknown IDs in the ledger.');
+
+    $checksumDb = new FakeConnection();
+    MigrationRunner::run($checksumDb, []);
+    $checksumDb->seedLedger('202611240002_successful_test', str_repeat('f', 64));
+    $checksumFailed = false;
+    try {
+        MigrationRunner::run($checksumDb, [new SuccessfulMigration()]);
+    } catch (RuntimeException $exception) {
+        $checksumFailed = true;
+    }
+    $assert($checksumFailed, 'Runner must reject changed contents for an already applied migration ID.');
 
     $unsupportedFailed = false;
     try {
