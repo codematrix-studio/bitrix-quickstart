@@ -152,7 +152,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     {
         Loader::includeModule('sale');
         $query = trim($query);
-        if (mb_strlen($query) < 2) {
+        if (mb_strlen($query) < 2 || mb_strlen($query) > 120) {
             return ['items' => []];
         }
 
