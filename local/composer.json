@@ -48,6 +48,7 @@
             "@test:advanced-module-events",
             "@test:advanced-module-agents",
             "@test:advanced-module-migrations",
+            "@test:advanced-marketplace-updater",
             "@test:product-list",
             "@test:seo-analytics",
             "@test:d7-basket-handler",
@@ -90,6 +91,7 @@
         "test:video-url-parser": "php ../tests/video_url_parser_smoke.php",
         "test:advanced-module-events": "php ../tests/advanced_module_events_smoke.php",
         "test:advanced-module-agents": "php ../tests/advanced_module_agents_smoke.php",
-        "test:advanced-module-migrations": "php ../tests/advanced_module_migrations_smoke.php"
+        "test:advanced-module-migrations": "php ../tests/advanced_module_migrations_smoke.php",
+        "test:advanced-marketplace-updater": "php ../tests/advanced_marketplace_updater_smoke.php"
     }
 }
