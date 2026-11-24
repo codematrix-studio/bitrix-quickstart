@@ -170,6 +170,7 @@ class vendor_advancedmodule extends CModule
 
         $attemptedSteps = [];
         $isSchemaUpdateAttempt = false;
+        $registeredByThisAttempt = false;
 
         try {
             $moduleIsInstalled = IsModuleInstalled($this->MODULE_ID);
@@ -196,6 +197,7 @@ class vendor_advancedmodule extends CModule
 
             if (!$moduleIsInstalled) {
                 RegisterModule($this->MODULE_ID);
+                $registeredByThisAttempt = true;
             }
 
             Option::set($this->MODULE_ID, self::INSTALLATION_INCOMPLETE_OPTION, 'Y');
@@ -245,19 +247,18 @@ class vendor_advancedmodule extends CModule
                 $rollbackSuccessful = $this->rollbackInstallation($attemptedSteps);
                 $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
 
-                if (!$registrationRemoved && $rollbackSuccessful) {
+                if ($registeredByThisAttempt && !$registrationRemoved && $rollbackSuccessful) {
                     try {
                         UnRegisterModule($this->MODULE_ID);
                         $registrationRemoved = !IsModuleInstalled($this->MODULE_ID);
-                    } catch (\Throwable $unregisterException) {
+                    } catch (\\Throwable $unregisterException) {
                         error_log(sprintf(
                             'Не удалось снять регистрацию модуля %s после отката (%s).',
                             $this->MODULE_ID,
                             get_class($unregisterException)
                         ));
                     }
-                }
-            }
+                }            }
 
             if ($registrationRemoved) {
                 try {
@@ -281,8 +282,12 @@ class vendor_advancedmodule extends CModule
 
             if ($isSchemaUpdateAttempt) {
                 $message .= ' Существующая регистрация и данные модуля сохранены. Устраните причину ошибки и повторите запуск обновления.';
-            } elseif (!$rollbackSuccessful || !$registrationRemoved) {
+            } elseif (!$rollbackSuccessful) {
                 $message .= ' Откат выполнен не полностью; модуль оставлен зарегистрированным для повторного восстановления или удаления.';
+            } elseif ($registeredByThisAttempt && !$registrationRemoved) {
+                $message .= ' Не удалось снять регистрацию после отката; модуль оставлен зарегистрированным.';
+            } elseif (!$registeredByThisAttempt) {
+                $message .= ' Существующая регистрация модуля сохранена; устраните причину ошибки и повторите восстановление.';
             }
 
             if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {
