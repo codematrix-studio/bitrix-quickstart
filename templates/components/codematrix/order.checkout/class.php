@@ -460,20 +460,21 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 return null;
             }
 
+            $sumResult = $payment->setField('SUM', $order->getPrice());
+            if (!$sumResult->isSuccess()) {
+                foreach ($sumResult->getErrors() as $error) {
+                    $this->errorCollection->setError($error);
+                }
+                return null;
+            }
+
+            // Ограничения по сумме должны проверяться уже по итоговой сумме оплаты.
             $availablePaySystems = PaySystem\Manager::getListWithRestrictions(
                 $payment,
                 RestrictionManager::MODE_CLIENT
             );
             if (!isset($availablePaySystems[$paySystemId])) {
                 $this->errorCollection->setError(new Error('Выбранный способ оплаты недоступен для этого заказа.'));
-                return null;
-            }
-
-            $sumResult = $payment->setField('SUM', $order->getPrice());
-            if (!$sumResult->isSuccess()) {
-                foreach ($sumResult->getErrors() as $error) {
-                    $this->errorCollection->setError($error);
-                }
                 return null;
             }
         }
@@ -826,6 +827,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         $paymentCollection = $order->getPaymentCollection();
         $payment = $paymentCollection->createItem();
+        $payment->setField('SUM', $order->getPrice());
         $availablePaySystems = PaySystem\Manager::getListWithRestrictions($payment, RestrictionManager::MODE_CLIENT);
 
         $paySystemId = (int)($payload['paySystemId'] ?? 0);
@@ -838,7 +840,6 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $service = PaySystem\Manager::getObjectById($paySystemId);
             if ($service) {
                 $payment->setPaySystemService($service);
-                $payment->setField('SUM', $order->getPrice());
             }
         }
 
