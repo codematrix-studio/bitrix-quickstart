@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace Project\\Bitrix\\IBlock\\Property;
+namespace Project\Bitrix\IBlock\Property;
 
 final class CustomProperty
 {
@@ -54,7 +54,7 @@ EventManager::getInstance()->addEventHandler(
 );
 ```
 
-В этом каркасе автозагрузка и подключение обработчиков уже выполняются из `local/php_interface/init.php`. Класс в namespace `Project\\` подхватывается существующим PSR-4 автозагрузчиком.
+В этом каркасе автозагрузка и подключение обработчиков уже выполняются из `local/php_interface/init.php`. Класс в namespace `Project\` подхватывается существующим PSR-4 автозагрузчиком.
 
 ### Основные callback-методы
 
