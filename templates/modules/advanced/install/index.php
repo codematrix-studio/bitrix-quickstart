@@ -67,7 +67,7 @@ class vendor_advancedmodule extends CModule
     public function InstallDB()
     {
         if (!Loader::includeModule($this->MODULE_ID)) {
-            throw new \\RuntimeException('Не удалось подключить модуль перед запуском миграций.');
+            throw new \RuntimeException('Не удалось подключить модуль перед запуском миграций.');
         }
 
         MigrationRunner::run(Application::getConnection(), MigrationRegistry::all());
@@ -184,7 +184,7 @@ class vendor_advancedmodule extends CModule
                 // и файлы исправной установки повторно не трогаем.
                 $attemptedSteps[] = 'database';
                 if (!$this->InstallDB()) {
-                    throw new \\RuntimeException('Не удалось применить ожидающие миграции модуля.');
+                    throw new \RuntimeException('Не удалось применить ожидающие миграции модуля.');
                 }
 
                 return true;
