@@ -315,6 +315,8 @@ BX.ready(function () {
             const dadataSuggestions = ref([]);
             let dadataTimer = null;
             let dadataRequestId = 0;
+            let locationRequestId = 0;
+            let recalculateRequestId = 0;
 
             const form = reactive({
                 personTypeId: initialState.personTypeId,
@@ -389,6 +391,7 @@ BX.ready(function () {
             };
 
             const recalculate = () => {
+                const requestId = ++recalculateRequestId;
                 loading.value = true;
                 generalErrors.value = [];
 
@@ -397,10 +400,16 @@ BX.ready(function () {
                     signedParameters: signedParameters,
                     data: { payload: form }
                 }).then((response) => {
+                    if (requestId !== recalculateRequestId) {
+                        return;
+                    }
                     form.clearCoupon = false;
                     syncFormWithState(response.data);
                     loading.value = false;
                 }, (response) => {
+                    if (requestId !== recalculateRequestId) {
+                        return;
+                    }
                     form.clearCoupon = false;
                     generalErrors.value = (response.errors || []).map(e => e.message);
                     loading.value = false;
@@ -426,6 +435,7 @@ BX.ready(function () {
 
             const onLocationInput = (propCode) => {
                 clearTimeout(locationTimer);
+                const requestId = ++locationRequestId;
                 // Любое редактирование текста аннулирует ранее выбранный Bitrix location CODE.
                 form.properties[propCode] = '';
                 locationSuggestions.value = [];
@@ -438,12 +448,19 @@ BX.ready(function () {
                         signedParameters: signedParameters,
                         data: { query: locationQuery.value }
                     }).then((response) => {
-                        locationSuggestions.value = response.data.items || [];
+                        if (requestId === locationRequestId) {
+                            locationSuggestions.value = response.data.items || [];
+                        }
+                    }).catch(() => {
+                        if (requestId === locationRequestId) {
+                            locationSuggestions.value = [];
+                        }
                     });
                 }, 300);
             };
 
             const selectLocation = (propCode, loc) => {
+                locationRequestId++;
                 locationQuery.value = loc.label;
                 form.properties[propCode] = loc.code;
                 locationSuggestions.value = [];
