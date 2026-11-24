@@ -49,7 +49,7 @@ namespace Bitrix\Main {
             return self::$instance ??= new self();
         }
 
-        public function registerEventHandler(
+        public function registerEventHandlerCompatible(
             string $fromModuleId,
             string $eventType,
             string $toModuleId,
@@ -197,6 +197,7 @@ namespace {
 
     require_once __DIR__ . '/../templates/modules/advanced/lib/Agent/ExampleAgent.php';
     require_once __DIR__ . '/../templates/modules/advanced/lib/Agent/AgentRegistry.php';
+    require_once __DIR__ . '/../templates/modules/advanced/lib/Event/ExampleEventHandler.php';
     require_once __DIR__ . '/../templates/modules/advanced/lib/Event/EventRegistry.php';
     require_once __DIR__ . '/../templates/modules/advanced/install/index.php';
 
@@ -230,6 +231,10 @@ namespace {
     $assert($registration[3] === \Vendor\AdvancedModule\Event\ExampleEventHandler::class, 'Unexpected handler class.');
     $assert($registration[4] === 'onAfterUserAdd', 'Unexpected handler method.');
     $assert($registration[5] === 100 && $registration[6] === '' && $registration[7] === [], 'Unexpected registration options.');
+    $handlerMethod = new \ReflectionMethod(\Vendor\AdvancedModule\Event\ExampleEventHandler::class, 'onAfterUserAdd');
+    $handlerParameter = $handlerMethod->getParameters()[0];
+    $assert($handlerParameter->isPassedByReference(), 'OnAfterUserAdd fields must be accepted by reference.');
+    $assert((string) $handlerParameter->getType() === 'array', 'OnAfterUserAdd must receive the legacy fields array, not a D7 Event object.');
 
     $assert($installer->DoInstall(), 'Repeated install should remain successful.');
     $assert(count($manager->registered) === 1, 'A healthy repeated install must not register the handler again.');

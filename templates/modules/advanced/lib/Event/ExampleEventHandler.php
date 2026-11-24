@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Vendor\AdvancedModule\Event;
 
-use Bitrix\Main\Event;
-
 /**
- * Безопасный пример D7-обработчика.
- *
- * Здесь намеренно нет побочных действий: добавьте бизнес-логику конкретного
- * модуля и проверяйте состав параметров события на целевой версии ядра.
+ * Пример обработчика классического события OnAfterUserAdd.
  */
 final class ExampleEventHandler
 {
-    public static function onAfterUserAdd(Event $event): void
+    /**
+     * Получает поля пользователя в формате классического API.
+     *
+     * @param array<string, mixed> $fields Поля пользователя и результат операции.
+     */
+    public static function onAfterUserAdd(array &$fields): void
     {
-        // Example hook: implement module-specific behavior here.
+        // Добавьте здесь логику модуля, использующую результат создания пользователя.
     }
 }

@@ -22,7 +22,7 @@ namespace Bitrix\Main {
             return self::$instance ??= new self();
         }
 
-        public function registerEventHandler(
+        public function registerEventHandlerCompatible(
             string $fromModuleId,
             string $eventType,
             string $toModuleId,
