@@ -302,6 +302,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
+        DiscountCouponsManager::init();
+
         $requestId = (string)($payload['requestId'] ?? '');
         if (!preg_match('/^[a-f0-9]{32}$/i', $requestId)) {
             $this->errorCollection->setError(new Error('Не удалось проверить запрос оформления заказа. Обновите страницу и повторите попытку.'));
