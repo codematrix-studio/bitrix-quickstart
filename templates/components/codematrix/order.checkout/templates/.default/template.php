@@ -314,6 +314,7 @@ BX.ready(function () {
             const activeDadataField = ref('');
             const dadataSuggestions = ref([]);
             let dadataTimer = null;
+            let dadataRequestId = 0;
 
             const form = reactive({
                 personTypeId: initialState.personTypeId,
@@ -451,18 +452,29 @@ BX.ready(function () {
 
             const onDadataInput = (type, propCode, query) => {
                 clearTimeout(dadataTimer);
+                const requestId = ++dadataRequestId;
                 activeDadataField.value = propCode;
+
                 if (!query || query.trim().length < 2) {
                     dadataSuggestions.value = [];
                     return;
                 }
+
                 dadataTimer = setTimeout(() => {
                     BX.ajax.runComponentAction('codematrix:order.checkout', 'suggestDadata', {
                         mode: 'class',
                         signedParameters: signedParameters,
                         data: { type: type, query: query }
                     }).then((response) => {
+                        if (requestId !== dadataRequestId || activeDadataField.value !== propCode) {
+                            return;
+                        }
+
                         dadataSuggestions.value = response.data.items || [];
+                    }).catch(() => {
+                        if (requestId === dadataRequestId && activeDadataField.value === propCode) {
+                            dadataSuggestions.value = [];
+                        }
                     });
                 }, 300);
             };
