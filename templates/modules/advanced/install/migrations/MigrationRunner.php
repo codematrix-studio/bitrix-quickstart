@@ -224,7 +224,16 @@ final class MigrationRunner
         $applied = [];
 
         while ($row = $result->fetch()) {
-            $applied[(string) $row['MIGRATION_ID']] = (string) $row['CHECKSUM'];
+            $migrationId = (string) $row['MIGRATION_ID'];
+
+            if (array_key_exists($migrationId, $applied)) {
+                throw new RuntimeException(sprintf(
+                    'В ledger повторяется ID миграции "%s". Проверьте уникальность первичного ключа и данные таблицы.',
+                    $migrationId
+                ));
+            }
+
+            $applied[$migrationId] = (string) $row['CHECKSUM'];
         }
 
         return $applied;
