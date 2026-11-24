@@ -320,6 +320,19 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $_SESSION['CODEMATRIX_ORDER_CHECKOUT_IDEMPOTENCY'][$sessionKey] ??= [];
         $requests = &$_SESSION['CODEMATRIX_ORDER_CHECKOUT_IDEMPOTENCY'][$sessionKey];
 
+        // После обновления страницы requestId меняется. Не допускаем повтор
+        // того же заказа, если предыдущая попытка завершилась неопределённо.
+        foreach ($requests as $entry) {
+            if (($entry['status'] ?? '') === 'unknown'
+                && hash_equals((string)($entry['fingerprint'] ?? ''), $fingerprint)
+            ) {
+                $this->errorCollection->setError(new Error(
+                    'Результат предыдущей попытки оформления не подтверждён. Проверьте список заказов перед повторной отправкой.'
+                ));
+                return null;
+            }
+        }
+
         // Храним только недавние ключи, чтобы сессия не разрасталась.
         $expirationTime = time() - 86400;
         foreach ($requests as $key => $entry) {
