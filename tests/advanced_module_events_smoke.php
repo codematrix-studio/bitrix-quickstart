@@ -197,7 +197,17 @@ namespace {
     };
 
     $manager = \Bitrix\Main\EventManager::getInstance();
-    $installer = new vendor_advancedmodule();
+    $installer = new class extends vendor_advancedmodule {
+        public function InstallDB()
+        {
+            return true;
+        }
+
+        public function UnInstallDB()
+        {
+            return true;
+        }
+    };
 
     $assert($installer->DoInstall(), 'Advanced module install should succeed.');
     $assert(IsModuleInstalled('vendor.advancedmodule'), 'Install should register the module.');
