@@ -3,6 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
 use Vendor\AdvancedModule\Install\Migration\MigrationRegistry;
 use Vendor\AdvancedModule\Install\Migration\MigrationRunner;
 
@@ -65,6 +66,10 @@ class vendor_advancedmodule extends CModule
      */
     public function InstallDB()
     {
+        if (!Loader::includeModule($this->MODULE_ID)) {
+            throw new \\RuntimeException('Не удалось подключить модуль перед запуском миграций.');
+        }
+
         MigrationRunner::run(Application::getConnection(), MigrationRegistry::all());
 
         return true;
