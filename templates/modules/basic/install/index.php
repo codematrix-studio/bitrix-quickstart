@@ -130,6 +130,10 @@ class vendor_module extends CModule
     {
         global $APPLICATION;
 
+        if (!$this->checkAdminAccess()) {
+            return false;
+        }
+
         $attemptedSteps = [];
         try {
             $moduleIsInstalled = IsModuleInstalled($this->MODULE_ID);
@@ -246,6 +250,10 @@ class vendor_module extends CModule
     {
         global $APPLICATION;
 
+        if (!$this->checkAdminAccess()) {
+            return false;
+        }
+
         try {
             if (!$this->UnInstallFiles()) {
                 throw new \RuntimeException('Не удалось удалить файлы модуля.');
@@ -280,6 +288,29 @@ class vendor_module extends CModule
 
             return false;
         }
+    }
+
+    /**
+     * Проверяет, что установку или удаление запускает администратор.
+     *
+     * @return bool Разрешён ли доступ к операциям жизненного цикла модуля.
+     */
+    private function checkAdminAccess(): bool
+    {
+        global $USER, $APPLICATION;
+
+        if (is_object($USER) && method_exists($USER, 'IsAdmin') && $USER->IsAdmin()) {
+            return true;
+        }
+
+        $message = Loc::getMessage('VENDOR_MODULE_ACCESS_DENIED')
+            ?: 'Устанавливать и удалять модуль может только администратор.';
+
+        if (is_object($APPLICATION) && method_exists($APPLICATION, 'ThrowException')) {
+            $APPLICATION->ThrowException($message);
+        }
+
+        return false;
     }
 
     /**

@@ -52,6 +52,16 @@ namespace {
     {
     }
 
+    final class TestUser
+    {
+        public bool $isAdmin = true;
+
+        public function IsAdmin(): bool
+        {
+            return $this->isAdmin;
+        }
+    }
+
     final class TestApplication
     {
         public ?string $exceptionMessage = null;
@@ -243,6 +253,33 @@ namespace {
     }
 
     $GLOBALS['APPLICATION'] = new TestApplication();
+    $GLOBALS['USER'] = new TestUser();
+
+    // Неадминистратор не должен запускать установку или удаление.
+    $GLOBALS['USER']->isAdmin = false;
+    $GLOBALS['installedModules'] = [];
+    $GLOBALS['lifecycleLog'] = [];
+    $GLOBALS['APPLICATION']->exceptionMessage = null;
+    $installer = new SuccessfulModuleInstaller();
+    $assert(!$installer->DoInstall(), 'Неадминистратор не должен устанавливать модуль.');
+    $assert(!IsModuleInstalled('vendor.module'), 'Запрет установки не должен регистрировать модуль.');
+    $assert($GLOBALS['lifecycleLog'] === [], 'Запрет установки не должен запускать этапы жизненного цикла.');
+    $assert(
+        $GLOBALS['APPLICATION']->exceptionMessage === 'VENDOR_MODULE_ACCESS_DENIED',
+        'При запрете установки сообщение должно передаваться в административный интерфейс.'
+    );
+
+    $GLOBALS['installedModules'] = ['vendor.module' => true];
+    $GLOBALS['lifecycleLog'] = [];
+    $GLOBALS['APPLICATION']->exceptionMessage = null;
+    $assert(!$installer->DoUninstall(), 'Неадминистратор не должен удалять модуль.');
+    $assert(IsModuleInstalled('vendor.module'), 'Запрет удаления не должен снимать регистрацию модуля.');
+    $assert($GLOBALS['lifecycleLog'] === [], 'Запрет удаления не должен запускать этапы жизненного цикла.');
+    $assert(
+        $GLOBALS['APPLICATION']->exceptionMessage === 'VENDOR_MODULE_ACCESS_DENIED',
+        'При запрете удаления сообщение должно передаваться в административный интерфейс.'
+    );
+    $GLOBALS['USER']->isAdmin = true;
 
     // Успешная установка должна выполнить этапы в прямом порядке.
     $GLOBALS['installedModules'] = [];
