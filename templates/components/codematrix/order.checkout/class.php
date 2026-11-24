@@ -782,19 +782,31 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             ];
         }
 
-        $service = $targetPayment->getPaySystem();
-        if (!$service) {
+        try {
+            $service = $targetPayment->getPaySystem();
+            if (!$service) {
+                return [
+                    'paySystemId' => $paySystemId,
+                    'paySystemName' => $targetPayment->getPaymentSystemName(),
+                    'isCash' => false,
+                    'paymentUrl' => '',
+                    'html' => '',
+                    'error' => 'Заказ сохранён, но платёжный обработчик недоступен. Обратитесь к администратору магазина.',
+                ];
+            }
+
+            $isCash = $service->isCash();
+        } catch (\\Throwable $exception) {
             return [
                 'paySystemId' => $paySystemId,
-                'paySystemName' => $targetPayment->getPaymentSystemName(),
+                'paySystemName' => '',
                 'isCash' => false,
                 'paymentUrl' => '',
                 'html' => '',
-                'error' => 'Заказ сохранён, но платёжный обработчик недоступен. Обратитесь к администратору магазина.',
+                'error' => 'Заказ сохранён, но не удалось проверить платёжный обработчик. Обратитесь к администратору магазина.',
             ];
         }
 
-        $isCash = $service->isCash();
         $resultData = [
             'paySystemId'   => $paySystemId,
             'paySystemName' => $targetPayment->getPaymentSystemName(),
