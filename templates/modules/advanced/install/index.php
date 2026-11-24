@@ -82,7 +82,7 @@ class vendor_advancedmodule extends CModule
      */
     public function InstallEvents()
     {
-        \\Vendor\\AdvancedModule\\Event\\EventRegistry::register();
+        \Vendor\AdvancedModule\Event\EventRegistry::register();
 
         return true;
     }
@@ -94,7 +94,7 @@ class vendor_advancedmodule extends CModule
      */
     public function UnInstallEvents()
     {
-        \\Vendor\\AdvancedModule\\Event\\EventRegistry::unregister();
+        \Vendor\AdvancedModule\Event\EventRegistry::unregister();
 
         return true;
     }
