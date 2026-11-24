@@ -180,6 +180,13 @@ class vendor_advancedmodule extends CModule
             // Исправную установку не трогаем. Повторный запуск этапов нужен
             // только для восстановления, явно отмеченного предыдущим запуском.
             if ($moduleIsInstalled && !$installationIsIncomplete) {
+                // При повторном вызове обновляем только схему: runtime-регистрации
+                // и файлы исправной установки повторно не трогаем.
+                $attemptedSteps[] = 'database';
+                if (!$this->InstallDB()) {
+                    throw new \\RuntimeException('Не удалось применить ожидающие миграции модуля.');
+                }
+
                 return true;
             }
 
