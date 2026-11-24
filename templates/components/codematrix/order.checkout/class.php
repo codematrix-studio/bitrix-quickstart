@@ -666,56 +666,56 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
      */
     private function saveBuyerProfileAfterOrder(Order $order, array $payload): int
     {
-        global $USER;
-
-        if (($this->arParams['SAVE_USER_PROFILE'] ?? 'Y') !== 'Y'
-            || ($payload['saveProfile'] ?? false) !== true
-            || !$USER
-            || !$USER->IsAuthorized()
-        ) {
-            return 0;
-        }
-
-        $userId = (int)$USER->GetID();
-        $personTypeId = (int)$order->getPersonTypeId();
-        if ($userId <= 0 || $personTypeId <= 0) {
-            return 0;
-        }
-
-        $profileData = [];
-        foreach ($order->getPropertyCollection() as $property) {
-            $propertyData = $property->getProperty();
-            if (($propertyData['ACTIVE'] ?? 'Y') !== 'Y'
-                || ($propertyData['USER_PROPS'] ?? 'N') !== 'Y'
-            ) {
-                continue;
-            }
-
-            $value = $property->getValue();
-            if ($value === null || $value === '') {
-                continue;
-            }
-            $profileData[(int)$propertyData['ID']] = $value;
-        }
-
-        if ($profileData === []) {
-            return 0;
-        }
-
-        $profileId = (int)($payload['profileId'] ?? 0);
-        if ($profileId <= 0 || !OrderUserProperties::checkCorrect($profileId, $personTypeId, $userId)) {
-            $profileId = 0;
-        }
-
-        $profileName = trim((string)($payload['profileName'] ?? ''));
-        if ($profileName === '') {
-            $profileName = 'Профиль покупателя';
-        }
-        $profileName = mb_substr($profileName, 0, 255);
-
-        $errors = [];
         try {
-            $savedProfileId = \CSaleOrderUserProps::DoSaveUserProfile(
+            global $USER;
+
+            if (($this->arParams['SAVE_USER_PROFILE'] ?? 'Y') !== 'Y'
+                || ($payload['saveProfile'] ?? false) !== true
+                || !$USER
+                || !$USER->IsAuthorized()
+            ) {
+                return 0;
+            }
+
+            $userId = (int)$USER->GetID();
+            $personTypeId = (int)$order->getPersonTypeId();
+            if ($userId <= 0 || $personTypeId <= 0) {
+                return 0;
+            }
+
+            $profileData = [];
+            foreach ($order->getPropertyCollection() as $property) {
+                $propertyData = $property->getProperty();
+                if (($propertyData['ACTIVE'] ?? 'Y') !== 'Y'
+                    || ($propertyData['USER_PROPS'] ?? 'N') !== 'Y'
+                ) {
+                    continue;
+                }
+
+                $value = $property->getValue();
+                if ($value === null || $value === '') {
+                    continue;
+                }
+                $profileData[(int)$propertyData['ID']] = $value;
+            }
+
+            if ($profileData === []) {
+                return 0;
+            }
+
+            $profileId = (int)($payload['profileId'] ?? 0);
+            if ($profileId <= 0 || !OrderUserProperties::checkCorrect($profileId, $personTypeId, $userId)) {
+                $profileId = 0;
+            }
+
+            $profileName = trim((string)($payload['profileName'] ?? ''));
+            if ($profileName === '') {
+                $profileName = 'Профиль покупателя';
+            }
+            $profileName = mb_substr($profileName, 0, 255);
+
+            $errors = [];
+            $savedProfileId = \\CSaleOrderUserProps::DoSaveUserProfile(
                 $userId,
                 $profileId,
                 $profileName,
@@ -723,11 +723,12 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $profileData,
                 $errors
             );
-        } catch (\Throwable $exception) {
+
+            return $savedProfileId === false ? 0 : (int)$savedProfileId;
+        } catch (\\Throwable $exception) {
+            // Сбой необязательного профиля не должен отменять успешное оформление заказа.
             return 0;
         }
-
-        return $savedProfileId === false ? 0 : (int)$savedProfileId;
     }
 
     private function getOrderRequestFingerprint(array $payload): string
