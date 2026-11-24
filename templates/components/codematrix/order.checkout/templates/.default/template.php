@@ -26,6 +26,12 @@ if (!empty($arResult['IS_EMPTY'])) {
     <div v-if="createdOrder" class="cm-checkout__success">
         <h2>Заказ №{{ createdOrder.accountNumber }} успешно оформлен!</h2>
         <p>Номер заказа в системе: <strong>{{ createdOrder.orderId }}</strong>.</p>
+        <p v-if="createdOrder.savedProfileId" class="cm-muted">
+            Данные сохранены в профиль покупателя.
+        </p>
+        <p v-else-if="form.saveProfile" class="cm-error">
+            Заказ оформлен, но сохранить профиль покупателя не удалось. Вы можете сохранить данные позже в личном кабинете.
+        </p>
 
         <!-- Блок онлайн-оплаты -->
         <div v-if="createdOrder.payment && !createdOrder.payment.isCash" class="cm-payment-box">
