@@ -1053,7 +1053,12 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             }
 
             if ($calcResult && $calcResult->isSuccess()) {
-                $shipment->setBasePriceDelivery($calcResult->getPrice());
+                $priceResult = $shipment->setBasePriceDelivery($calcResult->getPrice());
+                if (!$priceResult->isSuccess()) {
+                    foreach ($priceResult->getErrors() as $error) {
+                        $this->errorCollection->setError($error);
+                    }
+                }
             }
         }
 
@@ -1119,8 +1124,19 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 }
 
                 if ($deliveryResult && $deliveryResult->isSuccess()) {
-                    $shipment->setBasePriceDelivery($deliveryResult->getPrice());
-                    $finalResult = $order->doFinalAction(true);
+                    $priceResult = $shipment->setBasePriceDelivery($deliveryResult->getPrice());
+                    if (!$priceResult->isSuccess()) {
+                        foreach ($priceResult->getErrors() as $error) {
+                            $this->errorCollection->setError($error);
+                        }
+                    } else {
+                        $finalResult = $order->doFinalAction(true);
+                        if (!$finalResult->isSuccess()) {
+                            foreach ($finalResult->getErrors() as $error) {
+                                $this->errorCollection->setError($error);
+                            }
+                        }
+                    }
                     if (!$finalResult->isSuccess()) {
                         foreach ($finalResult->getErrors() as $error) {
                             $this->errorCollection->setError($error);
