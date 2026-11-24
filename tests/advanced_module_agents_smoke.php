@@ -218,7 +218,17 @@ namespace {
         'Agent callback must return the same stable call string without a leading slash.'
     );
 
-    $installer = new vendor_advancedmodule();
+    $installer = new class extends vendor_advancedmodule {
+        public function InstallDB()
+        {
+            return true;
+        }
+
+        public function UnInstallDB()
+        {
+            return true;
+        }
+    };
     $assert($installer->DoInstall(), 'Advanced module install should succeed.');
     $assert(count(CAgent::$agents) === 1, 'Install should register one system agent.');
     $assert(CAgent::$agents[0]['NAME'] === $callback, 'Unexpected agent callback string.');
@@ -237,6 +247,16 @@ namespace {
 
     $removedBeforeRollback = count(CAgent::$removed);
     $failingInstaller = new class extends vendor_advancedmodule {
+        public function InstallDB()
+        {
+            return true;
+        }
+
+        public function UnInstallDB()
+        {
+            return true;
+        }
+
         public function InstallFiles()
         {
             return false;
