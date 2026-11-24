@@ -395,6 +395,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         $order = $this->createVirtualOrder($payload);
+        if (!$this->errorCollection->isEmpty()) {
+            return null;
+        }
 
         // Не подменяем выбранные покупателем способы доставки и оплаты,
         // если ограничения изменились между пересчётом и созданием заказа.
@@ -1052,7 +1055,18 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $calcResult = null;
             }
 
-            if ($calcResult && $calcResult->isSuccess()) {
+            if (!$calcResult || !$calcResult->isSuccess()) {
+                if ($calcResult) {
+                    foreach ($calcResult->getErrors() as $error) {
+                        $this->errorCollection->setError($error);
+                    }
+                }
+                if ($this->errorCollection->isEmpty()) {
+                    $this->errorCollection->setError(new Error(
+                        'Не удалось рассчитать стоимость выбранной службы доставки.'
+                    ));
+                }
+            } else {
                 $priceResult = $shipment->setBasePriceDelivery($calcResult->getPrice());
                 if (!$priceResult->isSuccess()) {
                     foreach ($priceResult->getErrors() as $error) {
@@ -1090,6 +1104,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     {
         $siteId = Context::getCurrent()->getSite();
         $order = $this->createVirtualOrder($payload);
+        if (!$this->errorCollection->isEmpty()) {
+            return [];
+        }
 
         // Пересчитываем скидки и итог заказа до расчёта ограничений платёжных систем.
         $finalResult = $order->doFinalAction(true);
