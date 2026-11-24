@@ -113,6 +113,18 @@ namespace {
         }
     };
 
+    // Метаданные версии должны соответствовать формату установщика Bitrix.
+    $arModuleVersion = [];
+    require __DIR__ . '/../templates/modules/basic/install/version.php';
+    $assert(
+        preg_match('/^\\d+\\.\\d+\\.\\d+$/', (string) ($arModuleVersion['VERSION'] ?? '')) === 1,
+        'Версия модуля должна иметь формат X.Y.Z.'
+    );
+    $assert(
+        preg_match('/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/', (string) ($arModuleVersion['VERSION_DATE'] ?? '')) === 1,
+        'Дата версии модуля должна иметь формат YYYY-MM-DD HH:MM:SS.'
+    );
+
     /**
      * Проверяет успешную установку и обратный порядок отката.
      */
