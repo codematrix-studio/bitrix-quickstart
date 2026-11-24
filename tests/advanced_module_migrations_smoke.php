@@ -6,6 +6,14 @@ namespace Bitrix\Main\DB {
     class Connection
     {
     }
+
+    class MysqliConnection extends Connection
+    {
+    }
+
+    class PgsqlConnection extends Connection
+    {
+    }
 }
 
 namespace Bitrix\Main\ORM\Fields {
@@ -94,7 +102,7 @@ namespace {
 
     require_once __DIR__ . '/../templates/modules/advanced/install/migrations/MigrationInterface.php';
 
-    class FakeConnection extends Connection
+    class FakeConnection extends \Bitrix\Main\DB\MysqliConnection
     {
         public array $tables = [];
         public bool $locked = false;
@@ -289,6 +297,14 @@ namespace {
         }
     }
 
+    final class NoLockConnection extends Connection
+    {
+        public function getType(): string
+        {
+            return 'mysql';
+        }
+    }
+
     define('B_PROLOG_INCLUDED', true);
     $GLOBALS['USER'] = new class {
         public function IsAdmin(): bool
@@ -413,6 +429,14 @@ namespace {
         $unsupportedFailed = true;
     }
     $assert($unsupportedFailed, 'Runner must reject database drivers without a supported named lock.');
+
+    $noLockFailed = false;
+    try {
+        MigrationRunner::run(new NoLockConnection(), []);
+    } catch (RuntimeException $exception) {
+        $noLockFailed = true;
+    }
+    $assert($noLockFailed, 'Runner must reject a base Connection whose lock() implementation is a no-op.');
 
     $integrationDb = new FakeConnection();
     \Bitrix\Main\Application::$connection = $integrationDb;
