@@ -53,7 +53,7 @@
 
 ```php
 <?php
-\\Bitrix\\Main\\Config\\Option::set('main', 'codematrix_order_checkout_dadata_api_key', 'ВАШ_API_КЛЮЧ');
+\Bitrix\Main\Config\Option::set('main', 'codematrix_order_checkout_dadata_api_key', 'ВАШ_API_КЛЮЧ');
 ```
 
 Для отключения подсказок удалите значение настройки или задайте пустую строку.
