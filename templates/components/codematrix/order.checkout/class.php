@@ -1175,6 +1175,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 foreach ($sumResult->getErrors() as $error) {
                     $this->errorCollection->setError($error);
                 }
+
+                // Не возвращаем способы оплаты и итоги с несинхронизированной суммой.
+                return [];
             }
         }
 
