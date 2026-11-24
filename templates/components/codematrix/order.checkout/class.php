@@ -718,7 +718,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $initResult = $service->initiatePay($targetPayment, $request, PaySystem\BaseServiceHandler::STRING);
 
             if (!$initResult->isSuccess()) {
-                $resultData['error'] = implode('; ', $initResult->getErrorMessages());
+                $errorMessages = $initResult->getErrorMessages();
+                $resultData['error'] = $errorMessages !== []
+                    ? implode('; ', $errorMessages)
+                    : 'Платёжный обработчик не смог начать оплату.';
+
                 return $resultData;
             }
 
