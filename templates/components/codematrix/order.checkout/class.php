@@ -152,13 +152,13 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         return $this->buildOrderState($payload);
     }
 
-    public function searchLocationsAction(string $query = ''): array
+    public function searchLocationsAction($query = ''): array
     {
-        if (!Loader::includeModule('sale')) {
+        if (!Loader::includeModule('sale') || !is_scalar($query)) {
             return ['items' => []];
         }
 
-        $query = trim($query);
+        $query = trim((string)$query);
         if (mb_strlen($query) < 2 || mb_strlen($query) > 120) {
             return ['items' => []];
         }
@@ -194,14 +194,15 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         return ['items' => $items];
     }
 
-    public function suggestDadataAction(string $type = 'address', string $query = ''): array
+    public function suggestDadataAction($type = 'address', $query = ''): array
     {
-        if (!Loader::includeModule('sale')) {
+        if (!Loader::includeModule('sale') || !is_scalar($type) || !is_scalar($query)) {
             return ['items' => []];
         }
 
+        $type = (string)$type;
         $apiKey = trim((string)Option::get('main', 'codematrix_order_checkout_dadata_api_key', ''));
-        $query = trim($query);
+        $query = trim((string)$query);
 
         if ($apiKey === '' || mb_strlen($query) < 2) {
             return ['items' => []];
