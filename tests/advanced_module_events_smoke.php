@@ -271,7 +271,7 @@ namespace {
 
     // Ошибка восстановления ранее зарегистрированного модуля не должна снимать его регистрацию.
     RegisterModule('vendor.advancedmodule');
-    \\Bitrix\\Main\\Config\\Option::set('vendor.advancedmodule', 'INSTALLATION_INCOMPLETE', 'Y');
+    \Bitrix\Main\Config\Option::set('vendor.advancedmodule', 'INSTALLATION_INCOMPLETE', 'Y');
     $failingRecoveryInstaller = new class extends vendor_advancedmodule {
         public function InstallDB()
         {
@@ -286,7 +286,7 @@ namespace {
     $assert(!$failingRecoveryInstaller->DoInstall(), 'A failed recovery attempt should return false.');
     $assert(IsModuleInstalled('vendor.advancedmodule'), 'A failed recovery must preserve pre-existing module registration.');
     $assert(
-        \\Bitrix\\Main\\Config\\Option::get('vendor.advancedmodule', 'INSTALLATION_INCOMPLETE', 'N') === 'Y',
+        \Bitrix\Main\Config\Option::get('vendor.advancedmodule', 'INSTALLATION_INCOMPLETE', 'N') === 'Y',
         'A failed recovery must keep the incomplete-installation marker for the next retry.'
     );
 
