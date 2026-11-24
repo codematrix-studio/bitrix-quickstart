@@ -118,6 +118,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         global $USER;
         $this->arResult['USER_AUTHORIZED'] = $USER && $USER->IsAuthorized();
 
+        DiscountCouponsManager::init();
         $initialProperties = $this->getUserProfileDefaults();
         $this->arResult['INITIAL_STATE'] = $this->buildOrderState([
             'personTypeId' => $this->getDefaultPersonTypeId(),
@@ -894,6 +895,23 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $siteId = Context::getCurrent()->getSite();
         $order = $this->createVirtualOrder($payload);
 
+        // Пересчитываем скидки и итог заказа до расчёта ограничений платёжных систем.
+        $finalResult = $order->doFinalAction(true);
+        if (!$finalResult->isSuccess()) {
+            foreach ($finalResult->getErrors() as $error) {
+                $this->errorCollection->setError($error);
+            }
+        }
+
+        foreach ($order->getPaymentCollection() as $payment) {
+            $sumResult = $payment->setField('SUM', $order->getPrice());
+            if (!$sumResult->isSuccess()) {
+                foreach ($sumResult->getErrors() as $error) {
+                    $this->errorCollection->setError($error);
+                }
+            }
+        }
+
         $items = [];
         foreach ($order->getBasket() as $basketItem) {
             $items[] = [
@@ -962,8 +980,27 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $paySystems = [];
         $selectedPaySystemId = 0;
         foreach ($order->getPaymentCollection() as $payment) {
+            $availablePaySystems = PaySystem\Manager::getListWithRestrictions(
+                $payment,
+                RestrictionManager::MODE_CLIENT
+            );
             $selectedPaySystemId = (int)$payment->getPaymentSystemId();
-            foreach (PaySystem\Manager::getListWithRestrictions($payment, RestrictionManager::MODE_CLIENT) as $ps) {
+
+            if (!isset($availablePaySystems[$selectedPaySystemId]) && $availablePaySystems !== []) {
+                $firstPaySystem = reset($availablePaySystems);
+                $fallbackPaySystemId = (int)$firstPaySystem['ID'];
+                $fallbackService = PaySystem\Manager::getObjectById($fallbackPaySystemId);
+                if ($fallbackService) {
+                    $payment->setPaySystemService($fallbackService);
+                    $selectedPaySystemId = $fallbackPaySystemId;
+                } else {
+                    $selectedPaySystemId = 0;
+                }
+            } elseif (!isset($availablePaySystems[$selectedPaySystemId])) {
+                $selectedPaySystemId = 0;
+            }
+
+            foreach ($availablePaySystems as $ps) {
                 $paySystems[] = [
                     'id'          => (int)$ps['ID'],
                     'name'        => $ps['NAME'],
@@ -973,7 +1010,6 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             break;
         }
 
-        DiscountCouponsManager::init();
         $appliedCoupons = array_keys(DiscountCouponsManager::get(true, [], true, true));
 
         return [
