@@ -47,6 +47,7 @@
             "@test:module-installer",
             "@test:advanced-module-events",
             "@test:advanced-module-agents",
+            "@test:advanced-module-migrations",
             "@test:product-list",
             "@test:seo-analytics",
             "@test:d7-basket-handler",
@@ -88,6 +89,7 @@
         "test:module-installer": "php ../tests/module_installer_lifecycle_smoke.php",
         "test:video-url-parser": "php ../tests/video_url_parser_smoke.php",
         "test:advanced-module-events": "php ../tests/advanced_module_events_smoke.php",
-        "test:advanced-module-agents": "php ../tests/advanced_module_agents_smoke.php"
+        "test:advanced-module-agents": "php ../tests/advanced_module_agents_smoke.php",
+        "test:advanced-module-migrations": "php ../tests/advanced_module_migrations_smoke.php"
     }
 }
