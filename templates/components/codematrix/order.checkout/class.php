@@ -139,12 +139,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return [];
         }
 
+        DiscountCouponsManager::init();
         $coupon = trim((string)($payload['coupon'] ?? ''));
         if ($coupon !== '') {
-            DiscountCouponsManager::init();
             DiscountCouponsManager::add($coupon);
         } elseif (isset($payload['clearCoupon']) && $payload['clearCoupon'] === true) {
-            DiscountCouponsManager::init();
             DiscountCouponsManager::clear(true);
         }
 
