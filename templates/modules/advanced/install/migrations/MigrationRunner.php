@@ -6,7 +6,6 @@ namespace Vendor\AdvancedModule\Install\Migration;
 
 use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DB\MysqliConnection;
-use Bitrix\Main\DB\PgsqlConnection;
 use Bitrix\Main\ORM\Fields\StringField;
 use ReflectionClass;
 use RuntimeException;
@@ -15,8 +14,9 @@ use Throwable;
 /**
  * Выполняет forward-only миграции и хранит ledger применённых ID.
  *
- * Блокировка использует Bitrix Connection::lock(): поддерживаются MySQL
- * и PostgreSQL. Для других драйверов runner откажется запускаться.
+ * Блокировка использует штатную реализацию MysqliConnection::lock().
+ * В первой версии поддерживается только MySQL: базовая документация Bitrix
+ * указывает именованные блокировки только для этой СУБД.
  */
 final class MigrationRunner
 {
@@ -43,8 +43,8 @@ final class MigrationRunner
         $failure = null;
 
         try {
-            // Создание ledger тоже должно выполняться под блокировкой:
-            // иначе параллельные первые запуски могут одновременно создать таблицу.
+            // Создание ledger тоже выполняется под блокировкой: иначе два
+            // первых параллельных запуска могут одновременно создавать таблицу.
             self::ensureLedger($connection);
 
             $known = [];
@@ -151,12 +151,10 @@ final class MigrationRunner
     private static function assertSupportedDatabase(Connection $connection): void
     {
         $type = $connection->getType();
-        $isSupportedMysql = $connection instanceof MysqliConnection && $type === 'mysql';
-        $isSupportedPostgreSql = $connection instanceof PgsqlConnection && $type === 'pgsql';
 
-        if (!$isSupportedMysql && !$isSupportedPostgreSql) {
+        if (!$connection instanceof MysqliConnection || $type !== 'mysql') {
             throw new RuntimeException(sprintf(
-                'Migration runner требует штатную MysqliConnection или PgsqlConnection с именованной блокировкой; текущий класс: "%s", драйвер: "%s".',
+                'Migration runner первой версии требует штатную MysqliConnection с MySQL; текущий класс: "%s", драйвер: "%s".',
                 get_class($connection),
                 $type
             ));
