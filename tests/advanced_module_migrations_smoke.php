@@ -310,7 +310,7 @@ namespace {
         }
     }
 
-    final class PostgreSqlConnection extends \\Bitrix\\Main\\DB\\PgsqlConnection
+    final class PostgreSqlConnection extends \Bitrix\Main\DB\PgsqlConnection
     {
         public function getType(): string
         {
