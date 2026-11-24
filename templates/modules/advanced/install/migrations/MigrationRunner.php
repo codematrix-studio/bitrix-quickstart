@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Vendor\AdvancedModule\Install\Migration;
 
 use Bitrix\Main\DB\Connection;
+use Bitrix\Main\DB\MysqliConnection;
+use Bitrix\Main\DB\PgsqlConnection;
 use Bitrix\Main\ORM\Fields\StringField;
 use ReflectionClass;
 use RuntimeException;
@@ -146,10 +148,13 @@ final class MigrationRunner
     private static function assertSupportedDatabase(Connection $connection): void
     {
         $type = $connection->getType();
+        $isSupportedMysql = $connection instanceof MysqliConnection && $type === 'mysql';
+        $isSupportedPostgreSql = $connection instanceof PgsqlConnection && $type === 'pgsql';
 
-        if (!in_array($type, ['mysql', 'pgsql'], true)) {
+        if (!$isSupportedMysql && !$isSupportedPostgreSql) {
             throw new RuntimeException(sprintf(
-                'Migration runner поддерживает только MySQL и PostgreSQL с работающим Connection::lock(); текущий драйвер: "%s".',
+                'Migration runner требует штатную MysqliConnection или PgsqlConnection с именованной блокировкой; текущий класс: "%s", драйвер: "%s".',
+                get_class($connection),
                 $type
             ));
         }
