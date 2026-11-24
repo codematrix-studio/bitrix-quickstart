@@ -705,7 +705,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                         && !empty($urlParts['host']);
                     $isRelativeUrl = $scheme === ''
                         && !str_starts_with($paymentUrl, '//')
-                        && !str_starts_with($paymentUrl, '\\\\');
+                        && !str_starts_with($paymentUrl, '\\');
 
                     if ($hasHttpScheme || $isRelativeUrl) {
                         $resultData['paymentUrl'] = $paymentUrl;
