@@ -262,14 +262,19 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 $suggestionValue = is_scalar($suggestion['value'] ?? null)
                     ? (string)$suggestion['value']
                     : '';
+                $shortName = is_scalar($nameData['short_with_opf'] ?? null)
+                    ? (string)$nameData['short_with_opf']
+                    : $suggestionValue;
+                $addressValue = $addressData['unrestricted_value'] ?? $addressData['value'] ?? '';
+                $addressValue = is_scalar($addressValue) ? (string)$addressValue : '';
 
                 $items[] = [
                     'value'   => $suggestionValue,
-                    'name'    => (string)($nameData['short_with_opf'] ?? $suggestionValue),
+                    'name'    => $shortName,
                     'inn'     => is_scalar($data['inn'] ?? null) ? (string)$data['inn'] : '',
                     'kpp'     => is_scalar($data['kpp'] ?? null) ? (string)$data['kpp'] : '',
                     'ogrn'    => is_scalar($data['ogrn'] ?? null) ? (string)$data['ogrn'] : '',
-                    'address' => (string)($addressData['unrestricted_value'] ?? $addressData['value'] ?? ''),
+                    'address' => $addressValue,
                 ];
             } else {
                 $settlementKladrId = is_scalar($data['settlement_kladr_id'] ?? null)
