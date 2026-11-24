@@ -254,13 +254,19 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $data = is_array($suggestion['data'] ?? null) ? $suggestion['data'] : [];
 
             if ($type === 'party') {
+                $nameData = is_array($data['name'] ?? null) ? $data['name'] : [];
+                $addressData = is_array($data['address'] ?? null) ? $data['address'] : [];
+                $suggestionValue = is_scalar($suggestion['value'] ?? null)
+                    ? (string)$suggestion['value']
+                    : '';
+
                 $items[] = [
-                    'value'   => (string)($suggestion['value'] ?? ''),
-                    'name'    => (string)($data['name']['short_with_opf'] ?? $suggestion['value'] ?? ''),
-                    'inn'     => (string)($data['inn'] ?? ''),
-                    'kpp'     => (string)($data['kpp'] ?? ''),
-                    'ogrn'    => (string)($data['ogrn'] ?? ''),
-                    'address' => (string)($data['address']['unrestricted_value'] ?? $data['address']['value'] ?? ''),
+                    'value'   => $suggestionValue,
+                    'name'    => (string)($nameData['short_with_opf'] ?? $suggestionValue),
+                    'inn'     => is_scalar($data['inn'] ?? null) ? (string)$data['inn'] : '',
+                    'kpp'     => is_scalar($data['kpp'] ?? null) ? (string)$data['kpp'] : '',
+                    'ogrn'    => is_scalar($data['ogrn'] ?? null) ? (string)$data['ogrn'] : '',
+                    'address' => (string)($addressData['unrestricted_value'] ?? $addressData['value'] ?? ''),
                 ];
             } else {
                 $kladrId = (string)(
@@ -270,8 +276,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 );
                 $cityName = (string)(($data['settlement'] ?? '') ?: ($data['city'] ?? ''));
                 $items[] = [
-                    'value'        => (string)($suggestion['value'] ?? ''),
-                    'postalCode'   => (string)($data['postal_code'] ?? ''),
+                    'value'        => is_scalar($suggestion['value'] ?? null) ? (string)$suggestion['value'] : '',
+                    'postalCode'   => is_scalar($data['postal_code'] ?? null) ? (string)$data['postal_code'] : '',
                     'city'         => $cityName,
                     'locationCode' => $this->resolveBitrixLocationByKladr($kladrId),
                 ];
