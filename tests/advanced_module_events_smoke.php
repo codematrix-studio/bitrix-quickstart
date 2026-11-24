@@ -231,7 +231,7 @@ namespace {
     $assert($registration[3] === \Vendor\AdvancedModule\Event\ExampleEventHandler::class, 'Unexpected handler class.');
     $assert($registration[4] === 'onAfterUserAdd', 'Unexpected handler method.');
     $assert($registration[5] === 100 && $registration[6] === '' && $registration[7] === [], 'Unexpected registration options.');
-    $handlerMethod = new \\ReflectionMethod(\\Vendor\\AdvancedModule\\Event\\ExampleEventHandler::class, 'onAfterUserAdd');
+    $handlerMethod = new \ReflectionMethod(\Vendor\AdvancedModule\Event\ExampleEventHandler::class, 'onAfterUserAdd');
     $handlerParameter = $handlerMethod->getParameters()[0];
     $assert($handlerParameter->isPassedByReference(), 'OnAfterUserAdd fields must be accepted by reference.');
     $assert((string) $handlerParameter->getType() === 'array', 'OnAfterUserAdd must receive the legacy fields array, not a D7 Event object.');
