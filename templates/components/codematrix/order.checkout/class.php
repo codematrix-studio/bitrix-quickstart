@@ -236,7 +236,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             }
 
             $decoded = Json::decode($rawResponse);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             // Ошибка внешнего сервиса не должна ломать оформление заказа.
             return ['items' => []];
         }
@@ -728,7 +728,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     }
                 }
             }
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $resultData['error'] = 'Не удалось подготовить форму оплаты. Заказ сохранён, обратитесь к администратору магазина.';
         }
 
