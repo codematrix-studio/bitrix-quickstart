@@ -322,7 +322,7 @@ class vendor_advancedmodule extends CModule
         try {
             // Восстанавливаем только полностью завершённые этапы; сбойный этап должен сам обеспечивать атомарность.
             foreach ($uninstallSteps as $step => $methods) {
-                $attemptedSteps[] = $step;
+                $completedSteps[] = $step;
                 if (!$this->{$methods['remove']}()) {
                     throw new \RuntimeException(sprintf('Не удалось выполнить этап %s удаления модуля.', $methods['remove']));
                 }
@@ -361,16 +361,16 @@ class vendor_advancedmodule extends CModule
     /**
      * Восстанавливает ресурсы, затронутые неудачным удалением модуля.
      *
-     * @param list<string> $attemptedSteps Успешно завершённые этапы удаления в порядке выполнения.
+     * @param list<string> $completedSteps Успешно завершённые этапы удаления в порядке выполнения.
      * @param array<string, array{remove: string, restore: string}> $uninstallSteps Карта удаления и восстановления.
      *
      * @return bool Успешность восстановления всех затронутых ресурсов.
      */
-    private function restoreUninstallation(array $attemptedSteps, array $uninstallSteps): bool
+    private function restoreUninstallation(array $completedSteps, array $uninstallSteps): bool
     {
         $restorationSuccessful = true;
 
-        foreach (array_reverse($attemptedSteps) as $step) {
+        foreach (array_reverse($completedSteps) as $step) {
             $method = $uninstallSteps[$step]['restore'] ?? null;
             if ($method === null) {
                 continue;
@@ -419,11 +419,11 @@ class vendor_advancedmodule extends CModule
      * Этап включается в список до вызова установщика, чтобы откатить и частично
      * выполненную операцию, вернувшую false или выбросившую исключение.
      *
-     * @param list<string> $attemptedSteps Начатые этапы в порядке выполнения.
+     * @param list<string> $completedSteps Начатые этапы в порядке выполнения.
      *
      * @return bool Успешность отката всех начатых этапов.
      */
-    private function rollbackInstallation(array $attemptedSteps): bool
+    private function rollbackInstallation(array $completedSteps): bool
     {
         $rollbackSuccessful = true;
         $rollbackMethods = [
@@ -433,7 +433,7 @@ class vendor_advancedmodule extends CModule
             'files' => 'UnInstallFiles',
         ];
 
-        foreach (array_reverse($attemptedSteps) as $step) {
+        foreach (array_reverse($completedSteps) as $step) {
             $method = $rollbackMethods[$step] ?? null;
 
             if ($method === null) {
