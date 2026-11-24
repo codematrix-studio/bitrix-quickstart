@@ -144,6 +144,8 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         DiscountCouponsManager::init();
         $coupon = trim((string)($payload['coupon'] ?? ''));
         if ($coupon !== '') {
+            // В форме предусмотрен один промокод: новый заменяет ранее применённый.
+            DiscountCouponsManager::clear(true);
             DiscountCouponsManager::add($coupon);
         } elseif (isset($payload['clearCoupon']) && $payload['clearCoupon'] === true) {
             DiscountCouponsManager::clear(true);
