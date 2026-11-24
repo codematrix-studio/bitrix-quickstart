@@ -49,6 +49,14 @@ namespace Bitrix\Main {
             return self::$connection;
         }
     }
+
+    final class Loader
+    {
+        public static function includeModule(string $moduleId): bool
+        {
+            return true;
+        }
+    }
 }
 
 namespace Bitrix\Main\Localization {
