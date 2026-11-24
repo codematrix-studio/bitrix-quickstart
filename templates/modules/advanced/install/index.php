@@ -322,10 +322,10 @@ class vendor_advancedmodule extends CModule
         try {
             // Восстанавливаем только полностью завершённые этапы; сбойный этап должен сам обеспечивать атомарность.
             foreach ($uninstallSteps as $step => $methods) {
-                $completedSteps[] = $step;
                 if (!$this->{$methods['remove']}()) {
                     throw new \RuntimeException(sprintf('Не удалось выполнить этап %s удаления модуля.', $methods['remove']));
                 }
+                $completedSteps[] = $step;
             }
 
             // Удаление данных выполняется последним: универсального обратного действия нет.
