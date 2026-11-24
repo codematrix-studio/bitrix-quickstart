@@ -75,6 +75,12 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
                     new ActionFilter\Csrf(),
                 ],
+            'retryPayment' => [
+                'prefilters' => [
+                    new ActionFilter\\HttpMethod([ActionFilter\\HttpMethod::METHOD_POST]),
+                    new ActionFilter\\Csrf(),
+                ],
+            ],
             ],
         ];
     }
@@ -768,6 +774,74 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $userId,
             Fuser::getId(),
         ]));
+    }
+
+    /**
+     * Повторная инициализация оплаты существующего заказа.
+     * Доступ разрешён только владельцу заказа и текущей Fuser-сессии.
+     */
+    public function retryPaymentAction($orderId = 0): ?array
+    {
+        if (!Loader::includeModule('sale')) {
+            $this->errorCollection->setError(new Error('Модуль интернет-магазина не установлен.'));
+            return null;
+        }
+
+        if (!is_scalar($orderId) || !is_numeric((string)$orderId)) {
+            $this->errorCollection->setError(new Error('Некорректный номер заказа.'));
+            return null;
+        }
+
+        $orderId = (int)$orderId;
+        if ($orderId <= 0) {
+            $this->errorCollection->setError(new Error('Некорректный номер заказа.'));
+            return null;
+        }
+
+        $order = Order::load($orderId);
+        if (!$order) {
+            $this->errorCollection->setError(new Error('Заказ не найден.'));
+            return null;
+        }
+
+        global $USER;
+        $currentFuserId = (int)Fuser::getId();
+        $orderFuserId = (int)$order->getField('FUSER_ID');
+        $orderUserId = (int)$order->getField('USER_ID');
+        $currentUserId = ($USER && $USER->IsAuthorized())
+            ? (int)$USER->GetID()
+            : (int)\\CSaleUser::GetAnonymousUserID();
+
+        if ($currentFuserId <= 0
+            || $orderFuserId !== $currentFuserId
+            || $orderUserId !== $currentUserId
+        ) {
+            $this->errorCollection->setError(new Error('Нет доступа к оплате этого заказа.'));
+            return null;
+        }
+
+        $hasUnpaidExternalPayment = false;
+        foreach ($order->getPaymentCollection() as $payment) {
+            if (!$payment->isInner() && !$payment->isPaid()) {
+                $hasUnpaidExternalPayment = true;
+                break;
+            }
+        }
+
+        if (!$hasUnpaidExternalPayment) {
+            $this->errorCollection->setError(new Error('Для заказа нет ожидающего оплаты платежа. Проверьте его статус в личном кабинете.'));
+            return null;
+        }
+
+        if (($this->arParams['AUTO_INIT_PAYMENT'] ?? 'Y') !== 'Y') {
+            $this->errorCollection->setError(new Error('Повторная инициализация оплаты отключена настройками компонента. Перейдите в личный кабинет.'));
+            return null;
+        }
+
+        return [
+            'orderId' => $order->getId(),
+            'payment' => $this->initiateOrderPayment($order),
+        ];
     }
 
     /**
