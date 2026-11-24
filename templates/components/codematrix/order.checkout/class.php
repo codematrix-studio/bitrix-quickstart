@@ -697,9 +697,21 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             }
 
             if (method_exists($initResult, 'getPaymentUrl')) {
-                $paymentUrl = (string)$initResult->getPaymentUrl();
+                $paymentUrl = trim((string)$initResult->getPaymentUrl());
                 if ($paymentUrl !== '') {
-                    $resultData['paymentUrl'] = $paymentUrl;
+                    $urlParts = parse_url($paymentUrl);
+                    $scheme = is_array($urlParts) ? strtolower((string)($urlParts['scheme'] ?? '')) : '';
+                    $hasHttpScheme = in_array($scheme, ['http', 'https'], true)
+                        && !empty($urlParts['host']);
+                    $isRelativeUrl = $scheme === ''
+                        && !str_starts_with($paymentUrl, '//')
+                        && !str_starts_with($paymentUrl, '\\\\');
+
+                    if ($hasHttpScheme || $isRelativeUrl) {
+                        $resultData['paymentUrl'] = $paymentUrl;
+                    } else {
+                        $resultData['error'] = 'Платёжный обработчик вернул некорректную ссылку.';
+                    }
                 }
             }
 
