@@ -225,24 +225,33 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $http->setHeader('Accept', 'application/json', true);
         $http->setHeader('Authorization', 'Token ' . $apiKey, true);
 
-        $rawResponse = $http->post($endpoint, Json::encode([
-            'query' => $query,
-            'count' => 7,
-        ]));
+        try {
+            $rawResponse = $http->post($endpoint, Json::encode([
+                'query' => $query,
+                'count' => 7,
+            ]));
 
-        if ($rawResponse === false || $http->getStatus() !== 200) {
+            if ($rawResponse === false || $http->getStatus() !== 200) {
+                return ['items' => []];
+            }
+
+            $decoded = Json::decode($rawResponse);
+        } catch (\\Throwable $exception) {
+            // Ошибка внешнего сервиса не должна ломать оформление заказа.
             return ['items' => []];
         }
 
-        try {
-            $decoded = Json::decode($rawResponse);
-        } catch (\Throwable $e) {
+        if (!is_array($decoded) || !is_array($decoded['suggestions'] ?? null)) {
             return ['items' => []];
         }
 
         $items = [];
-        foreach (($decoded['suggestions'] ?? []) as $suggestion) {
-            $data = $suggestion['data'] ?? [];
+        foreach ($decoded['suggestions'] as $suggestion) {
+            if (!is_array($suggestion)) {
+                continue;
+            }
+
+            $data = is_array($suggestion['data'] ?? null) ? $suggestion['data'] : [];
 
             if ($type === 'party') {
                 $items[] = [
