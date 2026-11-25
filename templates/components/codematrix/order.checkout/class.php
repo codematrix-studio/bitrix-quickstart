@@ -808,7 +808,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 'html' => '',
                 'error' => 'Заказ уже создан. Предыдущий ответ оформления не был получен; проверьте статус оплаты в личном кабинете. Если платёж не завершён, можно повторить подготовку оплаты.',
             ];
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             return null;
         }
     }
