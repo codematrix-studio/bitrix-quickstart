@@ -809,18 +809,18 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         $pendingExternalPayments = [];
         try {
             foreach ($order->getPaymentCollection() as $payment) {
-                if ($payment->isInner()) {
-                    continue;
-                }
-
                 // Компонент не управляет возвратами: после начала возврата
-                // повторная инициализация внешнего платежа должна быть запрещена.
+                // повторная инициализация оплаты должна быть запрещена.
                 $returnStatus = (string)$payment->getField('IS_RETURN');
                 if ($returnStatus !== '' && $returnStatus !== 'N') {
                     $this->errorCollection->setError(new Error(
                         'По заказу оформлен или выполняется возврат. Повторная оплата через форму оформления недоступна.'
                     ));
                     return null;
+                }
+
+                if ($payment->isInner()) {
+                    continue;
                 }
 
                 if (!$payment->isPaid()) {
