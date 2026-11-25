@@ -806,16 +806,43 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
-        $hasUnpaidExternalPayment = false;
+        $pendingExternalPayments = [];
         foreach ($order->getPaymentCollection() as $payment) {
-            if (!$payment->isInner() && !$payment->isPaid()) {
-                $hasUnpaidExternalPayment = true;
-                break;
+            if ($payment->isInner()) {
+                continue;
+            }
+
+            // Компонент не управляет возвратами: после начала возврата
+            // повторная инициализация внешнего платежа должна быть запрещена.
+            $returnStatus = (string)$payment->getField('IS_RETURN');
+            if ($returnStatus !== '' && $returnStatus !== 'N') {
+                $this->errorCollection->setError(new Error(
+                    'По заказу оформлен или выполняется возврат. Повторная оплата через форму оформления недоступна.'
+                ));
+                return null;
+            }
+
+            if (!$payment->isPaid()) {
+                $pendingExternalPayments[] = $payment;
             }
         }
 
-        if (!$hasUnpaidExternalPayment) {
+        if (count($pendingExternalPayments) === 0) {
             $this->errorCollection->setError(new Error('Для заказа нет ожидающего оплаты платежа. Проверьте его статус в личном кабинете.'));
+            return null;
+        }
+
+        if (count($pendingExternalPayments) > 1) {
+            $this->errorCollection->setError(new Error(
+                'В заказе несколько неоплаченных платежей. Для продолжения оплаты обратитесь в личный кабинет или к администратору магазина.'
+            ));
+            return null;
+        }
+
+        if ($pendingExternalPayments[0]->getSum() <= 0) {
+            $this->errorCollection->setError(new Error(
+                'Сумма ожидающего платежа некорректна. Обратитесь к администратору магазина.'
+            ));
             return null;
         }
 
@@ -840,7 +867,11 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             /** @var Payment|null $targetPayment */
             $targetPayment = null;
             foreach ($order->getPaymentCollection() as $payment) {
-                if (!$payment->isInner() && !$payment->isPaid()) {
+                $returnStatus = (string)$payment->getField('IS_RETURN');
+                if (!$payment->isInner()
+                    && !$payment->isPaid()
+                    && ($returnStatus === '' || $returnStatus === 'N')
+                ) {
                     $targetPayment = $payment;
                     break;
                 }
