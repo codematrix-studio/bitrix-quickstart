@@ -35,6 +35,12 @@ if (!empty($arResult['IS_EMPTY'])) {
 
         <!-- Блок онлайн-оплаты -->
         <div v-if="createdOrder.payment && !createdOrder.payment.isCash" class="cm-payment-box">
+            <p v-if="createdOrder.payment.isPaid" class="cm-success-message">
+                Оплата заказа подтверждена.
+            </p>
+            <p v-if="createdOrder.payment.isPartiallyPaid" class="cm-muted">
+                Часть заказа уже оплачена. Можно продолжить оплату оставшейся суммы.
+            </p>
             <p v-if="redirectingToGateway" class="cm-payment-redirect-msg">
                 Перенаправляем на платёжный шлюз «{{ createdOrder.payment.paySystemName }}»...
             </p>
