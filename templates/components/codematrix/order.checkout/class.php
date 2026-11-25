@@ -771,7 +771,9 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
      */
     private function getExistingOrderPaymentRetryState(Order $order): ?array
     {
-        if ((string)$order->getField('CANCELED') === 'Y') {
+        if (($this->arParams['AUTO_INIT_PAYMENT'] ?? 'Y') !== 'Y'
+            || (string)$order->getField('CANCELED') === 'Y'
+        ) {
             return null;
         }
 
@@ -1038,6 +1040,15 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             if ($isCash) {
                 return $resultData;
             }
+
+            // Отмечаем и первоначальный запуск, чтобы повторный submit
+            // не позволил немедленно создать вторую сессию эквайринга.
+            $sessionKey = $this->getOrderIdempotencySessionKey();
+            $_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'] ??= [];
+            $_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'][$sessionKey] ??= [];
+            $_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'][$sessionKey][
+                (int)$order->getId() . ':' . (int)$targetPayment->getId()
+            ] = time();
 
             $request = Context::getCurrent()->getRequest();
             $initResult = $service->initiatePay(
