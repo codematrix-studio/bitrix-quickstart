@@ -898,27 +898,48 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     private function initiateOrderPayment(Order $order): ?array
     {
         try {
-            /** @var Payment|null $targetPayment */
-            $targetPayment = null;
+            /** @var Payment[] $pendingExternalPayments */
+            $pendingExternalPayments = [];
             foreach ($order->getPaymentCollection() as $payment) {
                 $returnStatus = (string)$payment->getField('IS_RETURN');
-                if (!$payment->isInner()
-                    && !$payment->isPaid()
-                    && ($returnStatus === '' || $returnStatus === 'N')
-                ) {
-                    $targetPayment = $payment;
-                    break;
+                if ($returnStatus !== '' && $returnStatus !== 'N') {
+                    return [
+                        'paySystemId' => 0,
+                        'paySystemName' => '',
+                        'isCash' => false,
+                        'paymentUrl' => '',
+                        'html' => '',
+                        'error' => 'По заказу обнаружен возврат. Автоматическая инициализация оплаты недоступна.',
+                    ];
+                }
+
+                if (!$payment->isInner() && !$payment->isPaid()) {
+                    $pendingExternalPayments[] = $payment;
                 }
             }
 
-            if (!$targetPayment) {
+            if (count($pendingExternalPayments) !== 1) {
                 return [
                     'paySystemId' => 0,
                     'paySystemName' => '',
                     'isCash' => false,
                     'paymentUrl' => '',
                     'html' => '',
-                    'error' => 'Заказ сохранён, но не удалось определить платёж для оплаты. Обратитесь к администратору магазина.',
+                    'error' => count($pendingExternalPayments) === 0
+                        ? 'Заказ сохранён, но ожидающий платёж не найден. Проверьте статус заказа в личном кабинете.'
+                        : 'Заказ сохранён, но содержит несколько неоплаченных внешних платежей. Автоматический выбор платежа невозможен.',
+                ];
+            }
+
+            $targetPayment = $pendingExternalPayments[0];
+            if ($targetPayment->getSum() <= 0) {
+                return [
+                    'paySystemId' => 0,
+                    'paySystemName' => '',
+                    'isCash' => false,
+                    'paymentUrl' => '',
+                    'html' => '',
+                    'error' => 'Заказ сохранён, но сумма ожидающего платежа некорректна. Обратитесь к администратору магазина.',
                 ];
             }
 
