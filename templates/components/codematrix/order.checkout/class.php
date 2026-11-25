@@ -357,13 +357,22 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                     ? (int)$USER->GetID()
                     : (int)\CSaleUser::GetAnonymousUserID();
 
-                if ($existingOrder
+                $currentFuserId = (int)Fuser::getId();
+                $ownsExistingOrder = $existingOrder
                     && (int)$existingOrder->getField('USER_ID') === $currentUserId
-                ) {
+                    && (
+                        ($USER && $USER->IsAuthorized())
+                        || (
+                            $currentFuserId > 0
+                            && (int)$existingOrder->getField('FUSER_ID') === $currentFuserId
+                        )
+                    );
+
+                if ($ownsExistingOrder) {
                     return [
-                        'orderId'         => $existingOrder->getId(),
-                        'accountNumber'   => $existingOrder->getField('ACCOUNT_NUMBER'),
-                        'payment'         => null,
+                        'orderId'          => $existingOrder->getId(),
+                        'accountNumber'    => $existingOrder->getField('ACCOUNT_NUMBER'),
+                        'payment'          => $this->getExistingOrderPaymentRetryState($existingOrder),
                         'alreadyProcessed' => true,
                     ];
                 }
@@ -754,6 +763,54 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $userId,
             Fuser::getId(),
         ]));
+    }
+
+    /**
+     * Возвращает безопасное состояние для повторного показа неоплаченного заказа.
+     * Сам платёжный обработчик здесь не вызывается.
+     */
+    private function getExistingOrderPaymentRetryState(Order $order): ?array
+    {
+        if ((string)$order->getField('CANCELED') === 'Y') {
+            return null;
+        }
+
+        try {
+            $pendingExternalPayments = [];
+            foreach ($order->getPaymentCollection() as $payment) {
+                $returnStatus = (string)$payment->getField('IS_RETURN');
+                if ($returnStatus !== '' && $returnStatus !== 'N') {
+                    return null;
+                }
+
+                if (!$payment->isInner() && !$payment->isPaid()) {
+                    $pendingExternalPayments[] = $payment;
+                }
+            }
+
+            if (count($pendingExternalPayments) !== 1
+                || $pendingExternalPayments[0]->getSum() <= 0
+            ) {
+                return null;
+            }
+
+            $payment = $pendingExternalPayments[0];
+            $service = $payment->getPaySystem();
+            if ($service && $service->isCash()) {
+                return null;
+            }
+
+            return [
+                'paySystemId' => (int)$payment->getPaymentSystemId(),
+                'paySystemName' => (string)$payment->getPaymentSystemName(),
+                'isCash' => false,
+                'paymentUrl' => '',
+                'html' => '',
+                'error' => 'Заказ уже создан. Предыдущий ответ оформления не был получен; проверьте статус оплаты в личном кабинете. Если платёж не завершён, можно повторить подготовку оплаты.',
+            ];
+        } catch (\\Throwable $exception) {
+            return null;
+        }
     }
 
     /**
