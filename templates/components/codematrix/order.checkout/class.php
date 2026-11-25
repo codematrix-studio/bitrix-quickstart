@@ -858,6 +858,33 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             return null;
         }
 
+        // Блокируем повторный вызов обработчика в пределах одной сессии.
+        // PHP session lock сериализует запросы этой сессии, поэтому отметка
+        // записывается до обращения к эквайрингу.
+        $sessionKey = $this->getOrderIdempotencySessionKey();
+        $paymentId = (int)$pendingExternalPayments[0]->getId();
+        $_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'] ??= [];
+        $_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'][$sessionKey] ??= [];
+        $retryAttempts = &$_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'][$sessionKey];
+        $now = time();
+
+        foreach ($retryAttempts as $key => $attemptTime) {
+            if ((int)$attemptTime < $now - 86400) {
+                unset($retryAttempts[$key]);
+            }
+        }
+
+        $retryKey = $orderId . ':' . $paymentId;
+        $lastAttempt = (int)($retryAttempts[$retryKey] ?? 0);
+        if ($lastAttempt > 0 && $lastAttempt > $now - 30) {
+            $this->errorCollection->setError(new Error(
+                'Повторная попытка оплаты уже выполнялась недавно. Подождите 30 секунд и проверьте статус заказа перед новой попыткой.'
+            ));
+            return null;
+        }
+
+        $retryAttempts[$retryKey] = $now;
+
         return [
             'orderId' => $order->getId(),
             'payment' => $this->initiateOrderPayment($order),
