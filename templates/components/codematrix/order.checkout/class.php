@@ -846,7 +846,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 ));
                 return null;
             }
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->errorCollection->setError(new Error(
                 'Не удалось проверить состояние платежа. Проверьте заказ в личном кабинете или обратитесь к администратору магазина.'
             ));
