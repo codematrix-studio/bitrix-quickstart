@@ -779,15 +779,34 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
 
         try {
             $pendingExternalPayments = [];
+            $paidExternalPayments = 0;
             foreach ($order->getPaymentCollection() as $payment) {
                 $returnStatus = (string)$payment->getField('IS_RETURN');
                 if ($returnStatus !== '' && $returnStatus !== 'N') {
                     return null;
                 }
 
-                if (!$payment->isInner() && !$payment->isPaid()) {
+                if ($payment->isInner()) {
+                    continue;
+                }
+
+                if ($payment->isPaid()) {
+                    $paidExternalPayments++;
+                } else {
                     $pendingExternalPayments[] = $payment;
                 }
+            }
+
+            if ($pendingExternalPayments === []
+                && $order->getPaymentCollection()->isPaid()
+            ) {
+                return [
+                    'isPaid' => true,
+                    'isCash' => false,
+                    'paymentUrl' => '',
+                    'html' => '',
+                    'error' => '',
+                ];
             }
 
             if (count($pendingExternalPayments) !== 1
@@ -806,6 +825,7 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
                 'paySystemId' => (int)$payment->getPaymentSystemId(),
                 'paySystemName' => (string)$payment->getPaymentSystemName(),
                 'isCash' => false,
+                'isPartiallyPaid' => $paidExternalPayments > 0,
                 'paymentUrl' => '',
                 'html' => '',
                 'error' => 'Заказ уже создан. Предыдущий ответ оформления не был получен; проверьте статус оплаты в личном кабинете. Если платёж не завершён, можно повторить подготовку оплаты.',
@@ -957,6 +977,17 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
     private function initiateOrderPayment(Order $order): ?array
     {
         try {
+            if ((string)$order->getField('CANCELED') === 'Y') {
+                return [
+                    'paySystemId' => 0,
+                    'paySystemName' => '',
+                    'isCash' => false,
+                    'paymentUrl' => '',
+                    'html' => '',
+                    'error' => 'Заказ отменён. Инициализация оплаты недоступна.',
+                ];
+            }
+
             /** @var Payment[] $pendingExternalPayments */
             $pendingExternalPayments = [];
             foreach ($order->getPaymentCollection() as $payment) {
