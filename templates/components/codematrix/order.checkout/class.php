@@ -1046,9 +1046,14 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
             $sessionKey = $this->getOrderIdempotencySessionKey();
             $_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'] ??= [];
             $_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'][$sessionKey] ??= [];
-            $_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'][$sessionKey][
-                (int)$order->getId() . ':' . (int)$targetPayment->getId()
-            ] = time();
+            $retryAttempts = &$_SESSION['CODEMATRIX_ORDER_CHECKOUT_PAYMENT_RETRY'][$sessionKey];
+            $attemptTime = time();
+            foreach ($retryAttempts as $key => $lastAttempt) {
+                if ((int)$lastAttempt < $attemptTime - 86400) {
+                    unset($retryAttempts[$key]);
+                }
+            }
+            $retryAttempts[(int)$order->getId() . ':' . (int)$targetPayment->getId()] = $attemptTime;
 
             $request = Context::getCurrent()->getRequest();
             $initResult = $service->initiatePay(
