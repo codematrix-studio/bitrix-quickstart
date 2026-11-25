@@ -807,41 +807,48 @@ class CodeMatrixOrderCheckoutComponent extends CBitrixComponent implements Contr
         }
 
         $pendingExternalPayments = [];
-        foreach ($order->getPaymentCollection() as $payment) {
-            if ($payment->isInner()) {
-                continue;
+        try {
+            foreach ($order->getPaymentCollection() as $payment) {
+                if ($payment->isInner()) {
+                    continue;
+                }
+
+                // Компонент не управляет возвратами: после начала возврата
+                // повторная инициализация внешнего платежа должна быть запрещена.
+                $returnStatus = (string)$payment->getField('IS_RETURN');
+                if ($returnStatus !== '' && $returnStatus !== 'N') {
+                    $this->errorCollection->setError(new Error(
+                        'По заказу оформлен или выполняется возврат. Повторная оплата через форму оформления недоступна.'
+                    ));
+                    return null;
+                }
+
+                if (!$payment->isPaid()) {
+                    $pendingExternalPayments[] = $payment;
+                }
             }
 
-            // Компонент не управляет возвратами: после начала возврата
-            // повторная инициализация внешнего платежа должна быть запрещена.
-            $returnStatus = (string)$payment->getField('IS_RETURN');
-            if ($returnStatus !== '' && $returnStatus !== 'N') {
+            if (count($pendingExternalPayments) === 0) {
+                $this->errorCollection->setError(new Error('Для заказа нет ожидающего оплаты платежа. Проверьте его статус в личном кабинете.'));
+                return null;
+            }
+
+            if (count($pendingExternalPayments) > 1) {
                 $this->errorCollection->setError(new Error(
-                    'По заказу оформлен или выполняется возврат. Повторная оплата через форму оформления недоступна.'
+                    'В заказе несколько неоплаченных платежей. Для продолжения оплаты обратитесь в личный кабинет или к администратору магазина.'
                 ));
                 return null;
             }
 
-            if (!$payment->isPaid()) {
-                $pendingExternalPayments[] = $payment;
+            if ($pendingExternalPayments[0]->getSum() <= 0) {
+                $this->errorCollection->setError(new Error(
+                    'Сумма ожидающего платежа некорректна. Обратитесь к администратору магазина.'
+                ));
+                return null;
             }
-        }
-
-        if (count($pendingExternalPayments) === 0) {
-            $this->errorCollection->setError(new Error('Для заказа нет ожидающего оплаты платежа. Проверьте его статус в личном кабинете.'));
-            return null;
-        }
-
-        if (count($pendingExternalPayments) > 1) {
+        } catch (\\Throwable $exception) {
             $this->errorCollection->setError(new Error(
-                'В заказе несколько неоплаченных платежей. Для продолжения оплаты обратитесь в личный кабинет или к администратору магазина.'
-            ));
-            return null;
-        }
-
-        if ($pendingExternalPayments[0]->getSum() <= 0) {
-            $this->errorCollection->setError(new Error(
-                'Сумма ожидающего платежа некорректна. Обратитесь к администратору магазина.'
+                'Не удалось проверить состояние платежа. Проверьте заказ в личном кабинете или обратитесь к администратору магазина.'
             ));
             return null;
         }
