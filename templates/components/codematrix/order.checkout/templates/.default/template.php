@@ -25,10 +25,22 @@ if (!empty($arResult['IS_EMPTY'])) {
     <!-- Экран успешного оформления и оплаты -->
     <div v-if="createdOrder" class="cm-checkout__success">
         <h2>Заказ №{{ createdOrder.accountNumber }} успешно оформлен!</h2>
-        <p>Номер заказа в системе: <strong>{{ createdOrder.orderId }}</strong>. Подробности отправлены на ваш E-mail.</p>
+        <p>Номер заказа в системе: <strong>{{ createdOrder.orderId }}</strong>.</p>
+        <p v-if="createdOrder.savedProfileId" class="cm-muted">
+            Данные сохранены в профиль покупателя.
+        </p>
+        <p v-else-if="form.saveProfile" class="cm-error">
+            Заказ оформлен, но сохранить профиль покупателя не удалось. Вы можете сохранить данные позже в личном кабинете.
+        </p>
 
         <!-- Блок онлайн-оплаты -->
         <div v-if="createdOrder.payment && !createdOrder.payment.isCash" class="cm-payment-box">
+            <p v-if="createdOrder.payment.isPaid" class="cm-success-message">
+                Оплата заказа подтверждена.
+            </p>
+            <p v-if="createdOrder.payment.isPartiallyPaid" class="cm-muted">
+                Часть заказа уже оплачена. Можно продолжить оплату оставшейся суммы.
+            </p>
             <p v-if="redirectingToGateway" class="cm-payment-redirect-msg">
                 Перенаправляем на платёжный шлюз «{{ createdOrder.payment.paySystemName }}»...
             </p>
@@ -38,6 +50,16 @@ if (!empty($arResult['IS_EMPTY'])) {
                 Вы можете оплатить заказ из личного кабинета.
             </div>
 
+            <button
+                v-if="createdOrder.payment.error && !createdOrder.payment.paymentUrl && !createdOrder.payment.html"
+                type="button"
+                class="cm-btn cm-submit-btn"
+                :disabled="paymentRetrying"
+                @click="retryPayment"
+            >
+                {{ paymentRetrying ? 'Подготавливаем оплату…' : 'Повторить попытку оплаты' }}
+            </button>
+
             <div v-if="createdOrder.payment.paymentUrl" class="cm-payment-actions">
                 <a :href="createdOrder.payment.paymentUrl" class="cm-btn cm-submit-btn">
                     Перейти к оплате ({{ createdOrder.payment.paySystemName }})
@@ -45,7 +67,16 @@ if (!empty($arResult['IS_EMPTY'])) {
             </div>
 
             <!-- Контейнер для HTML-формы или виджета платёжного шлюза -->
-            <div v-if="createdOrder.payment.html" ref="paymentHtmlContainer" class="cm-payment-gateway-html"></div>
+            <iframe
+                v-if="createdOrder.payment.html"
+                class="cm-payment-gateway-html"
+                :srcdoc="createdOrder.payment.html"
+                :sandbox="autoRedirectPayment
+                    ? 'allow-forms allow-scripts allow-popups allow-top-navigation'
+                    : 'allow-forms allow-scripts'"
+                referrerpolicy="no-referrer"
+                title="Переход к оплате"
+            ></iframe>
         </div>
 
         <div class="cm-success-links">
@@ -61,10 +92,28 @@ if (!empty($arResult['IS_EMPTY'])) {
                 <h3>1. Тип плательщика</h3>
                 <div class="cm-checkout__radio-group">
                     <label v-for="pt in state.personTypes" :key="pt.id" class="cm-radio-pill" :class="{ active: form.personTypeId === pt.id }">
-                        <input type="radio" :value="pt.id" v-model="form.personTypeId" @change="recalculate">
+                        <input type="radio" :value="pt.id" v-model="form.personTypeId" @change="onPersonTypeChange">
                         <span>{{ pt.name }}</span>
                     </label>
                 </div>
+            </section>
+
+            <section class="cm-checkout__section" v-if="state.profiles && state.profiles.length">
+                <h3>Профиль покупателя</h3>
+                <select v-model="form.profileId" @change="selectBuyerProfile">
+                    <option :value="0">Заполнить данные вручную</option>
+                    <option v-for="profile in state.profiles" :key="profile.id" :value="profile.id">
+                        {{ profile.name }}
+                    </option>
+                </select>
+            </section>
+            <section class="cm-checkout__section" v-if="saveProfileEnabled && userAuthorized">
+                <label class="cm-checkbox">
+                    <input type="checkbox" v-model="form.saveProfile">
+                    Сохранить заполненные данные в профиль покупателя
+                </label>
+                <input v-if="form.saveProfile" type="text" v-model="form.profileName" maxlength="255" placeholder="Название профиля">
+                <p class="cm-muted">Профиль будет сохранён после успешного создания заказа.</p>
             </section>
 
             <!-- 2. Данные покупателя -->
@@ -140,8 +189,11 @@ if (!empty($arResult['IS_EMPTY'])) {
                     <input
                         v-else
                         :id="'prop_' + prop.code"
-                        type="text"
+                        :type="isPhoneProp(prop.code) ? 'tel' : 'text'"
+                        :inputmode="isPhoneProp(prop.code) ? 'tel' : 'text'"
+                        :placeholder="isPhoneProp(prop.code) ? '+7 (___) ___-__-__' : ''"
                         v-model="form.properties[prop.code]"
+                        @input="onPhoneInput(prop.code, $event)"
                     >
 
                     <div v-if="fieldErrors['PROP_' + prop.code]" class="cm-error">
@@ -169,7 +221,7 @@ if (!empty($arResult['IS_EMPTY'])) {
                             <span class="cm-price">{{ del.price > 0 ? formatPrice(del.price) : 'Бесплатно' }}</span>
                         </div>
                         <small v-if="del.period" class="cm-period">Срок доставки: {{ del.period }}</small>
-                        <p v-if="del.description" v-html="del.description"></p>
+                        <p v-if="del.description">{{ del.description }}</p>
                     </div>
                 </label>
             </section>
@@ -186,7 +238,7 @@ if (!empty($arResult['IS_EMPTY'])) {
                     <input type="radio" :value="ps.id" v-model="form.paySystemId" @change="recalculate">
                     <div class="cm-card-radio__body">
                         <strong>{{ ps.name }}</strong>
-                        <p v-if="ps.description" v-html="ps.description"></p>
+                        <p v-if="ps.description">{{ ps.description }}</p>
                     </div>
                 </label>
             </section>
@@ -219,6 +271,7 @@ if (!empty($arResult['IS_EMPTY'])) {
                     Применён промокод: <strong>{{ state.appliedCoupons.join(', ') }}</strong>
                     <button type="button" class="cm-link-btn" @click="clearCoupon">Сбросить</button>
                 </div>
+                <p v-if="state.couponMessage" class="cm-error">{{ state.couponMessage }}</p>
 
                 <!-- Итоги -->
                 <div class="cm-summary__totals">
@@ -252,20 +305,23 @@ if (!empty($arResult['IS_EMPTY'])) {
 
 <script>
 BX.ready(function () {
-    const { createApp, ref, reactive, nextTick } = BX.Vue3;
-    const initialState = <?= Json::encode($arResult['INITIAL_STATE']) ?>;
+    const { createApp, ref, reactive } = BX.Vue3;
+    const initialState = <?= Json::encode($arResult['INITIAL_STATE'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    const checkoutRequestId = '<?= bin2hex(random_bytes(16)) ?>';
     const signedParameters = '<?= CUtil::JSEscape($arResult['SIGNED_PARAMS']) ?>';
     const dadataEnabled = <?= $arResult['DADATA_ENABLED'] ? 'true' : 'false' ?>;
     const autoRedirectPayment = <?= $arResult['AUTO_REDIRECT_PAYMENT'] ? 'true' : 'false' ?>;
+    const saveProfileEnabled = <?= $arResult['SAVE_USER_PROFILE_ENABLED'] ? 'true' : 'false' ?>;
+    const userAuthorized = <?= $arResult['USER_AUTHORIZED'] ? 'true' : 'false' ?>;
 
     createApp({
         setup() {
             const state = ref(initialState);
             const loading = ref(false);
             const submitting = ref(false);
+            const paymentRetrying = ref(false);
             const createdOrder = ref(null);
             const redirectingToGateway = ref(false);
-            const paymentHtmlContainer = ref(null);
             const fieldErrors = ref({});
             const generalErrors = ref([]);
 
@@ -276,23 +332,66 @@ BX.ready(function () {
             const activeDadataField = ref('');
             const dadataSuggestions = ref([]);
             let dadataTimer = null;
+            let dadataRequestId = 0;
+            let locationRequestId = 0;
+            let recalculateRequestId = 0;
 
             const form = reactive({
                 personTypeId: initialState.personTypeId,
+                profileId: initialState.selectedProfileId || 0,
                 properties: { ...initialState.propValues },
                 deliveryId: initialState.selectedDeliveryId,
                 paySystemId: initialState.selectedPaySystemId,
                 comment: '',
                 coupon: '',
-                clearCoupon: false
+                clearCoupon: false,
+                requestId: checkoutRequestId,
+                saveProfile: false,
+                profileName: 'Профиль покупателя'
             });
 
             const isAddressProp = (code) => ['ADDRESS', 'COMPANY_ADR', 'LEGAL_ADDRESS'].includes(code);
             const isPartyProp = (code) => ['INN', 'COMPANY'].includes(code);
 
+            const isPhoneProp = (code) => ['PHONE', 'PERSONAL_PHONE', 'CONTACT_PHONE', 'MOBILE'].includes(
+                String(code).toUpperCase()
+            );
+
+            const onPhoneInput = (code, event) => {
+                if (!isPhoneProp(code)) {
+                    return;
+                }
+
+                let digits = String(event.target.value || '').replace(/\D/g, '');
+                if (digits.startsWith('8')) {
+                    digits = '7' + digits.slice(1);
+                } else if (!digits.startsWith('7') && digits.length > 0) {
+                    digits = '7' + digits;
+                }
+                digits = digits.slice(0, 11);
+
+                let formatted = digits.length === 0 ? '' : '+7';
+                if (digits.length > 1) {
+                    formatted += ' (' + digits.slice(1, 4);
+                }
+                if (digits.length >= 4) {
+                    formatted += ') ' + digits.slice(4, 7);
+                }
+                if (digits.length >= 8) {
+                    formatted += '-' + digits.slice(7, 9);
+                }
+                if (digits.length >= 10) {
+                    formatted += '-' + digits.slice(9, 11);
+                }
+
+                form.properties[code] = formatted;
+                event.target.value = formatted;
+            };
+
             const syncFormWithState = (newState) => {
                 state.value = newState;
                 form.personTypeId = newState.personTypeId;
+                form.profileId = newState.selectedProfileId || 0;
                 form.deliveryId = newState.selectedDeliveryId;
                 form.paySystemId = newState.selectedPaySystemId;
 
@@ -310,6 +409,7 @@ BX.ready(function () {
             };
 
             const recalculate = () => {
+                const requestId = ++recalculateRequestId;
                 loading.value = true;
                 generalErrors.value = [];
 
@@ -318,14 +418,31 @@ BX.ready(function () {
                     signedParameters: signedParameters,
                     data: { payload: form }
                 }).then((response) => {
+                    if (requestId !== recalculateRequestId) {
+                        return;
+                    }
                     form.clearCoupon = false;
                     syncFormWithState(response.data);
                     loading.value = false;
                 }, (response) => {
+                    if (requestId !== recalculateRequestId) {
+                        return;
+                    }
                     form.clearCoupon = false;
                     generalErrors.value = (response.errors || []).map(e => e.message);
                     loading.value = false;
                 });
+            };
+
+            const onPersonTypeChange = () => {
+                form.profileId = 0;
+                form.properties = {};
+                recalculate();
+            };
+
+            const selectBuyerProfile = () => {
+                form.properties = {};
+                recalculate();
             };
 
             const clearCoupon = () => {
@@ -336,8 +453,11 @@ BX.ready(function () {
 
             const onLocationInput = (propCode) => {
                 clearTimeout(locationTimer);
+                const requestId = ++locationRequestId;
+                // Любое редактирование текста аннулирует ранее выбранный Bitrix location CODE.
+                form.properties[propCode] = '';
+                locationSuggestions.value = [];
                 if (locationQuery.value.trim().length < 2) {
-                    locationSuggestions.value = [];
                     return;
                 }
                 locationTimer = setTimeout(() => {
@@ -346,12 +466,19 @@ BX.ready(function () {
                         signedParameters: signedParameters,
                         data: { query: locationQuery.value }
                     }).then((response) => {
-                        locationSuggestions.value = response.data.items || [];
+                        if (requestId === locationRequestId) {
+                            locationSuggestions.value = response.data.items || [];
+                        }
+                    }).catch(() => {
+                        if (requestId === locationRequestId) {
+                            locationSuggestions.value = [];
+                        }
                     });
                 }, 300);
             };
 
             const selectLocation = (propCode, loc) => {
+                locationRequestId++;
                 locationQuery.value = loc.label;
                 form.properties[propCode] = loc.code;
                 locationSuggestions.value = [];
@@ -360,18 +487,29 @@ BX.ready(function () {
 
             const onDadataInput = (type, propCode, query) => {
                 clearTimeout(dadataTimer);
+                const requestId = ++dadataRequestId;
                 activeDadataField.value = propCode;
+
                 if (!query || query.trim().length < 2) {
                     dadataSuggestions.value = [];
                     return;
                 }
+
                 dadataTimer = setTimeout(() => {
                     BX.ajax.runComponentAction('codematrix:order.checkout', 'suggestDadata', {
                         mode: 'class',
                         signedParameters: signedParameters,
                         data: { type: type, query: query }
                     }).then((response) => {
+                        if (requestId !== dadataRequestId || activeDadataField.value !== propCode) {
+                            return;
+                        }
+
                         dadataSuggestions.value = response.data.items || [];
+                    }).catch(() => {
+                        if (requestId === dadataRequestId && activeDadataField.value === propCode) {
+                            dadataSuggestions.value = [];
+                        }
                     });
                 }, 300);
             };
@@ -383,11 +521,14 @@ BX.ready(function () {
                 }
 
                 const locProp = state.value.properties.find(p => p.isLocation);
-                if (locProp && item.locationCode) {
-                    form.properties[locProp.code] = item.locationCode;
+                if (locProp) {
+                    // Не оставляем старый код, если DaData не сопоставилась с каталогом Bitrix.
+                    form.properties[locProp.code] = item.locationCode || '';
                     if (item.city) {
                         locationQuery.value = item.city;
                     }
+                    // Пересчитываем и при отсутствии сопоставления:
+                    // пустое значение должно очистить ранее выбранное местоположение.
                     recalculate();
                 }
 
@@ -413,7 +554,7 @@ BX.ready(function () {
                 activeDadataField.value = '';
             };
 
-            const handlePaymentAfterCreate = async (orderData) => {
+            const handlePaymentAfterCreate = (orderData) => {
                 const payment = orderData.payment;
                 if (!payment || payment.isCash) {
                     return;
@@ -422,31 +563,31 @@ BX.ready(function () {
                 if (payment.paymentUrl && autoRedirectPayment) {
                     redirectingToGateway.value = true;
                     window.location.href = payment.paymentUrl;
+                }
+            };
+
+            const retryPayment = () => {
+                if (!createdOrder.value || !createdOrder.value.orderId || paymentRetrying.value) {
                     return;
                 }
 
-                if (payment.html) {
-                    await nextTick();
-                    if (paymentHtmlContainer.value) {
-                        paymentHtmlContainer.value.innerHTML = payment.html;
-
-                        // Выполняем встроенные скрипты платёжного шлюза (например, авто-сабмит формы или виджет ЮKassa/Т-Банка)
-                        const scripts = paymentHtmlContainer.value.querySelectorAll('script');
-                        scripts.forEach((oldScript) => {
-                            const newScript = document.createElement('script');
-                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                            newScript.textContent = oldScript.textContent;
-                            oldScript.parentNode.replaceChild(newScript, oldScript);
-                        });
-
-                        // Если внутри формы шлюза есть форма без авто-отправки, отправляем её автоматически
-                        const gatewayForm = paymentHtmlContainer.value.querySelector('form');
-                        if (gatewayForm && autoRedirectPayment) {
-                            redirectingToGateway.value = true;
-                            gatewayForm.submit();
-                        }
-                    }
-                }
+                paymentRetrying.value = true;
+                BX.ajax.runComponentAction('codematrix:order.checkout', 'retryPayment', {
+                    mode: 'class',
+                    signedParameters: signedParameters,
+                    data: { orderId: createdOrder.value.orderId }
+                }).then((response) => {
+                    createdOrder.value.payment = response.data.payment;
+                    paymentRetrying.value = false;
+                    handlePaymentAfterCreate(createdOrder.value);
+                }, (response) => {
+                    const messages = (response.errors || []).map(error => error.message);
+                    createdOrder.value.payment = {
+                        ...(createdOrder.value.payment || {}),
+                        error: messages.join(' ') || 'Не удалось повторно подготовить оплату.'
+                    };
+                    paymentRetrying.value = false;
+                });
             };
 
             const submitOrder = () => {
@@ -487,18 +628,24 @@ BX.ready(function () {
                 form,
                 loading,
                 submitting,
+                paymentRetrying,
                 createdOrder,
                 redirectingToGateway,
-                paymentHtmlContainer,
                 fieldErrors,
                 generalErrors,
                 locationQuery,
                 locationSuggestions,
                 dadataEnabled,
+                saveProfileEnabled,
+                userAuthorized,
                 activeDadataField,
                 dadataSuggestions,
                 isAddressProp,
                 isPartyProp,
+                isPhoneProp,
+                onPhoneInput,
+                onPersonTypeChange,
+                selectBuyerProfile,
                 recalculate,
                 clearCoupon,
                 onLocationInput,
@@ -507,6 +654,7 @@ BX.ready(function () {
                 selectDadataAddress,
                 selectDadataParty,
                 submitOrder,
+                retryPayment,
                 formatPrice
             };
         }

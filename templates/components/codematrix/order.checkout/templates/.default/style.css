@@ -344,7 +344,12 @@
 }
 
 .cm-payment-gateway-html {
+    display: block;
+    width: 100%;
+    min-height: 420px;
     margin-top: 14px;
+    border: 0;
+    background: #fff;
 }
 
 .cm-success-links {

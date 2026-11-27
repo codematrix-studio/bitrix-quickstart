@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -35,17 +37,17 @@ $arComponentParameters = [
             'TYPE'    => 'CHECKBOX',
             'DEFAULT' => 'Y',
         ],
+        'SAVE_USER_PROFILE' => [
+            'PARENT'  => 'INTEGRATIONS',
+            'NAME'    => 'Разрешить покупателю сохранять данные в профиль (по отдельному согласию)',
+            'TYPE'    => 'CHECKBOX',
+            'DEFAULT' => 'Y',
+        ],
         'AUTO_REDIRECT_PAYMENT' => [
             'PARENT'  => 'INTEGRATIONS',
             'NAME'    => 'Автоматически перенаправлять на эквайринг (если шлюз возвращает ссылку или форму)',
             'TYPE'    => 'CHECKBOX',
             'DEFAULT' => 'Y',
-        ],
-        'DADATA_API_KEY' => [
-            'PARENT'  => 'INTEGRATIONS',
-            'NAME'    => 'API-ключ DaData (оставьте пустым, чтобы отключить подсказки)',
-            'TYPE'    => 'STRING',
-            'DEFAULT' => '',
         ],
     ],
 ];
