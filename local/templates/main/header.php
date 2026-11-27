@@ -49,7 +49,6 @@ use Bitrix\Main\Page\Asset;
 
     // Общие стили проекта:
     // Asset::getInstance()->addCss(PATH_GLOBAL_CSS);
-    // Asset::getInstance()->addCss(PATH_RESPONSIVE_CSS);
 
     /**
      * ПРИМЕРЫ ПОДКЛЮЧЕНИЯ JAVASCRIPT.
